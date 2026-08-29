@@ -97,6 +97,7 @@ export default async function ProblemPage(props: ProblemRouteProps) {
         exerciseId={id}
         language="javascript"
         starterCode={problem.starterCode.javascript ?? ''}
+        starterByLanguage={problem.starterCode}
         spec={problem.testSpec}
         complexity={problem.complexity}
       />

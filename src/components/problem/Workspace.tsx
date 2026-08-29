@@ -11,6 +11,7 @@ import { TIMEOUT_MESSAGE } from '@/lib/runtime/errors';
 import { clearDraft, readDraft, subscribeToDrafts, writeDraft } from '@/lib/drafts';
 import { track } from '@/lib/analytics/track';
 import { recordLocalAttempt } from '@/lib/progress-local';
+import { supportedLanguages } from '@/content/test-runner';
 import type { Language, TestSpec, Tier } from '@/content/schema';
 import type { SpecResult } from '@/content/test-runner';
 
@@ -22,16 +23,19 @@ import type { SpecResult } from '@/content/test-runner';
  */
 export function Workspace({
   exerciseId,
-  language,
+  language: initialLanguage,
   starterCode,
   spec,
   complexity,
   tier = 'problem',
   compact = false,
   onSolved,
+  starterByLanguage,
 }: {
   exerciseId: string;
   language: Language;
+  /** Starter code per language, so switching swaps the scaffold (A6). */
+  starterByLanguage?: Partial<Record<Language, string>>;
   starterCode: string;
   spec: TestSpec;
   complexity?: { time: string; space: string; note?: string };
@@ -47,6 +51,19 @@ export function Workspace({
   /** Fires when a run passes, so a lesson can advance its own state. */
   onSolved?: () => void;
 }) {
+  /**
+   * The switcher only offers languages this exercise actually has code for.
+   * Listing a language with no starter would hand a learner an empty editor.
+   */
+  const available = (
+    starterByLanguage
+      ? (Object.keys(starterByLanguage) as Language[]).filter((l) => starterByLanguage[l])
+      : [initialLanguage]
+  ).filter((l) => supportedLanguages().includes(l));
+
+  const [language, setLanguage] = useState<Language>(initialLanguage);
+  const starter = starterByLanguage?.[language] ?? starterCode;
+
   const [result, setResult] = useState<SpecResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
@@ -62,11 +79,11 @@ export function Workspace({
     () => null,
   );
 
-  const initialDoc = resetCount === 0 ? (savedDraft ?? starterCode) : starterCode;
+  const initialDoc = resetCount === 0 ? (savedDraft ?? starter) : starter;
 
   // The editor is uncontrolled and keeps this mirror current, so `run` reads the
   // real document without the tree re-rendering on every keystroke.
-  const codeRef = useRef(starterCode);
+  const codeRef = useRef(starter);
 
   const runtime = useRef<RuntimeClient | null>(null);
   const onSolvedRef = useRef(onSolved);
@@ -139,25 +156,47 @@ export function Workspace({
     clearDraft(exerciseId, language);
     // Remounting the editor re-seeds the mirror; this keeps them in step even
     // if a run fires before the remount lands.
-    codeRef.current = starterCode;
+    codeRef.current = starter;
     setResetCount((n) => n + 1);
     setResult(null);
     setError(null);
-  }, [exerciseId, language, starterCode]);
+  }, [exerciseId, language, starter]);
 
   return (
     <section className="flex flex-col gap-4">
       {!compact && (
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold">Your solution</h2>
-          <span className="text-xs text-foreground-muted">{language}</span>
+          {available.length > 1 ? (
+            <div className="flex gap-2">
+              {available.map((l) => (
+                <Button
+                  key={l}
+                  tone={l === language ? 'strong' : 'surface'}
+                  aria-pressed={l === language}
+                  onClick={() => {
+                    // Drafts are keyed per language, so switching preserves
+                    // whatever was written in the language being left.
+                    setLanguage(l);
+                    setResult(null);
+                    setError(null);
+                    setResetCount((n) => n + 1);
+                  }}
+                >
+                  {l}
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <span className="text-xs text-foreground-muted">{language}</span>
+          )}
         </div>
       )}
 
       {/* Remounting on reset restores the starter code and clears undo history,
           which is what "reset" should mean. */}
       <Editor
-        key={resetCount}
+        key={`${language}-${resetCount}`}
         value={initialDoc}
         docRef={codeRef}
         onChange={handleChange}

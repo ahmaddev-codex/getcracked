@@ -1,7 +1,8 @@
 import { runJavaScript } from '@/lib/runtime/javascript';
-import type { RunResult } from '@/lib/runtime/javascript';
+import { runPython } from '@/lib/runtime/python';
+import type { RunOptions, RunResult } from '@/lib/runtime/javascript';
 import { measureRun, type RuntimeMetrics } from '@/lib/runtime/measure';
-import type { Language, TestSpec } from './schema';
+import { entryFor, type Language, type TestSpec } from './schema';
 
 /**
  * Runs a declarative test spec against learner code (AD-3).
@@ -59,6 +60,26 @@ function describeCase(index: number, args: unknown[], name?: string): string {
   return name ?? `case ${index + 1}: (${args.map((a) => JSON.stringify(a)).join(', ')})`;
 }
 
+/**
+ * The language registry — the whole of AD-2's extensibility claim.
+ *
+ * Adding a language is one entry here plus an adapter satisfying
+ * `LanguageRuntime`. Nothing else in the spec runner, the worker, the editor,
+ * or the results UI knows how many languages exist, which is what keeps Java's
+ * eventual return an adapter rather than a rewrite.
+ */
+export type LanguageRuntime = (opts: RunOptions) => Promise<RunResult>;
+
+const RUNTIMES: Partial<Record<Language, LanguageRuntime>> = {
+  javascript: runJavaScript,
+  python: runPython,
+};
+
+/** Languages with a working adapter, for the editor's switcher. */
+export function supportedLanguages(): Language[] {
+  return (Object.keys(RUNTIMES) as Language[]).filter((l) => RUNTIMES[l]);
+}
+
 export interface RunSpecOptions {
   spec: TestSpec;
   source: string;
@@ -72,21 +93,21 @@ export interface RunSpecOptions {
 export async function runTestSpec(opts: RunSpecOptions): Promise<SpecResult> {
   const { spec, source, language, trace = false, timeoutMs, measure = false } = opts;
 
-  if (language !== 'javascript') {
-    // Python's adapter exists (T0.2) but content is JavaScript-only for the
-    // Phase 1 slice; T2.6 wires the second language through here.
-    throw new Error(`Language not yet wired into the spec runner: ${language}`);
+  const run = RUNTIMES[language];
+  if (!run) {
+    throw new Error(`No runtime adapter registered for language: ${language}`);
   }
 
+  const entry = entryFor(spec, language);
   const cases: CaseResult[] = [];
   let timedOut = false;
   let traceEvents: RunResult['events'] = [];
   let traceDegraded = false;
 
   for (const [i, testCase] of spec.cases.entries()) {
-    const result = await runJavaScript({
+    const result = await run({
       source,
-      entry: spec.entry,
+      entry,
       args: testCase.args,
       // Only the first case is traced: a trace is for watching one execution,
       // and tracing every case would multiply payload for no added insight.
@@ -133,13 +154,16 @@ export async function runTestSpec(opts: RunSpecOptions): Promise<SpecResult> {
    * code reports the cost of the wrong algorithm.
    */
   let metrics: RuntimeMetrics | null = null;
-  if (measure && passed && !timedOut) {
+  // Measurement instruments JavaScript source specifically (measure.ts), so it
+  // is skipped for other languages rather than reporting figures it cannot
+  // actually produce.
+  if (measure && passed && !timedOut && language === 'javascript') {
     const largest = [...spec.cases].sort(
       (a, b) => JSON.stringify(b.args).length - JSON.stringify(a.args).length,
     )[0];
     metrics = await measureRun({
       source,
-      entry: spec.entry,
+      entry,
       args: largest.args,
       timeoutMs,
     });

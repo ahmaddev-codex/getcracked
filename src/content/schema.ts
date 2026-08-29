@@ -48,9 +48,22 @@ export type TestCase = z.infer<typeof testCaseSchema>;
 export const testSpecSchema = z.object({
   /** Function the learner must implement. */
   entry: z.string().min(1),
+  /**
+   * Per-language overrides for the entry name.
+   *
+   * Idiomatic naming differs — `twoSum` in JavaScript is `two_sum` in Python —
+   * and forcing one convention on every language would teach learners to write
+   * code that looks wrong in the language they are writing it in.
+   */
+  entryByLanguage: z.partialRecord(languageSchema, z.string().min(1)).optional(),
   cases: z.array(testCaseSchema).min(1, 'A test spec needs at least one case'),
 });
 export type TestSpec = z.infer<typeof testSpecSchema>;
+
+/** The function name to call for a given language. */
+export function entryFor(spec: TestSpec, language: Language): string {
+  return spec.entryByLanguage?.[language] ?? spec.entry;
+}
 
 /**
  * The single runnable unit underlying all three tiers (AD-7).

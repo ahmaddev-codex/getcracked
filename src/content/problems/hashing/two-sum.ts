@@ -36,6 +36,9 @@ The obvious approach compares every pair, which is O(n²). There is an O(n) way.
   // TODO: return the indices of the two numbers adding up to target.
   return [];
 }`,
+    python: `def two_sum(nums, target):
+    # TODO: return the indices of the two numbers adding up to target.
+    return []`,
   },
 
   referenceSolution: {
@@ -50,6 +53,14 @@ The obvious approach compares every pair, which is O(n²). There is an O(n) way.
   }
   return [];
 }`,
+    python: `def two_sum(nums, target):
+    seen = {}
+    for i in range(len(nums)):
+        complement = target - nums[i]
+        if complement in seen:
+            return [seen[complement], i]
+        seen[nums[i]] = i
+    return []`,
   },
 
   complexity: {
@@ -60,6 +71,7 @@ The obvious approach compares every pair, which is O(n²). There is an O(n) way.
 
   testSpec: {
     entry: 'twoSum',
+    entryByLanguage: { python: 'two_sum' },
     cases: [
       { name: 'pair at the start', args: [[2, 7, 11, 15], 9], expected: [0, 1] },
       { name: 'pair in the middle', args: [[3, 2, 4], 6], expected: [1, 2] },

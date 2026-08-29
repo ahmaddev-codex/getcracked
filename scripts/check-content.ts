@@ -1,5 +1,10 @@
 import { RAW_LESSONS, RAW_PROBLEMS } from '../src/content/registry';
-import { contentSchema, exerciseId, type RunnableExercise } from '../src/content/schema';
+import {
+  contentSchema,
+  exerciseId,
+  LANGUAGES,
+  type RunnableExercise,
+} from '../src/content/schema';
 import { runTestSpec } from '../src/content/test-runner';
 
 /**
@@ -45,44 +50,43 @@ function describe(content: unknown): string {
  * comprehension check that might teach the wrong thing.
  */
 async function checkExercise(id: string, exercise: RunnableExercise) {
-  const reference = exercise.referenceSolution.javascript;
-  const starter = exercise.starterCode.javascript;
+  // Every language the exercise declares is verified, not just the first.
+  // A Python reference nobody ran is a solution that may not solve it.
+  const languages = LANGUAGES.filter((l) => exercise.referenceSolution[l]);
 
-  if (!reference) {
-    fail(id, 'No JavaScript reference solution. Phase 1 content is JavaScript-only.');
-    return;
-  }
-  if (!starter) {
-    fail(id, 'No JavaScript starter code.');
+  if (!languages.includes('javascript')) {
+    fail(id, 'No JavaScript reference solution. JavaScript is the baseline language.');
     return;
   }
 
-  const ref = await runTestSpec({
-    spec: exercise.testSpec,
-    source: reference,
-    language: 'javascript',
-  });
-  if (!ref.passed) {
-    const failed = ref.cases.filter((c) => !c.passed);
-    fail(
-      id,
-      `Reference solution fails its own spec (${failed.length}/${ref.cases.length} cases). ` +
-        `First failure — ${failed[0]?.name}: expected ${JSON.stringify(failed[0]?.expected)}, ` +
-        `got ${JSON.stringify(failed[0]?.actual)}${failed[0]?.error ? ` (${failed[0].error})` : ''}`,
-    );
-  }
+  for (const language of languages) {
+    const reference = exercise.referenceSolution[language];
+    const starter = exercise.starterCode[language];
 
-  const stub = await runTestSpec({
-    spec: exercise.testSpec,
-    source: starter,
-    language: 'javascript',
-  });
-  if (stub.passed) {
-    fail(
-      id,
-      'Starter code passes the spec — the exercise tests nothing. Add a case the ' +
-        'stub cannot satisfy.',
-    );
+    if (!starter) {
+      fail(id, `[${language}] has a reference solution but no starter code.`);
+      continue;
+    }
+
+    const ref = await runTestSpec({ spec: exercise.testSpec, source: reference!, language });
+    if (!ref.passed) {
+      const failed = ref.cases.filter((c) => !c.passed);
+      fail(
+        id,
+        `[${language}] reference fails its own spec (${failed.length}/${ref.cases.length} cases). ` +
+          `First failure — ${failed[0]?.name}: expected ${JSON.stringify(failed[0]?.expected)}, ` +
+          `got ${JSON.stringify(failed[0]?.actual)}${failed[0]?.error ? ` (${failed[0].error})` : ''}`,
+      );
+    }
+
+    const stub = await runTestSpec({ spec: exercise.testSpec, source: starter, language });
+    if (stub.passed) {
+      fail(
+        id,
+        `[${language}] starter code passes the spec — the exercise tests nothing. ` +
+          'Add a case the stub cannot satisfy.',
+      );
+    }
   }
 }
 

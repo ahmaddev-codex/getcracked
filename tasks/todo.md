@@ -64,7 +64,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 - [x] **T2.5** — `/learn` hub + concept map at `/learn/system-design` with deep-linkable anchors and 308 redirect (A14) · *M* · deps: T1.1, T0.4 — ⚠️ **58 of the PRD's 129 concepts authored**; remainder is content backlog
 
 **Track C — second language and animation** *(risk-critical)*
-- [ ] **T2.6** — Second launch language behind the adapter + stub third-language conformance (H1, A6) · *M* · deps: T1.3
+- [x] **T2.6** — Python wired behind the adapter registry, per-language entry names, editor language switcher, stub third-language conformance (H1, A6) · *M* · deps: T1.3
 - [ ] **T2.7** — 🔥 Versioned, language-agnostic trace event protocol (B1 core) · *L* · deps: T2.6
 - [ ] **T2.8** — First renderer (arrays) + playback; also drives lesson walkthroughs (B2, B3, B10b) · *L* · deps: T2.7, T2.1
 
