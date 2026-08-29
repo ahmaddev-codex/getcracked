@@ -9,11 +9,6 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  /* Reference (roadmap.sh) ships no custom web font: no @font-face, no Google
-     Fonts, no font files — only KaTeX math faces for LaTeX in markdown. It
-     renders in the OS system UI font. We match that deliberately: system stacks
-     only, so text looks native per platform and costs zero network requests.
-     Verified against roadmap.sh's six stylesheets on 2026-08-29. */
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
