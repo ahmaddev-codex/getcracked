@@ -166,3 +166,65 @@ describe('cross-language equivalence through the protocol', () => {
     TIMEOUT,
   );
 });
+
+/**
+ * The change information the visualizer narrates.
+ *
+ * Reconstructed during replay rather than sent on the wire, so these cost
+ * nothing in payload — which is the whole reason `toProtocol` diffs in the first
+ * place. Tested here because a renderer that highlights the wrong thing is worse
+ * than one that highlights nothing.
+ */
+describe('what changed at a step', () => {
+  const trace = toProtocol([
+    { kind: 'line', line: 1, vars: { xs: [3, 1, 2], i: 0, n: 3 } },
+    { kind: 'array_read', array: 'xs', index: 0, value: 3 },
+    { kind: 'line', line: 2, vars: { i: 1 } },
+    { kind: 'array_write', array: 'xs', index: 1, value: 9 },
+    { kind: 'return', value: 9 },
+  ]);
+
+  it('carries the value a write replaced', () => {
+    const state = stateAtStep(trace, 3);
+    expect(state.lastWrite).toMatchObject({ array: 'xs', index: 1, value: 9, previous: 1 });
+  });
+
+  it('takes the previous value from the array as it stood, not the initial one', () => {
+    // Two writes to the same index: the second must report the first's value,
+    // not the value the array started with.
+    const twice = toProtocol([
+      { kind: 'line', line: 1, vars: { xs: [0], i: 0 } },
+      { kind: 'array_write', array: 'xs', index: 0, value: 5 },
+      { kind: 'array_write', array: 'xs', index: 0, value: 7 },
+    ]);
+    expect(stateAtStep(twice, 2).lastWrite).toMatchObject({ previous: 5, value: 7 });
+  });
+
+  it('reports changes for the step asked for, not everything so far', () => {
+    expect([...stateAtStep(trace, 0).changed].sort()).toEqual(['i', 'n']);
+    // Step 2 changed only `i`; `n` was set back at step 0 and has not moved.
+    expect([...stateAtStep(trace, 2).changed]).toEqual(['i']);
+  });
+
+  it('reports no change on a step that is not a line event', () => {
+    expect(stateAtStep(trace, 1).changed.size).toBe(0);
+  });
+
+  it('remembers what each changed variable was before', () => {
+    expect(stateAtStep(trace, 2).previousValues.get('i')).toBe(0);
+  });
+
+  it('marks the run finished only once it has returned', () => {
+    expect(stateAtStep(trace, 3).finished).toBe(false);
+    const done = stateAtStep(trace, 4);
+    expect(done.finished).toBe(true);
+    expect(done.returned).toBe(9);
+  });
+
+  it('scrubbing backwards reports that step, not the furthest reached', () => {
+    // The player replays from the start on every seek precisely so this holds.
+    stateAtStep(trace, 4);
+    expect(stateAtStep(trace, 2).finished).toBe(false);
+    expect([...stateAtStep(trace, 2).changed]).toEqual(['i']);
+  });
+});

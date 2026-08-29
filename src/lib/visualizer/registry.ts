@@ -1,4 +1,4 @@
-import type { Trace } from '@/lib/trace/protocol';
+import type { Trace, TraceState } from '@/lib/trace/protocol';
 
 /**
  * Renderer registry (B2).
@@ -14,14 +14,14 @@ import type { Trace } from '@/lib/trace/protocol';
  * the frame loop mutates the DOM directly and never touches React state.
  */
 
-export interface RenderState {
-  /** Source line currently executing, if the trace carries line events. */
-  line: number | null;
-  variables: Map<string, string | number | boolean | null>;
-  arrays: Map<string, unknown[]>;
-  lastRead: { array: string; index: number } | null;
-  lastWrite: { array: string; index: number } | null;
-}
+/**
+ * What renderers draw, which is exactly what the trace can reconstruct.
+ *
+ * Aliased to `TraceState` rather than restated so the two cannot drift: a
+ * renderer written against a field the protocol stops producing should fail to
+ * compile, not silently draw nothing.
+ */
+export type RenderState = TraceState;
 
 export interface Renderer {
   /** Builds the initial DOM inside `host`. Called once per mount. */

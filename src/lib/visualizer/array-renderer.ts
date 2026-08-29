@@ -1,5 +1,6 @@
 import type { Trace } from '@/lib/trace/protocol';
 import type { RenderState, Renderer } from './registry';
+import type { Scalar } from '@/lib/trace/protocol';
 
 /**
  * Array renderer (B2) — the first structure type, and the pattern the rest
@@ -36,12 +37,16 @@ const MIN_CELL = 4;
 const GAP = 2;
 const PLOT_HEIGHT = 120;
 const LABEL_BAND = 30;
+/** Headroom above the bars for the "was N" annotation on a write. */
+const WAS_BAND = 14;
 
 interface Cell {
   group: SVGGElement;
   rect: SVGRectElement;
   value: SVGTextElement | null;
   index: SVGTextElement | null;
+  /** "was N" above a cell that just changed. Empty except on a write. */
+  was: SVGTextElement | null;
 }
 
 /** Bars stay readable when few, and stay on screen when many. */
@@ -93,11 +98,11 @@ export function createArrayRenderer(): Renderer {
         `Array ${arrayName}, ${values.length} elements, drawn as bars whose height is the value. A text description of each step follows.`,
       );
       svg.setAttribute('width', String(values.length * (width + GAP)));
-      svg.setAttribute('height', String(PLOT_HEIGHT + LABEL_BAND));
+      svg.setAttribute('height', String(WAS_BAND + PLOT_HEIGHT + LABEL_BAND));
 
       values.forEach((value, index) => {
         const group = el('g');
-        group.setAttribute('transform', `translate(${index * (width + GAP)}, 0)`);
+        group.setAttribute('transform', `translate(${index * (width + GAP)}, ${WAS_BAND})`);
 
         const rect = el('rect');
         rect.setAttribute('width', String(width));
@@ -111,6 +116,7 @@ export function createArrayRenderer(): Renderer {
 
         let valueText: SVGTextElement | null = null;
         let indexText: SVGTextElement | null = null;
+        let wasText: SVGTextElement | null = null;
 
         if (showLabels) {
           valueText = el('text');
@@ -130,11 +136,19 @@ export function createArrayRenderer(): Renderer {
           indexText.setAttribute('fill', 'var(--foreground-muted)');
           indexText.textContent = String(index);
 
-          group.append(valueText, indexText);
+          wasText = el('text');
+          wasText.setAttribute('x', String(width / 2));
+          wasText.setAttribute('y', '-4');
+          wasText.setAttribute('text-anchor', 'middle');
+          wasText.setAttribute('font-size', '9');
+          wasText.setAttribute('font-family', 'var(--font-mono)');
+          wasText.setAttribute('fill', 'var(--foreground-muted)');
+
+          group.append(valueText, indexText, wasText);
         }
 
         svg!.append(group);
-        cells.push({ group, rect, value: valueText, index: indexText });
+        cells.push({ group, rect, value: valueText, index: indexText, was: wasText });
       });
 
       container.append(svg);
@@ -158,9 +172,14 @@ export function createArrayRenderer(): Renderer {
         }
       }
 
+      const write = state.lastWrite?.array === arrayName ? state.lastWrite : null;
+      // A write whose value is unchanged is not worth annotating — `a[i] = a[i]`
+      // happens in plenty of correct code and reads as noise.
+      const realChange = write && !Object.is(write.previous, write.value);
+
       cells.forEach((cell, index) => {
         const isRead = state.lastRead?.array === arrayName && state.lastRead.index === index;
-        const isWrite = state.lastWrite?.array === arrayName && state.lastWrite.index === index;
+        const isWrite = write?.index === index;
         const marked = pointers.get(index);
 
         cell.rect.setAttribute(
@@ -183,7 +202,21 @@ export function createArrayRenderer(): Renderer {
           // Guarded: writing textContent unconditionally invalidates layout for
           // every cell every frame, which is the difference between 60fps and not.
           if (cell.value.textContent !== next) cell.value.textContent = next;
+          cell.value.setAttribute(
+            'fill',
+            isWrite ? 'var(--accent-foreground)' : 'var(--foreground)',
+          );
+          cell.value.setAttribute('font-weight', isWrite ? '700' : '400');
         }
+
+        // "was 9" above the cell that just changed, so the learner can see the
+        // value it replaced rather than having to remember it.
+        if (cell.was) {
+          const label =
+            isWrite && realChange ? `was ${String(write.previous)}` : '';
+          if (cell.was.textContent !== label) cell.was.textContent = label;
+        }
+
         if (cell.index) {
           const label = marked ? marked.join(',') : String(index);
           if (cell.index.textContent !== label) cell.index.textContent = label;
@@ -204,26 +237,63 @@ export function createArrayRenderer(): Renderer {
 }
 
 /**
- * A screen-reader-equivalent description of one step (H4).
+ * A plain-language account of one step (H4).
  *
- * The animation is not the only way to follow the trace. Generated from the same
- * state the renderer draws, so the two cannot describe different things.
+ * Serves two audiences with one string, which is why it is generated from the
+ * same state the renderer draws rather than written separately: a screen-reader
+ * user gets an equivalent to the animation, and a sighted learner gets the
+ * sentence that says *what changed* — the thing colour alone cannot convey.
+ *
+ * Leads with the change (a write, then a read) because that is the answer to
+ * "what just happened". Variable values follow as context. Reports only what the
+ * trace recorded; it never characterises progress toward a solution, which the
+ * trace cannot know.
  */
 export function describeStep(state: RenderState, arrayName: string): string {
   const parts: string[] = [];
-  if (state.line !== null) parts.push(`Line ${state.line}`);
 
   const values = state.arrays.get(arrayName);
-  if (state.lastWrite?.array === arrayName && values) {
-    parts.push(`wrote ${String(values[state.lastWrite.index])} to index ${state.lastWrite.index}`);
-  } else if (state.lastRead?.array === arrayName && values) {
-    parts.push(`read index ${state.lastRead.index}, value ${String(values[state.lastRead.index])}`);
+  const write = state.lastWrite?.array === arrayName ? state.lastWrite : null;
+  const read = state.lastRead?.array === arrayName ? state.lastRead : null;
+
+  if (write && !Object.is(write.previous, write.value)) {
+    parts.push(
+      `${arrayName}[${write.index}] changed from ${format(write.previous)} to ${format(write.value)}`,
+    );
+  } else if (write) {
+    parts.push(`${arrayName}[${write.index}] was rewritten with the same value, ${format(write.value)}`);
+  } else if (read && values) {
+    parts.push(`read ${arrayName}[${read.index}], which is ${format(read.value)}`);
   }
 
-  const vars = [...state.variables]
-    .filter(([, v]) => v !== null)
-    .map(([k, v]) => `${k} is ${String(v)}`);
-  if (vars.length > 0) parts.push(vars.join(', '));
+  // Variables that moved on this step, with where they moved from — a loop
+  // counter going 3 → 4 is the clearest signal of what the code is doing.
+  const moved = [...state.changed]
+    .filter((name) => state.variables.get(name) !== undefined)
+    .map((name) => {
+      const now = state.variables.get(name) ?? null;
+      const before = state.previousValues.get(name) ?? null;
+      return before === null || Object.is(before, now)
+        ? `${name} is ${format(now)}`
+        : `${name} moved from ${format(before)} to ${format(now)}`;
+    });
+  if (moved.length > 0) parts.push(moved.join(', '));
 
-  return parts.join('. ') || 'No state yet.';
+  if (state.finished) {
+    parts.push(`returned ${format(state.returned as Scalar)}`);
+  }
+
+  if (parts.length === 0 && state.line !== null) return `Line ${state.line}: no change recorded.`;
+  if (parts.length === 0) return 'No state yet.';
+
+  const prefix = state.line !== null ? `Line ${state.line}: ` : '';
+  return `${prefix}${parts.join('. ')}.`;
+}
+
+/** Renders a traced value the way a learner would write it. */
+function format(value: Scalar | unknown): string {
+  if (value === null) return 'null';
+  if (typeof value === 'string') return `"${value}"`;
+  if (Array.isArray(value)) return `[${value.map(format).join(', ')}]`;
+  return String(value);
 }

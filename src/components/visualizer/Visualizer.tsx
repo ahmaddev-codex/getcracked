@@ -1,13 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Node } from '@/components/ui/Node';
-import { stateAtStep, type Trace } from '@/lib/trace/protocol';
+import { stateAtStep, type Scalar, type Trace } from '@/lib/trace/protocol';
 import { createArrayRenderer } from '@/lib/visualizer/array-renderer';
 import { describeStep } from '@/lib/visualizer/array-renderer';
 import { registerRenderer, selectRenderer } from '@/lib/visualizer/registry';
 import { CodePanel } from './CodePanel';
+import type { Language } from '@/content/schema';
 
 registerRenderer('array', createArrayRenderer);
 
@@ -48,24 +49,66 @@ function Legend() {
   );
 }
 
-/** The variables the trace can account for at this step. */
-function Inspector({ variables }: { variables: Map<string, string | number | boolean | null> }) {
+/**
+ * The variables the trace can account for at this step.
+ *
+ * A variable that changed on this step is highlighted and shown as `before → now`.
+ * Without that, the panel is a list of numbers that silently mutate and the
+ * learner has to diff two frames in their head to see which one moved.
+ */
+function Inspector({
+  variables,
+  changed,
+  previousValues,
+}: {
+  variables: Map<string, Scalar>;
+  changed: Set<string>;
+  previousValues: Map<string, Scalar>;
+}) {
   const entries = [...variables].filter(([, v]) => v !== null);
   if (entries.length === 0) return null;
 
   return (
     <dl className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs">
-      {entries.map(([name, value]) => (
-        <div key={name} className="flex gap-1">
-          <dt className="text-foreground-muted">{name}</dt>
-          <dd>{String(value)}</dd>
-        </div>
-      ))}
+      {entries.map(([name, value]) => {
+        const justChanged = changed.has(name);
+        const before = previousValues.get(name);
+        const showFrom = justChanged && before !== undefined && before !== null && !Object.is(before, value);
+
+        return (
+          <div
+            key={name}
+            className={`flex gap-1 rounded-xs px-1 ${
+              justChanged ? 'bg-accent text-accent-foreground' : ''
+            }`}
+          >
+            <dt className={justChanged ? 'opacity-70' : 'text-foreground-muted'}>{name}</dt>
+            {showFrom && (
+              <dd className="opacity-70 line-through">{String(before)}</dd>
+            )}
+            <dd className={justChanged ? 'font-semibold' : ''}>{String(value)}</dd>
+          </div>
+        );
+      })}
     </dl>
   );
 }
 
-export function Visualizer({ trace, source }: { trace: Trace; source?: string }) {
+export function Visualizer({
+  trace,
+  source,
+  language = 'javascript',
+  title,
+  toolbar,
+}: {
+  trace: Trace;
+  source?: string;
+  language?: Language;
+  /** What this run is solving, stated rather than left to be inferred. */
+  title?: string;
+  /** Caller-supplied controls (e.g. a language switcher) shown in the header. */
+  toolbar?: ReactNode;
+}) {
   const hostRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<ReturnType<typeof selectRenderer>>(null);
   const stepRef = useRef(0);
@@ -77,9 +120,10 @@ export function Visualizer({ trace, source }: { trace: Trace; source?: string })
   const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(1);
   const [description, setDescription] = useState('');
   const [currentLine, setCurrentLine] = useState<number | null>(null);
-  const [variables, setVariables] = useState<
-    Map<string, string | number | boolean | null>
-  >(new Map());
+  const [variables, setVariables] = useState<Map<string, Scalar>>(new Map());
+  const [changed, setChanged] = useState<Set<string>>(new Set());
+  const [previousValues, setPreviousValues] = useState<Map<string, Scalar>>(new Map());
+  const [returned, setReturned] = useState<{ value: unknown } | null>(null);
   const [drawable, setDrawable] = useState(true);
 
   const total = trace.events.length;
@@ -99,6 +143,9 @@ export function Visualizer({ trace, source }: { trace: Trace; source?: string })
       // canvas. Only these two cheap values cross the boundary per step.
       setCurrentLine(state.line);
       setVariables(state.variables);
+      setChanged(state.changed);
+      setPreviousValues(state.previousValues);
+      setReturned(state.finished ? { value: state.returned } : null);
     },
     [trace, total, arrayName],
   );
@@ -169,10 +216,20 @@ export function Visualizer({ trace, source }: { trace: Trace; source?: string })
   return (
     <section className="flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="text-sm font-semibold">Watch it run</h2>
-        <span className="font-mono text-xs text-foreground-muted">
-          step {step + 1} / {total}
-        </span>
+        <div className="flex flex-col gap-0.5">
+          <h2 className="text-sm font-semibold">{title ?? 'Watch it run'}</h2>
+          {title && (
+            <p className="text-xs text-foreground-muted">
+              Stepping through the {language} solution one operation at a time.
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {toolbar}
+          <span className="font-mono text-xs text-foreground-muted">
+            step {step + 1} / {total}
+          </span>
+        </div>
       </div>
 
       {trace.degraded && (
@@ -182,7 +239,7 @@ export function Visualizer({ trace, source }: { trace: Trace; source?: string })
       )}
 
       <div className={source ? 'grid gap-3 lg:grid-cols-2' : ''}>
-        {source && <CodePanel source={source} line={currentLine} />}
+        {source && <CodePanel source={source} line={currentLine} language={language} />}
 
         <Node tone="surface" className="flex flex-col gap-3 overflow-x-auto p-4">
           <div ref={hostRef} />
@@ -195,7 +252,11 @@ export function Visualizer({ trace, source }: { trace: Trace; source?: string })
             </p>
           )}
           {drawable && <Legend />}
-          <Inspector variables={variables} />
+          <Inspector
+            variables={variables}
+            changed={changed}
+            previousValues={previousValues}
+          />
         </Node>
       </div>
 
@@ -210,6 +271,16 @@ export function Visualizer({ trace, source }: { trace: Trace; source?: string })
           disabled={step >= total - 1}
         >
           Step →
+        </Button>
+        <Button
+          tone="surface"
+          onClick={() => {
+            setPlaying(false);
+            draw(0);
+          }}
+          disabled={step === 0 && !playing}
+        >
+          ↺ Start over
         </Button>
         <Button tone="surface" onClick={jumpToDivergence}>
           Jump to end
@@ -247,6 +318,15 @@ export function Visualizer({ trace, source }: { trace: Trace; source?: string })
       <p aria-live="polite" className="font-mono text-xs text-foreground-muted">
         {description}
       </p>
+
+      {returned && (
+        <p className="font-mono text-xs">
+          <span className="text-foreground-muted">returned </span>
+          <span className="rounded-xs bg-accent px-1 text-accent-foreground">
+            {JSON.stringify(returned.value)}
+          </span>
+        </p>
+      )}
     </section>
   );
 }

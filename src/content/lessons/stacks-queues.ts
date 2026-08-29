@@ -11,8 +11,20 @@ export const stacksQueuesLesson: LessonInput = {
 
   walkthrough: {
     entry: "stackDepth",
+    entryByLanguage: { python: 'stack_depth' },
     source: {
       javascript: "function stackDepth(operations) {\n  const stack = [];\n  let deepest = 0;\n  for (let i = 0; i < operations.length; i++) {\n    if (operations[i] > 0) {\n      stack.push(i);\n      if (stack.length > deepest) {\n        deepest = stack.length;\n      }\n    } else {\n      stack.pop();\n    }\n  }\n  return deepest;\n}",
+      python: `def stack_depth(operations):
+    stack = []
+    deepest = 0
+    for i in range(len(operations)):
+        if operations[i] > 0:
+            stack.append(i)
+            if len(stack) > deepest:
+                deepest = len(stack)
+        else:
+            stack.pop()
+    return deepest`,
     },
     args: [[1, 1, -1, 1, 1, -1, -1, -1]],
     caption: "A stack is just an array with a top. +1 pushes, -1 pops \u2014 watch the depth rise and fall.",

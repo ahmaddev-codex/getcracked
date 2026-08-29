@@ -11,8 +11,15 @@ export const arraysLesson: LessonInput = {
 
   walkthrough: {
     entry: "runningSum",
+    entryByLanguage: { python: 'running_sum' },
     source: {
       javascript: "function runningSum(nums) {\n  let total = 0;\n  for (let i = 0; i < nums.length; i++) {\n    total = total + nums[i];\n    nums[i] = total;\n  }\n  return nums;\n}",
+      python: `def running_sum(nums):
+    total = 0
+    for i in range(len(nums)):
+        total = total + nums[i]
+        nums[i] = total
+    return nums`,
     },
     args: [[3, 1, 4, 1, 5]],
     caption: "A single pass carrying a running total \u2014 watch the write follow the read one step behind.",

@@ -31,8 +31,19 @@ complexity" are usually discussed together.`,
 
   walkthrough: {
     entry: "countValues",
+    entryByLanguage: { python: 'count_values' },
     source: {
       javascript: "function countValues(nums) {\n  const counts = {};\n  let distinct = 0;\n  for (let i = 0; i < nums.length; i++) {\n    const value = nums[i];\n    if (counts[value] === undefined) {\n      counts[value] = 0;\n      distinct = distinct + 1;\n    }\n    counts[value] = counts[value] + 1;\n  }\n  return distinct;\n}",
+      python: `def count_values(nums):
+    counts = {}
+    distinct = 0
+    for i in range(len(nums)):
+        value = nums[i]
+        if value not in counts:
+            counts[value] = 0
+            distinct = distinct + 1
+        counts[value] = counts[value] + 1
+    return distinct`,
     },
     args: [[2, 7, 2, 5, 7, 2]],
     caption: "One pass over the array, building a count for each value. Watch how every element is read exactly once.",

@@ -245,3 +245,53 @@ describe('worker that dies at module evaluation', () => {
     expect(created).toBe(1);
   }, 60_000);
 });
+
+/**
+ * Python in a worker that cannot run it.
+ *
+ * Pyodide 314 refuses to load in a classic worker, which is what Turbopack
+ * emits in development. The worker says so rather than attempting a
+ * multi-megabyte download that is guaranteed to fail, and the client re-runs on
+ * the main thread — keeping the worker, because JavaScript still runs there.
+ */
+describe('language the worker cannot run', () => {
+  it('re-runs on the main thread instead of failing', async () => {
+    const worker = new FakeWorker();
+    const client = new RuntimeClient(() => worker);
+
+    const promise = client.run({
+      spec: { entry: 'identity', cases: [{ args: [1], expected: 1, hidden: false }] },
+      source: 'def identity(x):\n    return x',
+      language: 'python',
+    });
+
+    await Promise.resolve();
+    expect(worker.posted[0].language).toBe('python');
+    worker.reply({
+      id: '0',
+      ok: false,
+      unsupported: true,
+      error: 'Python cannot run in this worker.',
+    });
+
+    const result = await promise;
+    expect(result.cases[0].passed).toBe(true);
+  }, 120_000);
+
+  it('keeps the worker, because it can still run other languages', async () => {
+    const worker = new FakeWorker();
+    const client = new RuntimeClient(() => worker);
+
+    const promise = client.run({
+      spec: { entry: 'identity', cases: [{ args: [1], expected: 1, hidden: false }] },
+      source: 'def identity(x):\n    return x',
+      language: 'python',
+    });
+    await Promise.resolve();
+    worker.reply({ id: '0', ok: false, unsupported: true, error: 'no' });
+    await promise;
+
+    // A worker that declines Python is healthy, unlike one that crashed.
+    expect(client.usingWorker).toBe(true);
+  }, 120_000);
+});

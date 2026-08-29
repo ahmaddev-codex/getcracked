@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import { runTestSpec } from '@/content/test-runner';
+import { pythonRuntimeAvailable } from './python';
 import type { RunRequest, RunResponse } from './protocol';
 
 /**
@@ -15,6 +16,20 @@ self.onmessage = async (event: MessageEvent<RunRequest>) => {
   const { id, spec, source, language, trace, timeoutMs, measure } = event.data;
 
   try {
+    // Pyodide will not load in a classic worker, which is what Turbopack emits
+    // in development. Saying so immediately lets the client re-run on the main
+    // thread; attempting it here would fail after a multi-megabyte download.
+    if (language === 'python' && !pythonRuntimeAvailable()) {
+      const response: RunResponse = {
+        id,
+        ok: false,
+        unsupported: true,
+        error: 'Python cannot run in this worker.',
+      };
+      self.postMessage(response);
+      return;
+    }
+
     const result = await runTestSpec({ spec, source, language, trace, timeoutMs, measure });
     const response: RunResponse = { id, ok: true, result };
     self.postMessage(response);

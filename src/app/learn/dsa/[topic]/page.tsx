@@ -59,12 +59,14 @@ export default async function LessonPage(props: LessonRouteProps) {
 
       {/* (b) The trace-driven walkthrough (B10b), filled by T2.8. */}
       <LessonSection title="Walkthrough">
-        {lesson.walkthrough?.source.javascript ? (
+        {lesson.walkthrough ? (
           <Walkthrough
             entry={lesson.walkthrough.entry}
-            source={lesson.walkthrough.source.javascript}
+            entryByLanguage={lesson.walkthrough.entryByLanguage}
+            sourceByLanguage={lesson.walkthrough.source}
             args={lesson.walkthrough.args}
             caption={lesson.walkthrough.caption}
+            title={lesson.title}
           />
         ) : (
           <Node tone="muted" className="p-4 text-sm text-foreground-muted">

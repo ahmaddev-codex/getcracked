@@ -216,6 +216,7 @@ export function Workspace({
         docRef={codeRef}
         onChange={handleChange}
         onRun={run}
+        language={language}
       />
 
       <div className="flex flex-wrap items-center gap-3">
@@ -239,7 +240,11 @@ export function Workspace({
       <TestCases spec={spec} result={result} />
 
       {!compact && result?.trace && (
-        <Visualizer trace={result.trace} source={ranSource ?? undefined} />
+        <Visualizer
+          trace={result.trace}
+          source={ranSource ?? undefined}
+          language={language}
+        />
       )}
 
       {!compact && (

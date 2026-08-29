@@ -11,11 +11,44 @@ export const graphsLesson: LessonInput = {
 
   walkthrough: {
     entry: "bfsOrder",
+    entryByLanguage: { python: 'bfs_order' },
     source: {
-      javascript: "function bfsOrder(cells) {\n  const visited = [];\n  for (let i = 0; i < cells.length; i++) {\n    visited.push(0);\n  }\n  const queue = [0];\n  let reached = 0;\n  while (queue.length > 0) {\n    const node = queue.shift();\n    if (node < 0 || node >= cells.length) {\n      continue;\n    }\n    if (visited[node] === 1 || cells[node] === 0) {\n      continue;\n    }\n    visited[node] = 1;\n    reached = reached + 1;\n    queue.push(node - 1);\n    queue.push(node + 1);\n  }\n  return reached;\n}",
+      javascript: `function bfsOrder(cells) {
+  const queue = [0];
+  let reached = 0;
+  while (queue.length > 0) {
+    const node = queue.shift();
+    if (node < 0 || node >= cells.length) {
+      continue;
+    }
+    if (cells[node] !== 1) {
+      continue;
+    }
+    cells[node] = 2;
+    reached = reached + 1;
+    queue.push(node - 1);
+    queue.push(node + 1);
+  }
+  return reached;
+}`,
+      python: `def bfs_order(cells):
+    queue = [0]
+    reached = 0
+    while len(queue) > 0:
+        node = queue.pop(0)
+        if node < 0 or node >= len(cells):
+            continue
+        if cells[node] != 1:
+            continue
+        cells[node] = 2
+        reached = reached + 1
+        queue.append(node - 1)
+        queue.append(node + 1)
+    return reached`,
     },
-    args: [[0, 1, 1, 0, 1, 1, 0, 0]],
-    caption: "Breadth-first over a row of cells: 1 is passable, 0 is a wall. Watch the frontier expand outward rather than diving deep.",
+    args: [[1, 1, 1, 0, 1, 1, 0, 0]],
+    caption:
+      "Breadth-first over a row of cells: 1 is open, 0 is a wall. Each cell flips to 2 as it is reached, so the frontier is visible spreading outward until the wall stops it.",
   },
 
   complexity: {

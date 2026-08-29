@@ -11,8 +11,20 @@ export const slidingWindowLesson: LessonInput = {
 
   walkthrough: {
     entry: "maxSumWindow",
+    entryByLanguage: { python: 'max_sum_window' },
     source: {
       javascript: "function maxSumWindow(nums, k) {\n  let sum = 0;\n  for (let i = 0; i < k; i++) {\n    sum = sum + nums[i];\n  }\n  let best = sum;\n  for (let right = k; right < nums.length; right++) {\n    const left = right - k;\n    sum = sum + nums[right] - nums[left];\n    if (sum > best) {\n      best = sum;\n    }\n  }\n  return best;\n}",
+      python: `def max_sum_window(nums, k):
+    total = 0
+    for i in range(k):
+        total = total + nums[i]
+    best = total
+    for right in range(k, len(nums)):
+        left = right - k
+        total = total + nums[right] - nums[left]
+        if total > best:
+            best = total
+    return best`,
     },
     args: [[2, 1, 5, 1, 3, 2], 3],
     caption: "A fixed window of three sliding right. Each step reads one element entering and one leaving \u2014 never the whole window.",

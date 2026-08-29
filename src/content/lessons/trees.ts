@@ -11,8 +11,19 @@ export const treesLesson: LessonInput = {
 
   walkthrough: {
     entry: "treeDepth",
+    entryByLanguage: { python: 'tree_depth' },
     source: {
       javascript: "function treeDepth(tree) {\n  function go(index) {\n    if (index >= tree.length) {\n      return 0;\n    }\n    if (tree[index] === -1) {\n      return 0;\n    }\n    const left = go(2 * index + 1);\n    const right = go(2 * index + 2);\n    return 1 + Math.max(left, right);\n  }\n  return go(0);\n}",
+      python: `def tree_depth(tree):
+    def go(index):
+        if index >= len(tree):
+            return 0
+        if tree[index] == -1:
+            return 0
+        left = go(2 * index + 1)
+        right = go(2 * index + 2)
+        return 1 + max(left, right)
+    return go(0)`,
     },
     args: [[1, 2, 3, 4, 5, -1, 6]],
     caption: "A tree stored in an array: node i has children at 2i+1 and 2i+2. Watch the traversal walk down each branch and back.",

@@ -34,6 +34,16 @@ export interface RunOptions {
 const DEFAULT_TIMEOUT_MS = 5_000;
 /** Headroom over the sandbox deadline, so the hard kill is genuinely a backstop. */
 const TERMINATE_GRACE_MS = 2_000;
+/**
+ * Extra headroom for a first Python run.
+ *
+ * `timeoutMs` bounds execution *inside* the sandbox, but the hard kill on this
+ * side also covers loading the interpreter — and Pyodide is a multi-megabyte
+ * download on a cold cache. Without this allowance the backstop fires while
+ * CPython is still downloading and a correct solution reports a timeout, which
+ * is the most confusing failure the runtime could produce.
+ */
+const PYTHON_COLD_START_MS = 60_000;
 
 /** Minimal surface the client needs, so a test can substitute a fake. */
 export interface WorkerLike {
@@ -180,15 +190,28 @@ export class RuntimeClient {
         // Ignore replies to superseded runs rather than resolving the wrong one.
         if (data.id !== id) return;
         cleanup();
+
+        // The worker can run other languages fine, so it is kept: only this run
+        // moves to the main thread.
+        if (!data.ok && 'unsupported' in data && data.unsupported) {
+          this.runInThread(opts).then(resolve, reject);
+          return;
+        }
+
         if (data.ok) resolve(data.result);
         else reject(new Error(data.error));
       };
 
-      const killTimer = setTimeout(() => {
-        cleanup();
-        this.reset();
-        reject(new Error('TIMEOUT'));
-      }, timeoutMs + TERMINATE_GRACE_MS);
+      const killTimer = setTimeout(
+        () => {
+          cleanup();
+          this.reset();
+          reject(new Error('TIMEOUT'));
+        },
+        timeoutMs +
+          TERMINATE_GRACE_MS +
+          (opts.language === 'python' ? PYTHON_COLD_START_MS : 0),
+      );
 
       worker.addEventListener('message', onMessage);
       worker.addEventListener('error', onError);

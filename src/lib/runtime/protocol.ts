@@ -20,4 +20,13 @@ export interface RunRequest {
 
 export type RunResponse =
   | { id: string; ok: true; result: SpecResult }
+  /**
+   * The worker cannot run this language, but the main thread can.
+   *
+   * Distinct from `ok: false` because it is not a failure of the learner's code
+   * and not a broken worker: JavaScript still runs here perfectly well. The
+   * client retries on the main thread instead of surfacing an error or
+   * discarding a worker that is doing its job.
+   */
+  | { id: string; ok: false; unsupported: true; error: string }
   | { id: string; ok: false; error: string };

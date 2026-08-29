@@ -3,9 +3,11 @@ import {
   contentSchema,
   exerciseId,
   LANGUAGES,
+  type Language,
   type RunnableExercise,
 } from '../src/content/schema';
 import { runTestSpec } from '../src/content/test-runner';
+import { walkthroughSpec } from '../src/content/walkthrough';
 
 /**
  * Content validation gate (ADR 0001 §8, AD-3).
@@ -145,32 +147,90 @@ async function main() {
 
     // A walkthrough that produces no visual is a broken lesson, and nothing
     // else would catch it — the page renders, just empty.
+    //
+    // Every declared language is executed, not just JavaScript. The walkthrough
+    // now offers a language switcher, so a Python source that throws is a broken
+    // control on a shipped page rather than an unused field.
     if (lesson.walkthrough) {
-      const source = lesson.walkthrough.source.javascript;
-      if (!source) {
-        fail(id, 'walkthrough has no JavaScript source.');
-      } else {
+      const walkthrough = lesson.walkthrough;
+      const declared = (Object.keys(walkthrough.source) as Language[]).filter(
+        (l) => walkthrough.source[l],
+      );
+
+      if (declared.length === 0) {
+        fail(id, 'walkthrough declares no source in any language.');
+      }
+
+      for (const language of declared) {
+        const source = walkthrough.source[language]!;
+        const entry = walkthrough.entryByLanguage?.[language] ?? walkthrough.entry;
+        const where = `walkthrough (${language})`;
+
+        // The entry has to exist in the source, or the failure surfaces as an
+        // unhelpful runtime error rather than a naming mistake.
+        if (!source.includes(entry)) {
+          fail(id, `${where} never defines its entry \`${entry}\`.`);
+          continue;
+        }
+
         const run = await runTestSpec({
-          spec: {
-            entry: lesson.walkthrough.entry,
-            cases: [{ args: lesson.walkthrough.args, expected: null, hidden: false }],
-          },
+          // The same construction the lesson page uses, so this gate cannot
+          // pass a spec the page would never build.
+          spec: walkthroughSpec(walkthrough),
           source,
-          language: 'javascript',
+          language,
           trace: true,
         });
 
         if (run.timedOut) {
-          fail(id, 'walkthrough timed out — it must terminate to be animated.');
+          fail(id, `${where} timed out — it must terminate to be animated.`);
         } else if (run.cases[0]?.error) {
-          fail(id, `walkthrough threw: ${run.cases[0].error}`);
+          fail(id, `${where} threw: ${run.cases[0].error}`);
         } else if (!run.trace || run.trace.events.length === 0) {
-          fail(id, 'walkthrough produced no trace events — nothing to animate.');
+          fail(id, `${where} produced no trace events — nothing to animate.`);
         } else if (!run.trace.collections.some((c) => c.kind === 'array')) {
           fail(
             id,
-            'walkthrough traced no array, so the renderer has nothing to draw. ' +
+            `${where} traced no array, so the renderer has nothing to draw. ` +
               'Pass an array argument the code actually reads.',
+          );
+        } else {
+          // A handful of steps is not a walkthrough. This is a floor, not a
+          // guarantee: the BFS whose start cell was a wall still produced 20
+          // events while doing nothing, and no automatic check caught it —
+          // someone had to watch the animation. Treat a passing gate as "not
+          // obviously empty", not as "this teaches something".
+          const MIN_STEPS = 8;
+          if (run.trace.events.length < MIN_STEPS) {
+            fail(
+              id,
+              `${where} produced only ${run.trace.events.length} steps, which is ` +
+                'too short to show the pattern. Check the arguments actually ' +
+                'exercise the algorithm.',
+            );
+          }
+        }
+      }
+
+      // Both languages should compute the same thing. Divergence means the
+      // switcher shows two different algorithms wearing one caption.
+      if (declared.length > 1) {
+        const results = new Map<Language, string>();
+        for (const language of declared) {
+          const run = await runTestSpec({
+            spec: walkthroughSpec(walkthrough),
+            source: walkthrough.source[language]!,
+            language,
+          });
+          results.set(language, JSON.stringify(run.cases[0]?.actual ?? null));
+        }
+        const distinct = new Set(results.values());
+        if (distinct.size > 1) {
+          fail(
+            id,
+            'walkthrough languages disagree: ' +
+              [...results].map(([l, v]) => `${l} returned ${v}`).join(', ') +
+              '. They must implement the same algorithm.',
           );
         }
       }

@@ -151,6 +151,34 @@ export function toProtocol(raw: RawEvent[], options: { degraded?: boolean } = {}
 }
 
 /**
+ * What a renderer draws at one step.
+ *
+ * `lastWrite` carries the **previous** value as well as the new one, and
+ * `changed` names the variables that moved on this exact step. Both are
+ * reconstructed during the replay below rather than sent on the wire, so they
+ * cost nothing in payload — the whole point of the diffing in `toProtocol`.
+ *
+ * They exist because "index 3 turned yellow" does not teach anything. "index 3
+ * went from 9 to 5" does, and it is the difference between watching an animation
+ * and following an algorithm.
+ */
+export interface TraceState {
+  line: number | null;
+  variables: Map<string, Scalar>;
+  arrays: Map<string, unknown[]>;
+  lastRead: { array: string; index: number; value: Scalar } | null;
+  lastWrite: { array: string; index: number; value: Scalar; previous: Scalar } | null;
+  /** Variables whose value changed on this step, for highlighting. */
+  changed: Set<string>;
+  /** Value of each changed variable immediately before this step. */
+  previousValues: Map<string, Scalar>;
+  /** The value returned, once the trace has reached its return event. */
+  returned: unknown;
+  /** True once the run has returned by this step. */
+  finished: boolean;
+}
+
+/**
  * Rebuilds the state a renderer should draw at a given step.
  *
  * Replaying from the start is deliberate. Keeping a running mutable state and
@@ -158,8 +186,12 @@ export function toProtocol(raw: RawEvent[], options: { degraded?: boolean } = {}
  * gap there shows up as an animation that is subtly wrong only when scrubbed
  * backwards — the hardest kind of bug to notice. Traces are bounded by
  * `maxEvents`, so replay is cheap enough not to need the risk.
+ *
+ * The same reasoning covers `previous` on a write: the prior value is read out
+ * of the array being replayed, immediately before it is overwritten, so it is
+ * always the value that was actually there rather than a guess.
  */
-export function stateAtStep(trace: Trace, step: number) {
+export function stateAtStep(trace: Trace, step: number): TraceState {
   const variables = new Map<string, Scalar>();
   const arrays = new Map<string, unknown[]>();
 
@@ -168,30 +200,72 @@ export function stateAtStep(trace: Trace, step: number) {
   }
 
   let line: number | null = null;
-  let lastRead: { array: string; index: number } | null = null;
-  let lastWrite: { array: string; index: number } | null = null;
+  let lastRead: TraceState['lastRead'] = null;
+  let lastWrite: TraceState['lastWrite'] = null;
+  let changed = new Set<string>();
+  let previousValues = new Map<string, Scalar>();
+  let returned: unknown;
+  let finished = false;
 
-  for (const event of trace.events.slice(0, Math.max(0, step + 1))) {
+  const target = Math.max(0, step + 1);
+
+  trace.events.slice(0, target).forEach((event, index) => {
+    // Only the final step's changes are "what just happened"; earlier ones are
+    // history. Reset per event so scrubbing to a step reports that step alone.
+    const isCurrent = index === target - 1;
+    if (isCurrent) {
+      changed = new Set();
+      previousValues = new Map();
+    }
+
     switch (event.kind) {
       case 'line':
         line = event.line;
-        for (const [name, value] of Object.entries(event.changed)) variables.set(name, value);
+        for (const [name, value] of Object.entries(event.changed)) {
+          if (isCurrent) {
+            changed.add(name);
+            // `variables` still holds the pre-update value at this point.
+            previousValues.set(name, variables.get(name) ?? null);
+          }
+          variables.set(name, value);
+        }
         break;
+
       case 'array_read':
-        lastRead = { array: event.array, index: event.index };
+        lastRead = { array: event.array, index: event.index, value: event.value };
         break;
+
       case 'array_write': {
-        const target = arrays.get(event.array);
-        if (target) target[event.index] = event.value;
-        lastWrite = { array: event.array, index: event.index };
+        const array = arrays.get(event.array);
+        // Read the outgoing value before overwriting it — this is the only
+        // moment it is available.
+        const previous = (array?.[event.index] ?? null) as Scalar;
+        if (array) array[event.index] = event.value;
+        lastWrite = { array: event.array, index: event.index, value: event.value, previous };
         break;
       }
+
+      case 'return':
+        returned = event.value;
+        finished = true;
+        break;
+
       default:
         break;
     }
-  }
+  });
 
-  return { line, variables, arrays, lastRead, lastWrite };
+  return {
+    line,
+    variables,
+    arrays,
+    lastRead,
+    lastWrite,
+    changed,
+    previousValues,
+    returned,
+    finished,
+  };
 }
 
 /** Byte size of a trace on the wire, for measuring the payload reduction. */

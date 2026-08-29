@@ -11,8 +11,17 @@ export const recursionLesson: LessonInput = {
 
   walkthrough: {
     entry: "sumArray",
+    entryByLanguage: { python: 'sum_array' },
     source: {
       javascript: "function sumArray(nums) {\n  function go(index) {\n    if (index >= nums.length) {\n      return 0;\n    }\n    const here = nums[index];\n    const rest = go(index + 1);\n    return here + rest;\n  }\n  return go(0);\n}",
+      python: `def sum_array(nums):
+    def go(index):
+        if index >= len(nums):
+            return 0
+        here = nums[index]
+        rest = go(index + 1)
+        return here + rest
+    return go(0)`,
     },
     args: [[4, 8, 15, 16, 23]],
     caption: "Recursion unwinding: each call reads one element, then the answers add back up as the stack collapses.",

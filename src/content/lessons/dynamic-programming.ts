@@ -11,8 +11,17 @@ export const dynamicProgrammingLesson: LessonInput = {
 
   walkthrough: {
     entry: "climbWays",
+    entryByLanguage: { python: 'climb_ways' },
     source: {
       javascript: "function climbWays(table) {\n  table[0] = 1;\n  table[1] = 1;\n  for (let i = 2; i < table.length; i++) {\n    const oneBack = table[i - 1];\n    const twoBack = table[i - 2];\n    table[i] = oneBack + twoBack;\n  }\n  return table[table.length - 1];\n}",
+      python: `def climb_ways(table):
+    table[0] = 1
+    table[1] = 1
+    for i in range(2, len(table)):
+        one_back = table[i - 1]
+        two_back = table[i - 2]
+        table[i] = one_back + two_back
+    return table[len(table) - 1]`,
     },
     args: [[0, 0, 0, 0, 0, 0, 0, 0]],
     caption: "The DP table filling left to right. Each cell reads the two before it \u2014 the recurrence made visible.",

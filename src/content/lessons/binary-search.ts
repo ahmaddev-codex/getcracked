@@ -13,6 +13,19 @@ export const binarySearchLesson: LessonInput = {
     entry: "search",
     source: {
       javascript: "function search(nums, target) {\n  let low = 0;\n  let high = nums.length - 1;\n  while (low <= high) {\n    const mid = low + Math.floor((high - low) / 2);\n    const value = nums[mid];\n    if (value === target) {\n      return mid;\n    }\n    if (value < target) {\n      low = mid + 1;\n    } else {\n      high = mid - 1;\n    }\n  }\n  return -1;\n}",
+      python: `def search(nums, target):
+    low = 0
+    high = len(nums) - 1
+    while low <= high:
+        mid = low + (high - low) // 2
+        value = nums[mid]
+        if value == target:
+            return mid
+        if value < target:
+            low = mid + 1
+        else:
+            high = mid - 1
+    return -1`,
     },
     args: [[1, 3, 5, 7, 9, 11, 13, 15], 13],
     caption: "Eight elements, three comparisons. Watch low and high close in \u2014 each read discards half of what is left.",

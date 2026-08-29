@@ -13,7 +13,6 @@ import {
 } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
-import { javascript } from '@codemirror/lang-javascript';
 import {
   bracketMatching,
   indentOnInput,
@@ -24,6 +23,8 @@ import {
 import { closeBrackets, closeBracketsKeymap, autocompletion, completionKeymap } from '@codemirror/autocomplete';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { editorTheme, syntaxExtension } from './editor-theme';
+import { languageExtension } from './language-support';
+import type { Language } from '@/content/schema';
 
 /**
  * Code editor (A6).
@@ -43,6 +44,7 @@ export function Editor({
   onChange,
   onRun,
   docRef,
+  language = 'javascript',
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -56,6 +58,8 @@ export function Editor({
    * keystroke — or mutating a ref during render, which React forbids.
    */
   docRef?: React.MutableRefObject<string>;
+  /** Drives syntax highlighting. The editor is remounted per language anyway. */
+  language?: Language;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
@@ -93,7 +97,7 @@ export function Editor({
         rectangularSelection(),
         highlightSelectionMatches(),
         history(),
-        javascript(),
+        languageExtension(language),
         syntaxExtension,
         bracketMatching(),
         closeBrackets(),

@@ -11,8 +11,27 @@ export const heapsLesson: LessonInput = {
 
   walkthrough: {
     entry: "siftDown",
+    entryByLanguage: { python: 'sift_down' },
     source: {
       javascript: "function siftDown(heap) {\n  let i = 0;\n  let swaps = 0;\n  while (true) {\n    const left = 2 * i + 1;\n    const right = 2 * i + 2;\n    let largest = i;\n    if (left < heap.length && heap[left] > heap[largest]) {\n      largest = left;\n    }\n    if (right < heap.length && heap[right] > heap[largest]) {\n      largest = right;\n    }\n    if (largest === i) {\n      return swaps;\n    }\n    const temp = heap[i];\n    heap[i] = heap[largest];\n    heap[largest] = temp;\n    swaps = swaps + 1;\n    i = largest;\n  }\n}",
+      python: `def sift_down(heap):
+    i = 0
+    swaps = 0
+    while True:
+        left = 2 * i + 1
+        right = 2 * i + 2
+        largest = i
+        if left < len(heap) and heap[left] > heap[largest]:
+            largest = left
+        if right < len(heap) and heap[right] > heap[largest]:
+            largest = right
+        if largest == i:
+            return swaps
+        temp = heap[i]
+        heap[i] = heap[largest]
+        heap[largest] = temp
+        swaps = swaps + 1
+        i = largest`,
     },
     args: [[1, 8, 6, 5, 9, 3]],
     caption: "A heap is an array. Sift-down repeatedly swaps a node with its larger child \u2014 watch the bar sink to its level.",

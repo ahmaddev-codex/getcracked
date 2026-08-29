@@ -161,6 +161,12 @@ export const lessonSchema = z.object({
   walkthrough: z
     .object({
       entry: z.string().min(1),
+      /**
+       * Per-language entry name, for the same reason `testSpec` has one: the
+       * walkthrough shows idiomatic code, and `runningSum` is `running_sum` in
+       * Python.
+       */
+      entryByLanguage: z.partialRecord(languageSchema, z.string().min(1)).optional(),
       source: z.partialRecord(languageSchema, z.string().min(1)),
       /** The call the animation steps through. */
       args: z.array(z.unknown()),

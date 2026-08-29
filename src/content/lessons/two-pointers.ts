@@ -72,6 +72,16 @@ If you cannot state the invariant, the pointers are guesswork.`,
   }
   return xs;
 }`,
+      python: `def reverse(xs):
+    i = 0
+    j = len(xs) - 1
+    while i < j:
+        t = xs[i]
+        xs[i] = xs[j]
+        xs[j] = t
+        i += 1
+        j -= 1
+    return xs`,
     },
     args: [[1, 2, 3, 4, 5]],
     caption: 'Watch the two pointers converge, swapping as they go.',

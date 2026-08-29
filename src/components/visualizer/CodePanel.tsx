@@ -3,8 +3,9 @@
 import { useEffect, useRef } from 'react';
 import { EditorView, lineNumbers, Decoration, type DecorationSet } from '@codemirror/view';
 import { EditorState, StateEffect, StateField } from '@codemirror/state';
-import { javascript } from '@codemirror/lang-javascript';
 import { editorTheme, syntaxExtension } from '@/components/problem/editor-theme';
+import { languageExtension } from '@/components/problem/language-support';
+import type { Language } from '@/content/schema';
 
 /**
  * The learner's own code, with the executing line highlighted (B1).
@@ -43,7 +44,15 @@ const highlightField = StateField.define<DecorationSet>({
   provide: (field) => EditorView.decorations.from(field),
 });
 
-export function CodePanel({ source, line }: { source: string; line: number | null }) {
+export function CodePanel({
+  source,
+  line,
+  language = 'javascript',
+}: {
+  source: string;
+  line: number | null;
+  language?: Language;
+}) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
 
@@ -55,7 +64,7 @@ export function CodePanel({ source, line }: { source: string; line: number | nul
         doc: source,
         extensions: [
           lineNumbers(),
-          javascript(),
+          languageExtension(language),
           syntaxExtension,
           highlightField,
           editorTheme,
@@ -71,7 +80,7 @@ export function CodePanel({ source, line }: { source: string; line: number | nul
       instance.destroy();
       view.current = null;
     };
-  }, [source]);
+  }, [source, language]);
 
   useEffect(() => {
     const instance = view.current;

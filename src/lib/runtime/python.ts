@@ -36,6 +36,27 @@ function isNodeRuntime(): boolean {
 }
 
 /**
+ * Whether Pyodide can load in the current environment.
+ *
+ * **Pyodide 314 refuses to run in a classic worker at all.** Its environment
+ * detection throws `Classic web workers are not supported` at module evaluation,
+ * and there is no flag or entry point that opts out — the UMD build carries the
+ * same check. Turbopack emits a classic worker in development regardless of
+ * `{ type: 'module' }`, so in dev this is simply false inside the worker.
+ *
+ * Verified directly in Chromium rather than inferred: importing the module URL
+ * inside a deliberately-classic worker fetches it (HTTP 200) and then throws on
+ * evaluation. Lazy loading does not help, because the throw is in the module
+ * body, not in `loadPyodide`.
+ *
+ * The caller's job is therefore to run Python somewhere else — the main thread
+ * supports it — rather than to retry here.
+ */
+export function pythonRuntimeAvailable(): boolean {
+  return typeof (globalThis as { importScripts?: unknown }).importScripts !== 'function';
+}
+
+/**
  * Cached across runs: reloading multi-MB WASM per run would be unusable.
  *
  * **Two loading strategies, because the two environments genuinely differ.**
@@ -43,22 +64,15 @@ function isNodeRuntime(): boolean {
  * In Node the npm package works directly: it resolves its own assets from
  * `node_modules` and nothing bundles it.
  *
- * In the browser it must NOT be bundled. Two independent reasons:
+ * In the browser it must NOT be bundled. Pyodide loads its own WASM loader
+ * through a computed `import()`, which a bundler that follows it fails on with
+ * "Cannot find module as expression is too dynamic". Loading the browser build
+ * straight from `indexURL` means the bundler never sees it, so those internal
+ * imports resolve against the same directory the `.wasm` assets come from.
  *
- * 1. `pyodide.mjs` runs environment detection at *module evaluation* and throws
- *    "Classic web workers are not supported" when it finds itself in a classic
- *    worker — which is what Turbopack emits in development regardless of
- *    `{ type: 'module' }`. A static import therefore killed the worker as it was
- *    being evaluated, taking every JavaScript run down with it.
- * 2. Pyodide loads its own WASM loader through a computed `import()`. A bundler
- *    that tries to follow that fails with "Cannot find module as expression is
- *    too dynamic", so even a lazy bundled import cannot work.
- *
- * Loading the browser build straight from `indexURL` solves both: the module is
- * fetched at first Python run rather than evaluated at worker startup, and the
- * bundler never sees it, so its internal dynamic imports resolve against the
- * same directory its `.wasm` assets already come from. The ignore comments are
- * what keep the bundler out of it.
+ * A failed load clears the cache. Caching a rejected promise would turn one
+ * transient failure — a dropped connection on a multi-megabyte download — into a
+ * permanent one for the rest of the session.
  */
 export function getPyodide(): Promise<PyodideInterface> {
   pyodidePromise ??= (async () => {
@@ -66,12 +80,20 @@ export function getPyodide(): Promise<PyodideInterface> {
       const mod = await import('pyodide');
       return mod.loadPyodide();
     }
+    if (!pythonRuntimeAvailable()) {
+      throw new Error(
+        'Python cannot run here: Pyodide does not support classic web workers.',
+      );
+    }
     const mod = (await import(
       /* webpackIgnore: true */ /* turbopackIgnore: true */
       `${BROWSER_INDEX_URL}pyodide.mjs`
     )) as { loadPyodide: (o: { indexURL: string }) => Promise<PyodideInterface> };
     return mod.loadPyodide({ indexURL: BROWSER_INDEX_URL });
-  })();
+  })().catch((error: unknown) => {
+    pyodidePromise = null;
+    throw error;
+  });
   return pyodidePromise;
 }
 
@@ -79,6 +101,10 @@ const DEFAULT_TIMEOUT_MS = 5_000;
 
 const RUNNER = String.raw`
 import sys, json, time
+
+# Filename stamped on the learner's compiled code, so the tracer can recognise
+# its frames and ignore this runner's own.
+_SOURCE_FILE = "<learner>"
 
 class _TracedList(list):
     def __init__(self, values, name, sink):
@@ -128,8 +154,11 @@ def _run(source, entry, args_json, tracing, max_events, deadline):
             return
         events.append(e)
 
+    # Compiled explicitly so the frames carry a filename we can recognise: the
+    # tracer below uses it to tell the learner's code from this runner's.
     scope = {}
-    exec(source, scope)
+    code = compile(source, _SOURCE_FILE, "exec")
+    exec(code, scope)
     fn = scope[entry]
 
     args = json.loads(args_json)
@@ -150,7 +179,12 @@ def _run(source, entry, args_json, tracing, max_events, deadline):
         # COOP/COEP headers — see the spike writeup.
         if time.time() > deadline:
             raise _Timeout()
-        if event == "line" and tracing and frame.f_code.co_name == entry:
+        # Every frame from the learner's source, not just the entry function.
+        # Matching on the entry name alone skipped nested helpers entirely,
+        # which meant the two lessons about recursion - where the recursive
+        # call lives in an inner helper - animated nothing in Python while
+        # animating fully in JavaScript.
+        if event == "line" and tracing and frame.f_code.co_filename == _SOURCE_FILE:
             sink({
                 "kind": "line",
                 "line": frame.f_lineno,
