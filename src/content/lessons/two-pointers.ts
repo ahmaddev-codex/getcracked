@@ -57,6 +57,26 @@ If you cannot state the invariant, the pointers are guesswork.`,
   // Curriculum ordering, not a dependency: two pointers is understandable on its
   // own, and reads better once the hash-map trade-off is familiar so the two can
   // be compared. Nothing is locked either way (§6.6).
+  walkthrough: {
+    entry: 'reverse',
+    source: {
+      javascript: `function reverse(xs) {
+  let i = 0;
+  let j = xs.length - 1;
+  while (i < j) {
+    const t = xs[i];
+    xs[i] = xs[j];
+    xs[j] = t;
+    i++;
+    j--;
+  }
+  return xs;
+}`,
+    },
+    args: [[1, 2, 3, 4, 5]],
+    caption: 'Watch the two pointers converge, swapping as they go.',
+  },
+
   exercises: [
     {
       slug: 'reverse-in-place',

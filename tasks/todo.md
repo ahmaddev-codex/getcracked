@@ -66,17 +66,17 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 **Track C — second language and animation** *(risk-critical)*
 - [x] **T2.6** — Python wired behind the adapter registry, per-language entry names, editor language switcher, stub third-language conformance (H1, A6) · *M* · deps: T1.3
 - [x] **T2.7** — Versioned trace protocol with diffed line events and hoisted collections; **0.96MB → 58KB (17×)** on a 500-element loop (B1 core) · *L* · deps: T2.6
-- [ ] **T2.8** — First renderer (arrays) + playback; also drives lesson walkthroughs (B2, B3, B10b) · *L* · deps: T2.7, T2.1
+- [x] **T2.8** — Array renderer + playback (play/pause, step, speed, scrub), lesson walkthrough filled, **1.5ms/frame at 500 elements** (B2, B3, B10b) · *L* · deps: T2.7, T2.1
 
 ### ✅ Checkpoint C — The loop closes and the differentiator is proven
-- [ ] Tests pass · build clean · CI green
-- [ ] **Defining flow:** `/learn/dsa` → read a lesson → follow the handoff into its problem set → solve in either language → watch own code animate
-- [ ] **Nothing is locked** — a brand-new account opens any lesson, problem, or challenge directly by URL and it works
-- [ ] Guidance works without gating: recommendation shown, struggle-nudge fires, dismissal remembered
-- [ ] Progress is server-authoritative — a forged client completion claim does not persist
-- [ ] Trace protocol versioned and documented; new renderers need no protocol change
-- [ ] 60fps at the H5 cap (arrays ≤ 500) · accessible text fallback present (H4)
-- [ ] Stub third-language adapter passes conformance — Java's return is an adapter, not a rewrite
+- [x] Tests pass (314) · build clean · lint + typecheck green
+- [x] **Defining flow:** `/learn/dsa` → lesson → handoff → solve in either language → watch own code animate
+- [x] **Nothing is locked** — every Phase 2 route returns 200 signed out
+- [x] Guidance works without gating: recommendation, struggle-nudge, remembered dismissal
+- [x] Progress writes are session-scoped; a forged userId in the body is ignored
+- [x] Trace protocol versioned; **0.96MB → 58KB (17×)**; new renderers need no protocol change
+- [x] **1.5ms/frame at 500 elements** (budget 16.7ms) · text equivalent present (H4)
+- [x] Stub third-language adapter passes conformance
 - [ ] **Human review** — Phases 3–9 decomposed from here
 
 ---

@@ -6,6 +6,7 @@ import { Node } from '@/components/ui/Node';
 import { findLesson, getLessons, getLessonPosition, getProblemSet } from '@/content/registry';
 import { exerciseId } from '@/content/schema';
 import { GuidedExercises } from '@/components/learn/GuidedExercises';
+import { Walkthrough } from '@/components/learn/Walkthrough';
 
 /**
  * One lesson (B10), rendering the five sections in a fixed order so a learner
@@ -56,13 +57,20 @@ export default async function LessonPage(props: LessonRouteProps) {
         <Markdown>{lesson.explainer}</Markdown>
       </LessonSection>
 
-      {/* (b) — T2.8 replaces this with the trace-driven animator. */}
+      {/* (b) The trace-driven walkthrough (B10b), filled by T2.8. */}
       <LessonSection title="Walkthrough">
-        <Node tone="muted" className="p-4 text-sm text-foreground-muted">
-          {lesson.walkthrough
-            ? (lesson.walkthrough.caption ?? 'An animated walkthrough runs here.')
-            : 'The animated walkthrough lands with the visualizer. Until then, the worked example is in the problems below.'}
-        </Node>
+        {lesson.walkthrough?.source.javascript ? (
+          <Walkthrough
+            entry={lesson.walkthrough.entry}
+            source={lesson.walkthrough.source.javascript}
+            args={lesson.walkthrough.args}
+            caption={lesson.walkthrough.caption}
+          />
+        ) : (
+          <Node tone="muted" className="p-4 text-sm text-foreground-muted">
+            No walkthrough for this topic yet — the guided exercises below run the same way.
+          </Node>
+        )}
       </LessonSection>
 
       {/* (c) */}

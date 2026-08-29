@@ -6,6 +6,7 @@ import { Node } from '@/components/ui/Node';
 import { Editor } from './Editor';
 import { TestCases } from './TestCases';
 import { Complexity } from './Complexity';
+import { Visualizer } from '@/components/visualizer/Visualizer';
 import { RuntimeClient } from '@/lib/runtime/client';
 import { TIMEOUT_MESSAGE } from '@/lib/runtime/errors';
 import { clearDraft, readDraft, subscribeToDrafts, writeDraft } from '@/lib/drafts';
@@ -129,6 +130,9 @@ export function Workspace({
         language,
         // Costs an extra sandboxed run, so only measure when it will be shown.
         measure: !compact,
+        // Tracing costs an extra instrumented run too; only for the full
+        // surface, where there is somewhere to draw it.
+        trace: !compact,
       });
       setResult(outcome);
       if (outcome.passed) {
@@ -222,6 +226,8 @@ export function Workspace({
       )}
 
       <TestCases spec={spec} result={result} />
+
+      {!compact && result?.trace && <Visualizer trace={result.trace} />}
 
       {!compact && (
         <Complexity
