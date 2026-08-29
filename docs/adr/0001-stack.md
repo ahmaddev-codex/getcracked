@@ -1,6 +1,6 @@
 # ADR 0001 — Technology Stack
 
-**Status:** Proposed — awaiting human review
+**Status:** Proposed — awaiting human review · *Decision 5 amended 2026-08-29 following T0.2*
 **Date:** 2026-08-28
 **Context sources:** [docs/getcracked-prd.md](../getcracked-prd.md) (v1.0), [tasks/plan.md](../../tasks/plan.md)
 **Supersedes:** nothing. **Constrains:** every task in Phases 0–2.
@@ -96,13 +96,18 @@ This still fails closed and still has one allowlist, so AD-5's actual guarantee 
 
 - **No origin, no network, no ambient authority.** The interpreter has only what we explicitly inject. The isolation is structural rather than configured.
 - **Deterministic interruption.** QuickJS's interrupt handler kills an infinite loop reliably — a T0.2 acceptance criterion and a T1.3 one, satisfied by the runtime rather than by a watchdog racing a blocked thread.
-- **Instrumentable for tracing.** We can observe execution rather than AST-rewriting the learner's source. This removes the JavaScript half of R-2, which `plan.md` rates High.
+- ~~**Instrumentable for tracing.** We can observe execution rather than AST-rewriting the learner's source. This removes the JavaScript half of R-2, which `plan.md` rates High.~~
+  > **⛔ Disproven by T0.2 (2026-08-29).** QuickJS exposes exactly one execution hook, `setInterruptHandler(runtime)`, which carries no line number, no frame, and no variable state — it can only answer "abort or continue". The `DEBUG_SYNC`/`DEBUG_ASYNC` variants are assertion-and-sanitizer *builds*, not debuggers, and no step or breakpoint API exists in the package's type surface.
+  >
+  > **AST rewriting is required after all, and R-2 stays High.** See [docs/spikes/runtime-python-js.md](../spikes/runtime-python-js.md) §1.
 
 ### The honest cost
 
 This weakens AD-2's stated rationale that the two launch runtimes were "kept deliberately dissimilar" so the adapter abstraction is proven against real variation. Both become WASM-hosted interpreters.
 
 That rationale is the weaker of the two arguments. Sandbox integrity and reliable termination are hard requirements; adapter-shape variation is a design preference, and it is already protected by the stub-adapter conformance criterion in T2.6. QuickJS is also slower than native and does not perfectly match V8 semantics — irrelevant for teaching data structures.
+
+**Post-T0.2 note: the decision stands, but on two legs rather than three.** Of the three arguments above, structural isolation and deterministic interruption both held — the latter measured at a clean 201 ms abort on a 200 ms deadline. Only the tracing argument failed. Since sandbox integrity was always the load-bearing reason and the native-Worker `fetch`-with-cookies hole is real, QuickJS remains correct; the AST-rewriting cost it was supposed to avoid is simply now part of the price. `instrument.ts` pays it.
 
 **Python is unchanged:** Pyodide in a Web Worker, `sys.settrace` for tracing.
 
@@ -164,4 +169,6 @@ AD-1 puts several hundred problems in the repo as typed modules. Statically impo
 
 - Whether Vercel's bandwidth economics hold once MAU is real (Decision 2) — revisit against §8 metrics, not speculation.
 - Better Auth's maturity under production load (Decision 4) — the Auth.js fallback exists precisely because this is unproven for us.
-- Whether QuickJS tracing genuinely removes the JavaScript half of R-2 (Decision 5). **T0.2 must confirm this**; if it does not, the AST-instrumentation path returns and R-2 stays High.
+- ~~Whether QuickJS tracing genuinely removes the JavaScript half of R-2 (Decision 5).~~ **Closed by T0.2 (2026-08-29): it does not.** AST instrumentation returned and R-2 stays High. Decision 5 itself is unaffected — see its post-T0.2 note.
+- **New, from T0.2:** the trace payload is O(n²) in array size (~1 MB for a 500-element loop at the H5 cap), because every line event snapshots all live variables including the array. T2.7 must resolve this at the protocol level.
+- **New, from T0.2:** Pyodide's `setInterruptBuffer` needs `SharedArrayBuffer`, which needs COOP/COEP cross-origin-isolation headers — a deployment constraint interacting with Decision 2 and with any cross-origin embed. Without it, Python pays `sys.settrace` overhead on every run, traced or not.
