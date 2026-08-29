@@ -1,4 +1,4 @@
-import { RAW_PROBLEMS } from '../src/content/registry';
+import { RAW_LESSONS, RAW_PROBLEMS } from '../src/content/registry';
 import { contentSchema, exerciseId, type Content } from '../src/content/schema';
 import { runTestSpec } from '../src/content/test-runner';
 
@@ -105,6 +105,31 @@ async function main() {
     await checkBehaviour(content);
   }
 
+  for (const raw of RAW_LESSONS) {
+    const parsed = contentSchema.safeParse(raw);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        fail(describe(raw), `${issue.path.join('.') || '(root)'}: ${issue.message}`);
+      }
+      continue;
+    }
+
+    const lesson = parsed.data;
+    if (lesson.tier !== 'lesson') continue;
+
+    const id = exerciseId(lesson);
+    if (seen.has(id)) fail(id, 'Duplicate content id — two entries share a tier and slug.');
+    seen.add(id);
+
+    // A recommendation pointing at nothing renders a dead link.
+    const slugs = new Set(RAW_LESSONS.map((l) => l.slug));
+    for (const prereq of lesson.recommendedAfter) {
+      if (!slugs.has(prereq)) {
+        fail(id, `recommendedAfter names "${prereq}", which is not an authored lesson.`);
+      }
+    }
+  }
+
   if (problems.length > 0) {
     process.stderr.write(`\n✗ Content check failed (${problems.length} problem(s)):\n\n`);
     for (const p of problems) {
@@ -113,7 +138,9 @@ async function main() {
     process.exit(1);
   }
 
-  process.stdout.write(`✓ Content check passed (${RAW_PROBLEMS.length} item(s))\n`);
+  process.stdout.write(
+    `✓ Content check passed (${RAW_PROBLEMS.length} problem(s), ${RAW_LESSONS.length} lesson(s))\n`,
+  );
   process.exit(0);
 }
 

@@ -110,17 +110,67 @@ export type Problem = z.infer<typeof problemSchema>;
  */
 export type ProblemInput = z.input<typeof problemSchema>;
 
-/** Tier-1 lesson (B9, B10). Its guided exercises are the same runnable unit. */
+/**
+ * Tier-1 lesson (B9, B10).
+ *
+ * The five sections are separate fields rather than one markdown blob, because
+ * B10 fixes their order and every lesson should teach in the same shape — a
+ * learner who has read one knows where to find the pitfalls in the next. It also
+ * lets the walkthrough be structured data the animator can execute (T2.8)
+ * instead of prose it would have to parse.
+ */
 export const lessonSchema = z.object({
   tier: z.literal('lesson'),
   slug: z.string().regex(/^[a-z0-9-]+$/),
   title: z.string().min(1),
-  /** Markdown body — the explainer, pitfalls, and pattern cues (B10). */
-  body: z.string().min(1),
-  exercises: z.array(runnableExerciseSchema).default([]),
+  /** One line for the index. */
+  summary: z.string().min(1),
+  /** Curriculum position. Ordering only — it gates nothing (§6.6). */
+  order: z.number().int().nonnegative(),
+
+  /** (a) What the structure or pattern is. Markdown. */
+  explainer: z.string().min(1),
+
   /**
-   * Recommended prerequisites — guidance only. Nothing is locked (PRD §6.6,
-   * B16): these drive ordering and nudges, never access.
+   * (b) The animated walkthrough slot.
+   *
+   * Structured so T2.8 can run it through the same runtime the learner's own
+   * code uses, rather than replaying a recording. Optional while the animator
+   * is unbuilt; the page renders a placeholder in its absence.
+   */
+  walkthrough: z
+    .object({
+      entry: z.string().min(1),
+      source: z.partialRecord(languageSchema, z.string().min(1)),
+      /** The call the animation steps through. */
+      args: z.array(z.unknown()),
+      caption: z.string().optional(),
+    })
+    .optional(),
+
+  /** (c) What it costs, and why. */
+  complexity: z
+    .object({
+      time: z.string().min(1),
+      space: z.string().min(1),
+      note: z.string().optional(),
+    })
+    .optional(),
+
+  /** (d) How to recognise a problem this pattern solves. */
+  patternCues: z.array(z.string().min(1)).default([]),
+
+  /** (e) The mistakes this topic reliably produces. */
+  pitfalls: z
+    .array(z.object({ title: z.string().min(1), body: z.string().min(1) }))
+    .default([]),
+
+  /** Guided exercises — the same runnable unit as a problem (AD-7, B11). */
+  exercises: z.array(runnableExerciseSchema).default([]),
+
+  /**
+   * Lessons usually read better after these, and problem sets use the same
+   * relation to suggest an order. Guidance only: nothing is locked (§6.6, B16).
    */
   recommendedAfter: z.array(z.string()).default([]),
 });

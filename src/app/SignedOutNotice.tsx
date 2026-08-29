@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { useSession } from '@/lib/auth-client';
+import { useHydrated } from '@/lib/use-hydrated';
 import { track } from '@/lib/analytics/track';
 
 const DISMISSED_KEY = 'gc.notice.dismissed';
@@ -56,8 +57,18 @@ function getServerSnapshot(): boolean {
 export function SignedOutNotice() {
   const { data: session, isPending } = useSession();
   const dismissed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const hydrated = useHydrated();
 
-  const visible = !isPending && !session && !dismissed;
+  /**
+   * Held back until after hydration.
+   *
+   * Whether to show this depends on the session and on local storage, neither of
+   * which the server can see. Rendering it on the first client pass produced a
+   * hydration mismatch — the server had emitted nothing where the client wanted
+   * a banner. Waiting one render costs a frame and removes the mismatch
+   * entirely.
+   */
+  const visible = hydrated && !isPending && !session && !dismissed;
 
   useEffect(() => {
     if (visible) track('signed_out_notice_shown');

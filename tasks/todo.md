@@ -55,7 +55,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 *Three parallel tracks. Track A is internally sequential.*
 
 **Track A — the DSA learning loop**
-- [ ] **T2.1** — Learn surface `/learn/dsa` + lesson content model; author 2 lessons (B9, B10, B14) · *M* · deps: T1.1, T0.4
+- [x] **T2.1** — Learn surface `/learn/dsa` + B10's five-section lesson model; `hashing` and `two-pointers` authored; read-ahead asserted structurally (B9, B10, B14) · *M* · deps: T1.1, T0.4
 - [ ] **T2.2** — Guided in-lesson exercises + lesson completion state (B11, B12) · *M* · deps: T2.1, T1.4
 - [ ] **T2.3** — Problem sets + **recommendation engine, not locks** (B13, B15–B18, B21) · *M* · deps: T2.2
 

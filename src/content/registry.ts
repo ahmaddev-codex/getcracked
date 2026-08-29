@@ -1,5 +1,15 @@
 import { twoSum } from './problems/hashing/two-sum';
-import { problemSchema, type Content, type Problem, type ProblemInput } from './schema';
+import { hashing } from './lessons/hashing';
+import { twoPointers } from './lessons/two-pointers';
+import {
+  lessonSchema,
+  problemSchema,
+  type Content,
+  type Lesson,
+  type LessonInput,
+  type Problem,
+  type ProblemInput,
+} from './schema';
 
 /**
  * The content index (ADR 0001 §8).
@@ -41,7 +51,7 @@ export function getProblems(): readonly Problem[] {
 }
 
 export function getAllContent(): readonly Content[] {
-  return [...getProblems()];
+  return [...getProblems(), ...getLessons()];
 }
 
 export function findProblem(topic: string, slug: string): Problem | undefined {
@@ -75,6 +85,48 @@ export function getSetPosition(problem: Problem) {
     total: set.length,
     previous: index > 0 ? set[index - 1] : undefined,
     next: index >= 0 && index < set.length - 1 ? set[index + 1] : undefined,
+  };
+}
+
+/** Authored lessons, unvalidated — the check script reports on these. */
+export const RAW_LESSONS: readonly LessonInput[] = [hashing, twoPointers];
+
+let lessonCache: readonly Lesson[] | undefined;
+
+/**
+ * Lessons in curriculum order.
+ *
+ * Order is presentation only. Every lesson is readable at any time (B14) —
+ * nothing here consults progress, which is what makes read-ahead structural
+ * rather than a behaviour someone has to remember not to break.
+ */
+export function getLessons(): readonly Lesson[] {
+  lessonCache ??= RAW_LESSONS.map((l) => {
+    const parsed = lessonSchema.safeParse(l);
+    if (!parsed.success) {
+      const detail = parsed.error.issues
+        .map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`)
+        .join('; ');
+      throw new Error(`Invalid lesson "${l.slug}" — ${detail}. Run \`pnpm content:check\`.`);
+    }
+    return parsed.data;
+  }).sort((a, b) => a.order - b.order || a.slug.localeCompare(b.slug));
+  return lessonCache;
+}
+
+export function findLesson(slug: string): Lesson | undefined {
+  return getLessons().find((l) => l.slug === slug);
+}
+
+/** Neighbours in curriculum order, for lesson-to-lesson navigation. */
+export function getLessonPosition(lesson: Lesson) {
+  const all = getLessons();
+  const index = all.findIndex((l) => l.slug === lesson.slug);
+  return {
+    index,
+    total: all.length,
+    previous: index > 0 ? all[index - 1] : undefined,
+    next: index >= 0 && index < all.length - 1 ? all[index + 1] : undefined,
   };
 }
 
