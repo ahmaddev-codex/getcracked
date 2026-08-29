@@ -22,7 +22,7 @@ function connect() {
   const url = process.env.DATABASE_URL;
   if (!url) {
     throw new Error(
-      'DATABASE_URL is not set. Copy .env.example to .env.local and point it at a Postgres instance.',
+      'DATABASE_URL is not set. Run `cp .env.example .env` then `pnpm services:up`.',
     );
   }
   // Neon pools on its side; a large local pool would exhaust its connection

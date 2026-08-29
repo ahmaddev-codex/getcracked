@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GetCracked
 
-## Getting Started
+Interactive DSA, System Design labs, and company-wise interview prep.
+Build real systems. Step by step. In your browser.
 
-First, run the development server:
+- **Product spec:** [docs/getcracked-prd.md](docs/getcracked-prd.md)
+- **Stack decisions:** [docs/adr/0001-stack.md](docs/adr/0001-stack.md)
+- **Plan and tasks:** [tasks/plan.md](tasks/plan.md) · [tasks/todo.md](tasks/todo.md)
+
+---
+
+## Getting started
+
+Requires Node 22+, [pnpm](https://pnpm.io), and Docker.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.example .env
+pnpm db:setup      # starts services, migrates, seeds
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Local services
 
-## Learn More
+`docker-compose.yml` runs the local equivalents of the managed services used in
+production. **Ports are deliberately offset from the defaults** so this stack
+coexists with other projects rather than fighting them for a port.
 
-To learn more about Next.js, take a look at the following resources:
+| Service | Local port | Production | Used by |
+|---|---|---|---|
+| Postgres 17 | `5433` | [Neon](https://neon.tech) | Everything (schema in `src/db/schema.ts`) |
+| Redis | `6380` | [Upstash](https://upstash.com) | Nothing yet — arrives with L9 assistant rate limits |
+| Redis HTTP proxy | `8080` | Upstash REST API | Speaks Upstash's protocol so `@upstash/redis` works locally |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Postgres is pinned to 17 to match Neon's major version: a local/production major
+mismatch is how a migration passes locally and fails on deploy.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+pnpm services:up      # start (waits for healthchecks)
+pnpm services:down    # stop
+pnpm services:reset   # destroy volumes and start clean
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Commands
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Command | Purpose |
+|---|---|
+| `pnpm dev` | Dev server |
+| `pnpm build` | Production build |
+| `pnpm test` | Full test suite |
+| `pnpm test:watch` | Tests in watch mode |
+| `pnpm lint` · `pnpm typecheck` | Lint and typecheck |
+| `pnpm db:generate` | Generate a migration from schema changes |
+| `pnpm db:migrate` | Apply pending migrations |
+| `pnpm db:seed` | Seed the dev user (idempotent) |
+| `pnpm db:studio` | Drizzle Studio |
+| `pnpm db:setup` | Services + migrate + seed, from nothing |
+
+---
+
+## Testing
+
+Database tests run against **embedded Postgres (PGlite)**, not the Docker
+container and not mocks. They exercise the same migrations, constraints, and
+cascades that run against Neon, but need no running service — so they cannot
+silently stop running in CI, which is exactly when constraint regressions slip
+through.
+
+The Docker Postgres is for running the app, not the test suite.
+
+---
+
+## Layout
+
+```
+src/app/          routes (App Router)
+src/db/           schema, client, seed
+src/lib/runtime/  code execution + trace capture (T0.2 spike quality)
+db/migrations/    generated SQL migrations
+docs/             PRD, ADRs, spike writeups
+tasks/            implementation plan and checklist
+tests/            vitest suites
+```

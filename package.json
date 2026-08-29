@@ -13,7 +13,11 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx --env-file-if-exists=.env scripts/seed.ts",
+    "services:up": "docker compose up -d --wait",
+    "services:down": "docker compose down",
+    "services:reset": "docker compose down -v && docker compose up -d --wait",
+    "db:setup": "pnpm services:up && pnpm db:migrate && pnpm db:seed"
   },
   "dependencies": {
     "acorn": "^8.18.0",

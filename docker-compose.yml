@@ -1,0 +1,68 @@
+name: getcracked
+
+# Local development services. Production uses managed equivalents:
+# Postgres -> Neon, Redis -> Upstash (ADR 0001 §3, §6).
+#
+# Ports are deliberately offset from the defaults (5433, 6380, 8080) so this
+# stack coexists with other projects already bound to 5432/6379/8079 rather
+# than fighting them for a port.
+
+services:
+  postgres:
+    # Pinned to 17 to match Neon's major version — a local/production major
+    # mismatch is how a migration passes locally and fails on deploy.
+    image: postgres:17-alpine
+    container_name: getcracked-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: getcracked
+      POSTGRES_PASSWORD: getcracked
+      POSTGRES_DB: getcracked
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      # `pnpm db:migrate` immediately after `db:up` would otherwise race the
+      # server's startup and fail on a connection refused.
+      test: ['CMD-SHELL', 'pg_isready -U getcracked -d getcracked']
+      interval: 3s
+      timeout: 3s
+      retries: 15
+      start_period: 5s
+
+  redis:
+    image: redis:7-alpine
+    container_name: getcracked-redis
+    restart: unless-stopped
+    ports:
+      - '6380:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
+  # Speaks Upstash's HTTP/REST protocol in front of plain Redis, so
+  # @upstash/redis works locally against the same client code that runs in
+  # production. Without this, local code would need a second Redis client and
+  # the rate limiting in L9 would be exercised only in production.
+  redis-http:
+    image: hiett/serverless-redis-http:latest
+    container_name: getcracked-redis-http
+    restart: unless-stopped
+    environment:
+      SRH_MODE: env
+      SRH_TOKEN: getcracked_local_token
+      SRH_CONNECTION_STRING: 'redis://redis:6379'
+    ports:
+      - '8080:80'
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  redis-data:
