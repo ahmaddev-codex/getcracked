@@ -103,7 +103,11 @@ For a single loop summing a 500-element array — exactly the PRD H5 cap:
 
 **Cause:** every `line` event snapshots *all* live variables, and one of those variables is the 500-element array. So the trace stores 500 elements × ~1000 events. Payload is O(n²) in array size.
 
-This is a **protocol design flaw, not a runtime limit**, and it is the most important thing T2.7 inherits. Options:
+This is a **protocol design flaw, not a runtime limit**, and it was the most important thing T2.7 inherited.
+
+> **✅ Resolved in T2.7 (2026-08-29).** The same 500-element loop now encodes to **58 KB, down from 0.96 MB — a 17× reduction**, via two changes in `lib/trace/protocol.ts`: line events carry only the variables that *changed* since the previous event, and collections are hoisted into a preamble once rather than repeated on every line. A regression test asserts the encoded form stays at least an order of magnitude below the raw events.
+
+The options considered at the time:
 
 1. **Diff-based line events** — emit only variables that changed since the previous event. Natural fit: most steps change one index or one counter.
 2. **Structure-by-reference** — snapshot large collections once, then emit mutations against them, reconstructing state during playback.

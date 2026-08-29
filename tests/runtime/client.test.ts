@@ -46,7 +46,7 @@ function passingResult() {
     passed: true,
     cases: [],
     timedOut: false,
-    trace: [],
+    trace: null,
     traceDegraded: false,
     metrics: null,
   };

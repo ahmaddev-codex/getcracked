@@ -65,7 +65,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 
 **Track C — second language and animation** *(risk-critical)*
 - [x] **T2.6** — Python wired behind the adapter registry, per-language entry names, editor language switcher, stub third-language conformance (H1, A6) · *M* · deps: T1.3
-- [ ] **T2.7** — 🔥 Versioned, language-agnostic trace event protocol (B1 core) · *L* · deps: T2.6
+- [x] **T2.7** — Versioned trace protocol with diffed line events and hoisted collections; **0.96MB → 58KB (17×)** on a 500-element loop (B1 core) · *L* · deps: T2.6
 - [ ] **T2.8** — First renderer (arrays) + playback; also drives lesson walkthroughs (B2, B3, B10b) · *L* · deps: T2.7, T2.1
 
 ### ✅ Checkpoint C — The loop closes and the differentiator is proven

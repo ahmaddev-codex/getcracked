@@ -2,6 +2,7 @@ import { runJavaScript } from '@/lib/runtime/javascript';
 import { runPython } from '@/lib/runtime/python';
 import type { RunOptions, RunResult } from '@/lib/runtime/javascript';
 import { measureRun, type RuntimeMetrics } from '@/lib/runtime/measure';
+import { toProtocol, type Trace } from '@/lib/trace/protocol';
 import { entryFor, type Language, type TestSpec } from './schema';
 
 /**
@@ -34,8 +35,14 @@ export interface SpecResult {
   passed: boolean;
   cases: CaseResult[];
   timedOut: boolean;
-  /** Present when tracing was requested; empty otherwise. */
-  trace: RunResult['events'];
+  /**
+   * Encoded trace (T2.7), or null when tracing was not requested.
+   *
+   * The protocol form rather than raw events: diffed and with collections
+   * hoisted, which is a ~17x payload reduction on a 500-element loop and what
+   * makes the trace safe to hand to a renderer at all.
+   */
+  trace: Trace | null;
   traceDegraded: boolean;
   /**
    * Measured cost of the largest passing case — null when the code could not be
@@ -169,5 +176,12 @@ export async function runTestSpec(opts: RunSpecOptions): Promise<SpecResult> {
     });
   }
 
-  return { passed, cases, timedOut, trace: traceEvents, traceDegraded, metrics };
+  return {
+    passed,
+    cases,
+    timedOut,
+    trace: trace ? toProtocol(traceEvents, { degraded: traceDegraded }) : null,
+    traceDegraded,
+    metrics,
+  };
 }
