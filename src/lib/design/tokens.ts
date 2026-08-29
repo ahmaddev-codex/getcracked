@@ -57,14 +57,13 @@ export type Theme = 'light' | 'dark';
 /**
  * Token values per theme.
  *
- * `:root` carries light; the `prefers-color-scheme: dark` block overrides a
- * subset, so dark inherits anything it does not restate — which is exactly how
- * the browser resolves them.
+ * `:root` carries light; `:root[data-theme='dark']` overrides a subset, so dark
+ * inherits anything it does not restate — exactly how the browser resolves them.
  */
 export function readTokens(): Record<Theme, Record<string, Rgb>> {
   const css = readFileSync(CSS_PATH, 'utf8');
 
-  const darkBlock = /@media \(prefers-color-scheme: dark\) \{\s*:root \{([\s\S]*?)\n  \}/.exec(css);
+  const darkBlock = /:root\[data-theme='dark'\] \{([\s\S]*?)\n\}/.exec(css);
   const rootBlock = /:root \{([\s\S]*?)\n\}/.exec(css);
   if (!rootBlock) throw new Error('No :root block found in globals.css');
 

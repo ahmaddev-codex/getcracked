@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useState, useSyncExternalStore } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Node } from '@/components/ui/Node';
 import { track } from '@/lib/analytics/track';
@@ -49,6 +49,10 @@ function readRevealed(exerciseId: string): number {
 }
 
 export function Hints({ exerciseId, hints }: { exerciseId: string; hints: string[] }) {
+  // Collapsing is presentational and per-visit: it hides what is on screen
+  // without discarding the record of what was opened, which the analytics
+  // funnel and the struggle nudge both read.
+  const [collapsed, setCollapsed] = useState(false);
   const revealed = useSyncExternalStore(
     subscribe,
     () => readRevealed(exerciseId),
@@ -71,7 +75,18 @@ export function Hints({ exerciseId, hints }: { exerciseId: string; hints: string
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-sm font-semibold">Hints</h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <h2 className="text-sm font-semibold">Hints</h2>
+        {revealed > 0 && (
+          <button
+            onClick={() => setCollapsed((v) => !v)}
+            aria-expanded={!collapsed}
+            className="text-xs text-foreground-muted underline underline-offset-2"
+          >
+            {collapsed ? `Show ${revealed} opened` : 'Hide hints'}
+          </button>
+        )}
+      </div>
 
       {revealed === 0 && (
         <p className="text-sm text-foreground-muted">
@@ -79,14 +94,15 @@ export function Hints({ exerciseId, hints }: { exerciseId: string; hints: string
         </p>
       )}
 
-      {hints.slice(0, revealed).map((hint, i) => (
-        <Node key={i} tone="muted" className="p-3">
-          <p className="mb-1 text-xs font-semibold">Hint {i + 1}</p>
-          <p className="text-sm">{hint}</p>
-        </Node>
-      ))}
+      {!collapsed &&
+        hints.slice(0, revealed).map((hint, i) => (
+          <Node key={i} tone="muted" className="p-3">
+            <p className="mb-1 text-xs font-semibold">Hint {i + 1}</p>
+            <p className="text-sm">{hint}</p>
+          </Node>
+        ))}
 
-      {remaining > 0 ? (
+      {collapsed ? null : remaining > 0 ? (
         <div>
           <Button tone="surface" onClick={reveal}>
             {revealed === 0 ? 'Show a hint' : `Show hint ${revealed + 1}`}

@@ -76,38 +76,50 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #030713;
-    --surface: #0f172b;
-    --surface-muted: #1a2337;
+/**
+ * Dark theme.
+ *
+ * Applied by attribute rather than by media query, and set before paint by the
+ * inline script in layout.tsx (which reads the stored preference, falling back
+ * to the system setting).
+ *
+ * The alternative — a `prefers-color-scheme` block *plus* an attribute block —
+ * means writing every dark token twice and keeping the copies in step forever.
+ * Two blocks that drift apart both still pass a contrast check individually, so
+ * the drift would be invisible. One block cannot drift.
+ *
+ * The cost is that dark mode needs JavaScript. The whole product does.
+ */
+:root[data-theme='dark'] {
+  --background: #030713;
+  --surface: #0f172b;
+  --surface-muted: #1a2337;
 
-    --foreground: #f3f4f6;
-    --foreground-muted: #9ca3af;
+  --foreground: #f3f4f6;
+  --foreground-muted: #9ca3af;
 
-    --border: #334155;
-    --border-strong: #f3f4f6;
+  --border: #334155;
+  --border-strong: #f3f4f6;
 
-    /* The accent holds across themes: it is the identity, and black-on-yellow
-       already clears AA. */
-    --accent: #ffe599;
-    --accent-strong: #fdfd01;
-    --accent-foreground: #030713;
+  /* The accent holds across themes: it is the identity, and black-on-yellow
+     already clears AA. */
+  --accent: #ffe599;
+  --accent-strong: #fdfd01;
+  --accent-foreground: #030713;
 
-    --link: #93c5fd;
-    --alt: #a5b4fc;
-    --alt-foreground: #030713;
-    --danger: #fca5a5;
+  --link: #93c5fd;
+  --alt: #a5b4fc;
+  --alt-foreground: #030713;
+  --danger: #fca5a5;
 
-    --syntax-keyword: #c4b5fd;
-    --syntax-string: #86efac;
-    --syntax-number: #fcd34d;
-    --syntax-comment: #94a3b8;
-    --syntax-function: #93c5fd;
+  --syntax-keyword: #c4b5fd;
+  --syntax-string: #86efac;
+  --syntax-number: #fcd34d;
+  --syntax-comment: #94a3b8;
+  --syntax-function: #93c5fd;
 
-    /* Notice bar is deliberately unchanged: the yellow only clears AA on a dark
-       ground, so inverting it would fail contrast in light mode. */
-  }
+  /* Notice bar is deliberately unchanged: the yellow only clears AA on a dark
+     ground, so inverting it would fail contrast in light mode. */
 }
 
 @theme inline {

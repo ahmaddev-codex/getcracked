@@ -126,3 +126,38 @@ describe('progressive hints', () => {
     expect(screen.queryByText('first nudge')).not.toBeInTheDocument();
   });
 });
+
+describe('hiding hints', () => {
+  const HINTS = ['first nudge', 'second nudge'];
+
+  it('offers no hide control before anything is revealed', () => {
+    render(<Hints exerciseId="hide-1" hints={HINTS} />);
+    expect(screen.queryByRole('button', { name: /hide hints/i })).not.toBeInTheDocument();
+  });
+
+  it('hides revealed hints without forgetting them', async () => {
+    const user = userEvent.setup();
+    render(<Hints exerciseId="hide-2" hints={HINTS} />);
+
+    await user.click(screen.getByRole('button', { name: /show a hint/i }));
+    expect(screen.getByText('first nudge')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /hide hints/i }));
+    expect(screen.queryByText('first nudge')).not.toBeInTheDocument();
+
+    // Collapsing is presentational: the reveal is still recorded.
+    await user.click(screen.getByRole('button', { name: /show 1 opened/i }));
+    expect(screen.getByText('first nudge')).toBeInTheDocument();
+  });
+
+  it('does not offer another hint while collapsed', async () => {
+    const user = userEvent.setup();
+    render(<Hints exerciseId="hide-3" hints={HINTS} />);
+
+    await user.click(screen.getByRole('button', { name: /show a hint/i }));
+    await user.click(screen.getByRole('button', { name: /hide hints/i }));
+
+    // Revealing into a hidden panel would be a confusing no-op.
+    expect(screen.queryByRole('button', { name: /show hint 2/i })).not.toBeInTheDocument();
+  });
+});
