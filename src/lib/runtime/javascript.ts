@@ -1,4 +1,9 @@
-import { shouldInterruptAfterDeadline } from 'quickjs-emscripten';
+// From `quickjs-emscripten-core`, never `quickjs-emscripten`. The latter's
+// index re-exports all four wasmfile variants, and each runs environment
+// detection at module evaluation — which throws
+// "Classic web workers are not supported" inside a bundler-emitted classic
+// worker. One import of the convenience package undoes the singlefile loader.
+import { shouldInterruptAfterDeadline } from 'quickjs-emscripten-core';
 import { getQuickJS } from './quickjs';
 import { instrument } from './instrument';
 import { DEFAULT_MAX_EVENTS, type TraceEvent } from './trace';

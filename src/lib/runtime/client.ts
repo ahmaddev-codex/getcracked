@@ -39,8 +39,23 @@ const TERMINATE_GRACE_MS = 2_000;
 export interface WorkerLike {
   postMessage(message: unknown): void;
   terminate(): void;
-  addEventListener(type: 'message', listener: (event: MessageEvent) => void): void;
-  removeEventListener(type: 'message', listener: (event: MessageEvent) => void): void;
+  /**
+   * `error` matters as much as `message`.
+   *
+   * A worker can construct successfully and then die while evaluating its
+   * modules — a bundler emitting a classic worker for code that needs a module
+   * one, say. That failure surfaces only here: it is not a constructor throw and
+   * not a rejected postMessage, so without listening for it the run just hangs
+   * until the deadline.
+   */
+  addEventListener(
+    type: 'message' | 'error',
+    listener: (event: MessageEvent & { message?: string }) => void,
+  ): void;
+  removeEventListener(
+    type: 'message' | 'error',
+    listener: (event: MessageEvent & { message?: string }) => void,
+  ): void;
 }
 
 export type WorkerFactory = () => WorkerLike;
@@ -143,9 +158,21 @@ export class RuntimeClient {
     };
 
     return new Promise<SpecResult>((resolve, reject) => {
+      let settled = false;
       const cleanup = () => {
+        settled = true;
         worker.removeEventListener('message', onMessage);
+        worker.removeEventListener('error', onError);
         clearTimeout(killTimer);
+      };
+
+      /** The worker failed to start or crashed. Fall back rather than hang. */
+      const onError = () => {
+        if (settled) return;
+        cleanup();
+        this.workerUnavailable = true;
+        this.reset();
+        this.runInThread(opts).then(resolve, reject);
       };
 
       const onMessage = (event: MessageEvent) => {
@@ -164,6 +191,7 @@ export class RuntimeClient {
       }, timeoutMs + TERMINATE_GRACE_MS);
 
       worker.addEventListener('message', onMessage);
+      worker.addEventListener('error', onError);
       try {
         worker.postMessage(request);
       } catch {

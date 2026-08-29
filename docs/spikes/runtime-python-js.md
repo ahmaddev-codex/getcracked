@@ -190,6 +190,45 @@ Carry into later tasks:
 
 ---
 
+## 7a. Bug found in the browser: Pyodide must never be bundled
+
+Found only after the worker shipped, because **nothing in the test suite could
+catch it** — jsdom is not a classic worker, so all 406 tests passed while every
+walkthrough was broken in a real browser.
+
+`pyodide.mjs` runs environment detection at *module evaluation* and throws
+`Classic web workers are not supported` when it finds itself in a classic
+worker. Turbopack emits a classic worker in development regardless of
+`{ type: 'module' }`. Because `runner.worker.ts` reached Pyodide through a
+static import chain (`runner.worker` → `test-runner` → `python.ts` → `pyodide`),
+the module threw while the *worker script itself* was being evaluated: the
+worker died before receiving its first message, and JavaScript runs — which
+never touch Python — died with it.
+
+Making the import lazy fixed the worker but exposed a second, independent
+problem: Pyodide loads its own WASM loader through a computed `import()`, so a
+bundler that follows it fails with `Cannot find module as expression is too
+dynamic`. A lazy *bundled* import cannot work either.
+
+**Both are fixed by not bundling it.** The browser loads `pyodide.mjs` from the
+same `indexURL` its `.wasm` assets already come from, behind
+`/* turbopackIgnore: true */`; Node keeps using the npm package. The module is
+then fetched at first Python run instead of at worker startup, and the bundler
+never inspects it.
+
+Two consequences worth carrying forward:
+
+- **This is a constraint, not a workaround.** A future refactor that "tidies up"
+  the dynamic import back into a static one restores both failures, invisibly to
+  CI. `tests/runtime/imports.test.ts` guards the import shape for that reason —
+  it is the only test that can fail here.
+- It sharpens the self-hosting requirement already noted in §6: `indexURL` is now
+  load-bearing for *code*, not just assets, so a CDN outage stops Python
+  entirely.
+
+Verified in a real browser (Chromium, dev server, classic worker): JavaScript
+traced 12 events, Python traced 13, zero console errors.
+
 ## 8. Artifacts
 
 | Path | Purpose |

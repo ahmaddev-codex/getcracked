@@ -1,4 +1,4 @@
-import { loadPyodide, type PyodideInterface } from 'pyodide';
+import type { PyodideInterface } from 'pyodide';
 import { DEFAULT_MAX_EVENTS, type TraceEvent } from './trace';
 import type { RunOptions, RunResult } from './javascript';
 
@@ -35,11 +35,43 @@ function isNodeRuntime(): boolean {
   return typeof process !== 'undefined' && Boolean(process.versions?.node);
 }
 
-/** Cached across runs: reloading multi-MB WASM per run would be unusable. */
+/**
+ * Cached across runs: reloading multi-MB WASM per run would be unusable.
+ *
+ * **Two loading strategies, because the two environments genuinely differ.**
+ *
+ * In Node the npm package works directly: it resolves its own assets from
+ * `node_modules` and nothing bundles it.
+ *
+ * In the browser it must NOT be bundled. Two independent reasons:
+ *
+ * 1. `pyodide.mjs` runs environment detection at *module evaluation* and throws
+ *    "Classic web workers are not supported" when it finds itself in a classic
+ *    worker — which is what Turbopack emits in development regardless of
+ *    `{ type: 'module' }`. A static import therefore killed the worker as it was
+ *    being evaluated, taking every JavaScript run down with it.
+ * 2. Pyodide loads its own WASM loader through a computed `import()`. A bundler
+ *    that tries to follow that fails with "Cannot find module as expression is
+ *    too dynamic", so even a lazy bundled import cannot work.
+ *
+ * Loading the browser build straight from `indexURL` solves both: the module is
+ * fetched at first Python run rather than evaluated at worker startup, and the
+ * bundler never sees it, so its internal dynamic imports resolve against the
+ * same directory its `.wasm` assets already come from. The ignore comments are
+ * what keep the bundler out of it.
+ */
 export function getPyodide(): Promise<PyodideInterface> {
-  pyodidePromise ??= loadPyodide(
-    isNodeRuntime() ? undefined : { indexURL: BROWSER_INDEX_URL },
-  );
+  pyodidePromise ??= (async () => {
+    if (isNodeRuntime()) {
+      const mod = await import('pyodide');
+      return mod.loadPyodide();
+    }
+    const mod = (await import(
+      /* webpackIgnore: true */ /* turbopackIgnore: true */
+      `${BROWSER_INDEX_URL}pyodide.mjs`
+    )) as { loadPyodide: (o: { indexURL: string }) => Promise<PyodideInterface> };
+    return mod.loadPyodide({ indexURL: BROWSER_INDEX_URL });
+  })();
   return pyodidePromise;
 }
 

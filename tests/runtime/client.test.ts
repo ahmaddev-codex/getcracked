@@ -28,11 +28,18 @@ class FakeWorker implements WorkerLike {
   terminate() {
     this.terminated = true;
   }
-  addEventListener(_type: 'message', listener: (event: MessageEvent) => void) {
-    this.listeners.add(listener);
+  errorListeners = new Set<(event: MessageEvent) => void>();
+
+  addEventListener(type: 'message' | 'error', listener: (event: MessageEvent) => void) {
+    (type === 'error' ? this.errorListeners : this.listeners).add(listener);
   }
-  removeEventListener(_type: 'message', listener: (event: MessageEvent) => void) {
-    this.listeners.delete(listener);
+  removeEventListener(type: 'message' | 'error', listener: (event: MessageEvent) => void) {
+    (type === 'error' ? this.errorListeners : this.listeners).delete(listener);
+  }
+
+  /** Simulates the worker dying while evaluating its modules. */
+  fail() {
+    for (const l of [...this.errorListeners]) l({} as MessageEvent);
   }
 
   /** Simulates the worker replying. */
@@ -190,4 +197,51 @@ describe('RuntimeClient', () => {
     expect(worker.terminated).toBe(true);
     expect(client.isRunning).toBe(false);
   });
+});
+
+describe('worker that dies at module evaluation', () => {
+  it('falls back to running in-thread rather than hanging', async () => {
+    // The failure this exists for: the worker constructs fine, then throws while
+    // evaluating its imports. Not a constructor throw, not a rejected
+    // postMessage — without an error listener the run waits out the deadline.
+    const worker = new FakeWorker();
+    const client = new RuntimeClient(() => worker);
+
+    const promise = client.run({
+      spec: { entry: 'f', cases: [{ args: [], expected: 2, hidden: false }] },
+      source: 'function f() { return 2; }',
+      language: 'javascript',
+    });
+
+    worker.fail();
+
+    await expect(promise).resolves.toMatchObject({ passed: true });
+    expect(client.usingWorker).toBe(false);
+  }, 60_000);
+
+  it('routes later runs straight in-thread once a worker has failed', async () => {
+    let created = 0;
+    const worker = new FakeWorker();
+    const client = new RuntimeClient(() => {
+      created++;
+      return worker;
+    });
+
+    const first = client.run({
+      spec: { entry: 'f', cases: [{ args: [], expected: 1, hidden: false }] },
+      source: 'function f() { return 1; }',
+      language: 'javascript',
+    });
+    worker.fail();
+    await first;
+
+    await client.run({
+      spec: { entry: 'f', cases: [{ args: [], expected: 1, hidden: false }] },
+      source: 'function f() { return 1; }',
+      language: 'javascript',
+    });
+
+    // Retrying a worker known to be broken just costs another failure.
+    expect(created).toBe(1);
+  }, 60_000);
 });
