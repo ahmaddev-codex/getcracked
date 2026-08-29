@@ -98,6 +98,13 @@ export const problemSchema = runnableExerciseSchema.extend({
   difficulty: difficultySchema,
   /** Companies known to have asked a variant (B19). */
   companies: z.array(z.string()).default([]),
+  /**
+   * Lessons this problem reads best after (B16).
+   *
+   * Drives a suggestion and nothing else. There is no code path that turns this
+   * into a lock — see lib/recommendations.ts.
+   */
+  recommendedAfter: z.array(z.string()).default([]),
 });
 export type Problem = z.infer<typeof problemSchema>;
 

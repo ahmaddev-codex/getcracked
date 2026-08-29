@@ -4,8 +4,9 @@ import { Badge } from '@/components/ui/Badge';
 import { Node } from '@/components/ui/Node';
 import { Markdown } from '@/components/Markdown';
 import { Hints } from '@/components/problem/Hints';
+import { RecommendationBanner } from '@/components/problem/RecommendationBanner';
 import { Workspace } from '@/components/problem/Workspace';
-import { findProblem, getProblems, getSetPosition } from '@/content/registry';
+import { findLesson, findProblem, getProblems, getSetPosition } from '@/content/registry';
 import { exerciseId } from '@/content/schema';
 
 /**
@@ -77,6 +78,18 @@ export default async function ProblemPage(props: ProblemRouteProps) {
           ))}
         </div>
       </header>
+
+      {problem.recommendedAfter.length > 0 && (
+        <RecommendationBanner
+          recommendedAfter={problem.recommendedAfter}
+          lessonExerciseIds={Object.fromEntries(
+            problem.recommendedAfter.map((slug) => {
+              const lesson = findLesson(slug);
+              return [slug, lesson ? lesson.exercises.map((e) => exerciseId(lesson, e.slug)) : []];
+            }),
+          )}
+        />
+      )}
 
       <Markdown>{problem.brief}</Markdown>
 
