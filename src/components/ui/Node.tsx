@@ -23,7 +23,8 @@ const TONES: Record<NodeTone, string> = {
 export interface NodeProps {
   tone?: NodeTone;
   className?: string;
-  children: ReactNode;
+  /** Optional so the treatment can also be used for skeletons and spacers. */
+  children?: ReactNode;
 }
 
 export function nodeClasses(tone: NodeTone = 'surface', className = ''): string {

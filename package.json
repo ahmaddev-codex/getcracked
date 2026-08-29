@@ -22,11 +22,16 @@
     "prebuild": "pnpm content:check"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.11.0",
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/state": "^6.7.1",
+    "@codemirror/view": "^6.43.9",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.3",
     "acorn": "^8.18.0",
     "acorn-walk": "^8.3.5",
     "better-auth": "^1.7.2",
+    "codemirror": "^6.0.2",
     "drizzle-orm": "^0.45.2",
     "next": "16.3.3",
     "postgres": "^3.4.9",

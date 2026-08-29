@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Node } from '@/components/ui/Node';
 import { Markdown } from '@/components/Markdown';
 import { Hints } from '@/components/problem/Hints';
+import { Workspace } from '@/components/problem/Workspace';
 import { findProblem, getProblems, getSetPosition } from '@/content/registry';
 import { exerciseId } from '@/content/schema';
 
@@ -79,10 +80,12 @@ export default async function ProblemPage(props: ProblemRouteProps) {
 
       <Markdown>{problem.brief}</Markdown>
 
-      {/* T1.3 replaces this with the editor and test runner. */}
-      <Node tone="muted" className="p-4 text-sm text-foreground-muted">
-        The editor lands in the next step. For now this page is the brief and the hints.
-      </Node>
+      <Workspace
+        exerciseId={id}
+        language="javascript"
+        starterCode={problem.starterCode.javascript ?? ''}
+        spec={problem.testSpec}
+      />
 
       <Hints exerciseId={id} hints={problem.hints} />
 
