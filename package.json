@@ -17,7 +17,9 @@
     "services:up": "docker compose up -d --wait",
     "services:down": "docker compose down",
     "services:reset": "docker compose down -v && docker compose up -d --wait",
-    "db:setup": "pnpm services:up && pnpm db:migrate && pnpm db:seed"
+    "db:setup": "pnpm services:up && pnpm db:migrate && pnpm db:seed",
+    "content:check": "tsx scripts/check-content.ts",
+    "prebuild": "pnpm content:check"
   },
   "dependencies": {
     "@upstash/ratelimit": "^2.0.8",
@@ -31,7 +33,8 @@
     "pyodide": "^314.0.6",
     "quickjs-emscripten": "^0.32.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "zod": "^4.5.2"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
