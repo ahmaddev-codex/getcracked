@@ -31,16 +31,20 @@ export const progressStateEnum = pgEnum('progress_state', [
 ]);
 
 /**
- * Auth tables.
+ * Auth tables — reconciled against Better Auth v1.7.2 (T0.4).
  *
- * Shaped to Better Auth's documented core tables (ADR 0001 §4), but **not yet
- * reconciled against its generator** — T0.4 must run `better-auth generate` and
- * diff against these. Field names here follow Better Auth's conventions
- * deliberately so that reconciliation is a diff rather than a rewrite.
+ * Field names and constraints verified directly against
+ * `@better-auth/core/dist/db/get-tables.mjs` rather than documentation, because
+ * the docs page does not render its field tables.
+ *
+ * The adapter is configured with `usePlural: true`; snake_case columns are its
+ * default. So this keeps the plural, snake_case convention the app tables use
+ * instead of splitting the database across two naming styles.
  */
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
-  name: text('name'),
+  // Better Auth declares `name` required and always supplies it on sign-up.
+  name: text('name').notNull(),
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').notNull().default(false),
   image: text('image'),
@@ -133,10 +137,14 @@ export const submissions = pgTable(
 /**
  * Append-only analytics log (PRD F6).
  *
- * `userId` is nullable and set null on account deletion: mandatory sign-in
- * exists to make behaviour measurable (§2.6), and that measurement must survive
- * a single account being removed. Anonymising rather than cascading keeps the
- * aggregate honest without retaining the person.
+ * `userId` is nullable and set null on account deletion so aggregate history
+ * survives a single account being removed — anonymising rather than cascading
+ * keeps the aggregate honest without retaining the person.
+ *
+ * It is *also* nullable because signed-out tracking is a deliberate future
+ * option (F6 tier two). That tier is currently unbuilt: per the Open Question 7
+ * decision, **no event is written for a signed-out visitor at all** until a
+ * disclosure policy exists. The column shape does not commit us to collecting.
  */
 export const events = pgTable(
   'events',
@@ -152,6 +160,64 @@ export const events = pgTable(
     index('events_name_created_idx').on(t.name, t.createdAt),
     index('events_user_idx').on(t.userId),
   ],
+);
+
+/**
+ * One authentication method linked to a user (password, OAuth provider).
+ *
+ * `issuer` is Better Auth's namespace for the method — `local:credential` for
+ * passwords, `local:oauth:<provider>` otherwise — and it is unique with
+ * `accountId` so the same external identity cannot be linked twice.
+ */
+export const accounts = pgTable(
+  'accounts',
+  {
+    // `text`, not `uuid`: Better Auth mints its own opaque string ids
+    // (e.g. "Sm0p34PGMJV90YjX5C6TqCppBOFHhDnC") and a uuid column rejects them
+    // at insert. Same reason `users.id` and `sessions.id` are text.
+    id: text('id').primaryKey(),
+    issuer: text('issuer').notNull(),
+    accountId: text('account_id').notNull(),
+    providerId: text('provider_id').notNull(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    accessToken: text('access_token'),
+    refreshToken: text('refresh_token'),
+    idToken: text('id_token'),
+    accessTokenExpiresAt: timestamp('access_token_expires_at', { withTimezone: true }),
+    refreshTokenExpiresAt: timestamp('refresh_token_expires_at', { withTimezone: true }),
+    scope: text('scope'),
+    /** Password hash for credential accounts. Never returned to a client. */
+    password: text('password'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique('accounts_issuer_account_id_key').on(t.issuer, t.accountId),
+    index('accounts_user_id_idx').on(t.userId),
+  ],
+);
+
+/**
+ * Short-lived verification tokens (email confirmation, password reset).
+ *
+ * Deliberately not linked to `users`: a token may be issued for an address that
+ * has no account yet, so a foreign key here would reject the signup flow it
+ * exists to support.
+ */
+export const verifications = pgTable(
+  'verifications',
+  {
+    /** Text for the same reason as `accounts.id` — Better Auth supplies it. */
+    id: text('id').primaryKey(),
+    identifier: text('identifier').notNull(),
+    value: text('value').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('verifications_identifier_idx').on(t.identifier)],
 );
 
 export type User = typeof users.$inferSelect;

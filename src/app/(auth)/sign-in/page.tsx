@@ -1,0 +1,63 @@
+'use client';
+
+import { Suspense, useState } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn } from '@/lib/auth-client';
+
+function SignInForm() {
+  const router = useRouter();
+  const next = useSearchParams().get('next') ?? '/';
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    const data = new FormData(e.currentTarget);
+    const res = await signIn.email({
+      email: String(data.get('email')),
+      password: String(data.get('password')),
+    });
+    setBusy(false);
+    if (res.error) setError(res.error.message ?? 'Could not sign you in.');
+    else router.push(next);
+  }
+
+  return (
+    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 p-8">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
+        <p className="text-sm opacity-70">Pick up where you left off.</p>
+      </div>
+
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
+        <input name="email" type="email" placeholder="Email" required autoComplete="email" className="rounded border border-black/20 px-3 py-2 text-sm" />
+        <input name="password" type="password" placeholder="Password" required autoComplete="current-password" className="rounded border border-black/20 px-3 py-2 text-sm" />
+        <button disabled={busy} className="rounded border border-black bg-black px-3 py-2 text-sm text-white disabled:opacity-40">
+          {busy ? 'Signing in…' : 'Sign in'}
+        </button>
+      </form>
+
+      {error && <p className="text-sm text-red-600">{error}</p>}
+
+      <p className="text-sm">
+        No account? <Link href="/sign-up" className="underline">Create one</Link> — everything works signed out, too.
+      </p>
+    </main>
+  );
+}
+
+/**
+ * `useSearchParams` opts a component into client-side rendering, which fails
+ * prerendering without a boundary. The wrapper keeps the route statically
+ * renderable and the form streams in.
+ */
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<main className="p-8 text-sm">Loading…</main>}>
+      <SignInForm />
+    </Suspense>
+  );
+}

@@ -19,7 +19,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 - [x] **T0.1** — Next.js app skeleton and CI · *S* · deps: none
 - [x] **T0.2** — 🔥 SPIKE: Python + JavaScript in-browser execution and trace capture · *M* · deps: T0.1 — findings: [docs/spikes/runtime-python-js.md](../docs/spikes/runtime-python-js.md). **QuickJS cannot trace without AST rewriting → R-2 stays High.** Trace payload is O(n²) — T2.7 must fix.
 - [x] **T0.3** — Database schema and migrations · *M* · deps: T0.1 — Drizzle + Neon per [ADR 0001 §3](../docs/adr/0001-stack.md). Tests run on embedded PGlite. ✅ verified end-to-end against local Docker Postgres (migrate + seed twice, idempotent). ⚠️ auth tables still need reconciling against Better Auth's generator in T0.4.
-- [ ] **T0.4** — Auth for account-scoped data + reconcile Better Auth tables (A2, A15, §2.6) · *M* · deps: T0.3
+- [x] **T0.4** — Auth for account-scoped data + reconcile Better Auth tables (A2, A15, §2.6) · *M* · deps: T0.3 — Better Auth on our schema, verified end-to-end. ⚠️ A15 anonymous-progress migration is **not** built (needs local progress from T1.4 to migrate)
 - [ ] **T0.5** — Analytics event pipeline (F6) · *S* · deps: T0.3, T0.4
 - [ ] **T0.7** — 🎨 Design system: tokens sampled from the reference, node treatment, core components, CI contrast check (K1, K3, K8, K10) · *M* · deps: T0.1
 - [ ] ~~**T0.6** — SPIKE: Java execution strategy~~ · **suspended** — first task of Phase 9; nothing depends on it
