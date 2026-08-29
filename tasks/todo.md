@@ -16,7 +16,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 
 ## Phase 0 — Foundation, Design System & Risk Spikes
 
-- [ ] **T0.1** — Next.js app skeleton and CI · *S* · deps: none
+- [x] **T0.1** — Next.js app skeleton and CI · *S* · deps: none
 - [ ] **T0.2** — 🔥 SPIKE: Python + JavaScript in-browser execution and trace capture · *M* · deps: T0.1
 - [ ] **T0.3** — Database schema and migrations · *M* · deps: T0.1
 - [ ] **T0.4** — Auth hard gate (A2, §2.6) · *M* · deps: T0.3
@@ -162,7 +162,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 
 Every task clears this bar in addition to its own acceptance criteria:
 
-- [ ] `npm run build` · `npm run lint` · `npm run typecheck` · `npm run test` all pass
+- [ ] `pnpm build` · `pnpm lint` · `pnpm typecheck` · `pnpm test` all pass
 - [ ] New behavior has tests; changed behavior has updated tests
 - [ ] Every new route is behind the auth gate unless deliberately added to the public allowlist (§2.6)
 - [ ] **No route locks content behind progress** — prerequisites recommend, never restrict (§6.6, B16)

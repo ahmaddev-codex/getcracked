@@ -212,13 +212,13 @@ Highest-risk work first. If T0.2/T0.6 fail, the entire product architecture chan
 **Description:** Initialize the single fullstack Next.js application (App Router, TypeScript, strict mode) with formatting, linting, **Vitest** for unit tests, **Playwright** for end-to-end, and a CI workflow that runs all of it on every push. Establishes the commands every later task's verification step refers to.
 
 **Acceptance criteria:**
-- [ ] `npm run dev` serves an app shell at `/` with no console errors
-- [ ] `npm run build`, `npm run lint`, `npm run test`, and `npm run typecheck` all exit 0
+- [ ] `pnpm dev` serves an app shell at `/` with no console errors
+- [ ] `pnpm build`, `pnpm lint`, `pnpm test`, and `pnpm typecheck` all exit 0
 - [ ] CI runs build + lint + typecheck + test on push and blocks merge on failure
 
 **Verification:**
-- [ ] Build succeeds: `npm run build`
-- [ ] Tests pass: `npm run test`
+- [ ] Build succeeds: `pnpm build`
+- [ ] Tests pass: `pnpm test`
 - [ ] Manual check: CI shows green on a trivial PR
 
 **Dependencies:** None
@@ -343,7 +343,7 @@ The obligation that survives suspension is architectural, not scheduled: **T2.3'
 
 ### ✅ Checkpoint A — Foundation
 
-- [ ] All tests pass; `npm run build` clean; CI green
+- [ ] All tests pass; `pnpm build` clean; CI green
 - [ ] A user can sign up, sign in, and reach a protected empty dashboard; signed-out access is denied
 - [ ] The T0.2 spike document is written, with a **decision recorded** on the Python and JavaScript runtimes
 - [ ] Design tokens sampled and recorded; component gallery renders in both themes; **zero WCAG AA contrast failures in CI**
@@ -361,7 +361,7 @@ The goal is one learner solving one real problem — signed in, code written, te
 
 **Acceptance criteria:**
 - [ ] `RunnableExercise` is defined once and reused by all three tier wrappers — no tier redefines starter code, hints, or test-spec shape
-- [ ] Content is typed and validated at build time; a malformed exercise fails `npm run build` with a message naming the file and field
+- [ ] Content is typed and validated at build time; a malformed exercise fails `pnpm build` with a message naming the file and field
 - [ ] One problem (`two-sum`, topic `hashing`) is authored with brief, ≥2 progressive hints, starter code, and reference solution
 - [ ] The test spec compiles to a runnable suite for the Phase 1 language; the reference solution passes every case and the starter stub fails
 - [ ] **Content is loaded through a build-time generated index and `import()`ed by slug, never statically imported en masse** ([ADR 0001 §8](../docs/adr/0001-stack.md#decision-8--content-as-code-needs-a-generated-index)). With several hundred problems ahead (AD-3), static imports make builds slow and risk bundling the whole catalog into a client chunk — the index costs little now and cannot be retrofitted cheaply
