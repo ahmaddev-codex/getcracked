@@ -39,7 +39,13 @@ Checked and ruled out:
 
 **Conclusion:** there is no route to `sys.settrace`-equivalent events from QuickJS without rewriting the learner's source. `src/lib/runtime/instrument.ts` does that rewriting: it parses with acorn and inserts a `__t(line, vars)` call before each statement in the entry function, tracking a scope stack so a trace call only references bindings that are actually live (referencing a sibling block's `let`, or one before its declaration, would throw a ReferenceError or hit the TDZ and break the learner's program rather than observe it).
 
-**R-2 stays High.** The mitigation stands: the protocol is proven on both languages, and animation can ship Python-deep first if JS instrumentation proves fragile on real learner code.
+**R-2 stayed High on this finding — and was then engineered down to Low (2026-08-29).** Rewriting is unavoidable, but its risk was not. Three guarantees now sit on top of it, each asserted in `tests/runtime/instrument.test.ts`:
+
+1. **Coverage.** A generic recursive walk visits every statement-bearing position rather than an enumerated subset, so `try`/`catch`/`finally`, `switch`, labeled statements, nested functions, and concise arrow bodies are all traced.
+2. **Correctness — the load-bearing one.** Every traced run is validated against an untraced run of the same source. If they disagree on the returned value or on whether it threw, the *untraced* result is authoritative and the trace is discarded. Instrumentation therefore cannot mark a correct solution wrong; it can only fail to animate. The second execution costs one warm QuickJS run (0.7 ms).
+3. **Degradation.** Structure events come from a `Proxy` on the arguments and need no rewriting, so when the entry cannot be instrumented the run still animates array access and is flagged `traceDegraded`.
+
+What remains is reduced fidelity on unusual syntax, not a broken feature or a wrong answer.
 
 ### What this costs
 
@@ -47,7 +53,7 @@ Rewriting learner source has consequences the plan should carry forward:
 
 - **Line numbers must survive the rewrite.** Insertions are applied back-to-front and never add lines, so reported line numbers still match what the learner sees. Any future multi-line insertion breaks this silently.
 - **Syntax errors surface from acorn, not QuickJS**, so error messages for un-parseable code will differ between traced and untraced runs unless normalised.
-- **Coverage is bounded by the instrumenter.** It currently handles blocks, `for`, `for-in`/`for-of`, `while`, `do-while`, and `if`. Anything else (`try`/`catch`, `switch`, closures, arrow-function bodies) is executed but not traced. This is a spike-level subset, not a finished implementation.
+- ~~**Coverage is bounded by the instrumenter.**~~ **Resolved 2026-08-29.** The hand-rolled visitor was replaced with a generic recursive walk plus proper lexical scope tracking (function/block/loop-head/catch scopes, TDZ-aware). Every statement form acorn can parse is now traced.
 
 Python needs none of this. `sys.settrace` reports every line with the live frame, straight from the interpreter.
 

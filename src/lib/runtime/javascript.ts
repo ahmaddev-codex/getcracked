@@ -20,6 +20,14 @@ export interface RunResult {
   timedOut: boolean;
   events: TraceEvent[];
   truncated: boolean;
+  /**
+   * True when line-level tracing was unavailable or discarded, so the trace
+   * carries structure events only.
+   *
+   * Reduced fidelity is an acceptable outcome; a wrong answer is not. See the
+   * R-2 mitigation in instrument.ts.
+   */
+  traceDegraded: boolean;
 }
 
 const DEFAULT_TIMEOUT_MS = 5_000;
@@ -115,16 +123,25 @@ function entryParamNames(source: string, entry: string): string[] {
     .filter(Boolean);
 }
 
-export async function runJavaScript(opts: RunOptions): Promise<RunResult> {
+/**
+ * Runs the learner's code once, exactly as given.
+ *
+ * Split out so a traced run can be validated against an untraced one without
+ * duplicating the QuickJS setup, disposal, and error handling.
+ */
+async function executeOnce(
+  opts: RunOptions,
+  useTrace: boolean,
+): Promise<RunResult> {
   const {
     source,
     entry,
     args,
-    trace = false,
     timeoutMs = DEFAULT_TIMEOUT_MS,
     maxEvents = DEFAULT_MAX_EVENTS,
   } = opts;
 
+  const trace = useTrace;
   const QuickJS = await getQuickJS();
   const runtime = QuickJS.newRuntime();
   const vm = runtime.newContext();
@@ -133,12 +150,23 @@ export async function runJavaScript(opts: RunOptions): Promise<RunResult> {
   // is, only whether it should stop — which is why tracing needs instrument().
   runtime.setInterruptHandler(shouldInterruptAfterDeadline(Date.now() + timeoutMs));
 
-  const empty: RunResult = { ok: false, timedOut: false, events: [], truncated: false };
+  const empty: RunResult = {
+    ok: false,
+    timedOut: false,
+    events: [],
+    truncated: false,
+    traceDegraded: false,
+  };
 
   try {
-    const userCode = trace ? instrument(source, entry) : source;
+    // Instrumentation can fail to locate the entry (a function expression, say).
+    // That is not fatal: structure events come from a Proxy on the arguments and
+    // need no rewriting, so the run proceeds with reduced fidelity.
+    const rewritten = trace ? instrument(source, entry) : { code: source, instrumented: false };
+    const degraded = trace && !rewritten.instrumented;
+
     const argNames = entryParamNames(source, entry);
-    const program = `${userCode}\n${harness(entry, argNames, maxEvents, trace)}`;
+    const program = `${rewritten.code}\n${harness(entry, argNames, maxEvents, trace)}`;
 
     const setup = vm.evalCode(program);
     if (setup.error) {
@@ -178,6 +206,7 @@ export async function runJavaScript(opts: RunOptions): Promise<RunResult> {
       timedOut: false,
       events,
       truncated: payload.dropped > 0,
+      traceDegraded: degraded,
     };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
@@ -207,4 +236,41 @@ function formatError(err: unknown): string {
     }
   }
   return String(err);
+}
+
+/**
+ * Runs learner code, optionally with tracing.
+ *
+ * **The correctness guarantee (R-2).** Tracing means rewriting the learner's
+ * source, and rewritten code that behaves differently from what they wrote would
+ * be worse than no tracing at all — it would mark a correct solution wrong.
+ *
+ * So a traced run is validated against an untraced one. If the two disagree on
+ * the returned value or on whether it threw, the *untraced* result is
+ * authoritative and the trace is discarded as unsound. Instrumentation can
+ * therefore never change a learner's outcome; the worst it can do is fail to
+ * animate.
+ *
+ * The second execution costs a warm QuickJS run — measured at 0.7ms in T0.2 —
+ * which is a small price for the guarantee. Untraced runs skip it entirely.
+ */
+export async function runJavaScript(opts: RunOptions): Promise<RunResult> {
+  const wantsTrace = opts.trace ?? false;
+  const traced = await executeOnce(opts, wantsTrace);
+
+  if (!wantsTrace || traced.timedOut) return traced;
+
+  const plain = await executeOnce({ ...opts, trace: false }, false);
+
+  const sameOutcome =
+    traced.ok === plain.ok && JSON.stringify(traced.value) === JSON.stringify(plain.value);
+
+  if (sameOutcome) return traced;
+
+  // Instrumentation altered behaviour. Report what the learner's own code does.
+  return {
+    ...plain,
+    events: traced.events.filter((e) => e.kind !== 'line'),
+    traceDegraded: true,
+  };
 }

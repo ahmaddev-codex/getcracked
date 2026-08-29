@@ -93,6 +93,7 @@ export default function RuntimeSpikePage() {
           timedOut: false,
           events: [],
           truncated: false,
+          traceDegraded: false,
           error: e instanceof Error ? e.message : String(e),
           elapsedMs: performance.now() - started,
           label,

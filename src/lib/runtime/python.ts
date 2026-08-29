@@ -146,7 +146,15 @@ export async function runPython(opts: RunOptions): Promise<RunResult> {
     maxEvents = DEFAULT_MAX_EVENTS,
   } = opts;
 
-  const empty: RunResult = { ok: false, timedOut: false, events: [], truncated: false };
+  // Python never degrades: sys.settrace reports lines straight from the
+  // interpreter, so there is no source rewriting that could fail.
+  const empty: RunResult = {
+    ok: false,
+    timedOut: false,
+    events: [],
+    truncated: false,
+    traceDegraded: false,
+  };
 
   let py: PyodideInterface;
   try {
@@ -180,6 +188,7 @@ export async function runPython(opts: RunOptions): Promise<RunResult> {
       timedOut: false,
       events,
       truncated: payload.dropped > 0,
+      traceDegraded: false,
     };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
