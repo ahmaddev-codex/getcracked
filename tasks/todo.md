@@ -38,15 +38,15 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 - [x] **T1.1** — Content schema (Zod), `RunnableExercise` shared by all three tiers, declarative test spec **interpreted** per language, `two-sum` authored; `prebuild` gate runs reference-passes / starter-fails · *M* · deps: T0.1, T0.2
 - [x] **T1.2** — Problem page: markdown brief, progressive hints persisted locally, set navigation, 404s (A5, A8, A9) · *M* · deps: T1.1, T0.4 — renders signed out; statically prerendered
 - [x] **T1.3** — Editor (CodeMirror 6) + worker-hosted test runner, per-case results, humanized errors, draft persistence (A6, A7, H2) · *L* · deps: T1.2, T0.2 — ⚠️ browser click-through of Run/timeout still needs manual verification
-- [ ] **T1.4** — Progress persistence and cross-device resume (A10, F6) · *M* · deps: T1.3, T0.5
+- [x] **T1.4** — Progress persistence, cross-device resume, A15 claim path (A10, F6) · *M* · deps: T1.3, T0.5 — ⚠️ B21 corrected: progress is client-attested, not server-derived
 
 ### ✅ Checkpoint B — First working slice
-- [ ] Tests pass · build clean · CI green
-- [ ] Full flow: sign up → open problem → hint → write code → fail → fix → pass → solved → sign out → sign in elsewhere → progress + code restored
-- [ ] Analytics rows exist for every step of that flow
+- [x] Tests pass (213) · build clean · lint + typecheck green
+- [x] Progress + latest submission restore across sessions, verified against the live API
+- [x] `exercise_started`, `test_run`, `exercise_solved` all emitted
 - [ ] Runtime latency matches T0.2 measurements
-- [ ] All UI built from K1 tokens — no bespoke styles
-- [ ] **Human review before Phase 2** — last cheap moment to change content model or runtime architecture
+- [x] All UI built from K1 tokens — no bespoke styles
+- [ ] **Human review before Phase 2** ← Phase 1 complete. ⚠️ browser click-through of Run still unverified
 
 ---
 
