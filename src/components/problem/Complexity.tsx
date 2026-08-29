@@ -16,6 +16,11 @@ import type { RuntimeMetrics } from '@/lib/runtime/measure';
  *
  * The measured numbers are what make the target concrete — a learner who sees
  * 100 array reads for 100 elements has seen linearity, rather than been told it.
+ *
+ * Both panels use the bright accent. Complexity is the payoff of solving the
+ * problem rather than incidental detail, so it is given the loudest surface in
+ * the palette. Black-on-bright-yellow is contrast-checked in CI like every other
+ * pair.
  */
 
 function formatBytes(bytes: number): string {
@@ -50,7 +55,7 @@ export function Complexity({
       <h2 className="text-sm font-semibold">Complexity</h2>
 
       {target && (
-        <Node tone="accent" className="p-3">
+        <Node tone="strong" className="p-3">
           <dl className="flex flex-wrap gap-x-8 gap-y-2">
             <Stat label="target time" value={target.time} />
             <Stat label="target space" value={target.space} />
@@ -60,7 +65,7 @@ export function Complexity({
       )}
 
       {metrics && (
-        <Node tone="surface" className="p-3">
+        <Node tone="strong" className="p-3">
           <p className="mb-2 text-xs text-foreground-muted">
             Measured on the largest test case
             {inputSize !== undefined && ` (${inputSize} elements)`} — one run, not a proof.
