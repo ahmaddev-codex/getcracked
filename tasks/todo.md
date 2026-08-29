@@ -61,7 +61,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 
 **Track B — catalog and IA**
 - [x] **T2.4** — Dashboard, three-tier navigation, URL-persisted difficulty/topic filters (A3, A4) · *M* · deps: T1.4
-- [ ] **T2.5** — Concept map moved to `/learn/system-design` + 301 redirect (A14) · *M* · deps: T1.1, T0.4
+- [x] **T2.5** — `/learn` hub + concept map at `/learn/system-design` with deep-linkable anchors and 308 redirect (A14) · *M* · deps: T1.1, T0.4 — ⚠️ **58 of the PRD's 129 concepts authored**; remainder is content backlog
 
 **Track C — second language and animation** *(risk-critical)*
 - [ ] **T2.6** — Second launch language behind the adapter + stub third-language conformance (H1, A6) · *M* · deps: T1.3
