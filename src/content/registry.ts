@@ -47,3 +47,37 @@ export function getAllContent(): readonly Content[] {
 export function findProblem(topic: string, slug: string): Problem | undefined {
   return getProblems().find((p) => p.topic === topic && p.slug === slug);
 }
+
+const DIFFICULTY_ORDER = ['warm-up', 'core', 'stretch'] as const;
+
+/**
+ * A topic's problems in the order a learner should meet them (B17).
+ *
+ * Warm-up first so the problem straight after a lesson is deliberately gentle
+ * and reinforces the pattern just taught.
+ */
+export function getProblemSet(topic: string): readonly Problem[] {
+  return getProblems()
+    .filter((p) => p.topic === topic)
+    .sort(
+      (a, b) =>
+        DIFFICULTY_ORDER.indexOf(a.difficulty) - DIFFICULTY_ORDER.indexOf(b.difficulty) ||
+        a.slug.localeCompare(b.slug),
+    );
+}
+
+/** Where a problem sits in its set, plus its neighbours, for navigation. */
+export function getSetPosition(problem: Problem) {
+  const set = getProblemSet(problem.topic);
+  const index = set.findIndex((p) => p.slug === problem.slug);
+  return {
+    index,
+    total: set.length,
+    previous: index > 0 ? set[index - 1] : undefined,
+    next: index >= 0 && index < set.length - 1 ? set[index + 1] : undefined,
+  };
+}
+
+export function getTopics(): readonly string[] {
+  return [...new Set(getProblems().map((p) => p.topic))].sort();
+}

@@ -36,7 +36,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 ## Phase 1 — First Vertical Slice (one problem, end to end)
 
 - [x] **T1.1** — Content schema (Zod), `RunnableExercise` shared by all three tiers, declarative test spec **interpreted** per language, `two-sum` authored; `prebuild` gate runs reference-passes / starter-fails · *M* · deps: T0.1, T0.2
-- [ ] **T1.2** — Problem page: brief, progressive hints, navigation (A5, A8, A9) · *M* · deps: T1.1, T0.4
+- [x] **T1.2** — Problem page: markdown brief, progressive hints persisted locally, set navigation, 404s (A5, A8, A9) · *M* · deps: T1.1, T0.4 — renders signed out; statically prerendered
 - [ ] **T1.3** — Editor + test runner integration (A6, A7, H2) · *L, split if needed* · deps: T1.2, T0.2
 - [ ] **T1.4** — Progress persistence and cross-device resume (A10, F6) · *M* · deps: T1.3, T0.5
 
