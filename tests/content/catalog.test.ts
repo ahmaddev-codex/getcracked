@@ -1,0 +1,64 @@
+import { describe, expect, it } from 'vitest';
+import { DIFFICULTIES, catalogCounts, filterProblems } from '@/lib/catalog';
+import { getProblems, getTopics } from '@/content/registry';
+
+/** Catalog filtering (A4). Pure over content — no session, no progress. */
+
+describe('filtering', () => {
+  it('returns everything with no filter', () => {
+    expect(filterProblems({}).length).toBe(getProblems().length);
+  });
+
+  it('filters by difficulty', () => {
+    const out = filterProblems({ difficulty: 'warm-up' });
+    expect(out.every((p) => p.difficulty === 'warm-up')).toBe(true);
+  });
+
+  it('filters by topic', () => {
+    const out = filterProblems({ topic: 'hashing' });
+    expect(out.every((p) => p.topic === 'hashing')).toBe(true);
+    expect(out.length).toBeGreaterThan(0);
+  });
+
+  it('combines filters rather than treating them as alternatives', () => {
+    const out = filterProblems({ topic: 'hashing', difficulty: 'warm-up' });
+    expect(out.every((p) => p.topic === 'hashing' && p.difficulty === 'warm-up')).toBe(true);
+  });
+
+  it('returns empty rather than throwing for an unknown value', () => {
+    // Filters come from the URL, so any string can arrive.
+    expect(filterProblems({ topic: 'not-a-topic' })).toHaveLength(0);
+    expect(filterProblems({ difficulty: 'impossible' })).toHaveLength(0);
+  });
+
+  it('returns empty for a valid pair that matches nothing', () => {
+    expect(filterProblems({ topic: 'hashing', difficulty: 'stretch' })).toHaveLength(0);
+  });
+});
+
+describe('counts', () => {
+  it('derives from content rather than being hardcoded', () => {
+    const counts = catalogCounts();
+    expect(counts.problems).toBe(getProblems().length);
+  });
+
+  it('reports unbuilt tiers as zero rather than omitting them', () => {
+    // Showing the shape of the product honestly beats hiding what is missing.
+    expect(catalogCounts().challenges).toBe(0);
+  });
+});
+
+describe('filter vocabulary', () => {
+  it('offers every difficulty the content actually uses', () => {
+    for (const problem of getProblems()) {
+      expect(DIFFICULTIES).toContain(problem.difficulty);
+    }
+  });
+
+  it('offers every topic the content actually uses', () => {
+    const topics = getTopics();
+    for (const problem of getProblems()) {
+      expect(topics).toContain(problem.topic);
+    }
+  });
+});

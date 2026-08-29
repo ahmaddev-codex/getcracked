@@ -60,7 +60,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 - [x] **T2.3** — `/problems` + per-topic sets, recommendation engine with struggle-nudge and remembered dismissals — no locks anywhere (B13, B15–B18, B21) · *M* · deps: T2.2
 
 **Track B — catalog and IA**
-- [ ] **T2.4** — Dashboard, three-tier navigation, difficulty/topic filters (A3, A4) · *M* · deps: T1.4
+- [x] **T2.4** — Dashboard, three-tier navigation, URL-persisted difficulty/topic filters (A3, A4) · *M* · deps: T1.4
 - [ ] **T2.5** — Concept map moved to `/learn/system-design` + 301 redirect (A14) · *M* · deps: T1.1, T0.4
 
 **Track C — second language and animation** *(risk-critical)*
