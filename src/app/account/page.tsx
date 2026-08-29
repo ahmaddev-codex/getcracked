@@ -14,7 +14,7 @@ export default async function AccountPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-8">
       <h1 className="text-2xl font-semibold tracking-tight">Your account</h1>
-      <p className="text-sm">Signed in as {session.user.email}</p>
+      <p className="text-sm text-foreground-muted">Signed in as {session.user.email}</p>
     </main>
   );
 }

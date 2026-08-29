@@ -21,15 +21,15 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 - [x] **T0.3** — Database schema and migrations · *M* · deps: T0.1 — Drizzle + Neon per [ADR 0001 §3](../docs/adr/0001-stack.md). Tests run on embedded PGlite. ✅ verified end-to-end against local Docker Postgres (migrate + seed twice, idempotent). ⚠️ auth tables still need reconciling against Better Auth's generator in T0.4.
 - [x] **T0.4** — Auth for account-scoped data + reconcile Better Auth tables (A2, A15, §2.6) · *M* · deps: T0.3 — Better Auth on our schema, verified end-to-end. ⚠️ A15 anonymous-progress migration is **not** built (needs local progress from T1.4 to migrate)
 - [x] **T0.5** — Analytics event pipeline, **both tiers** (F6, A16) · *S* · deps: T0.3, T0.4 — signed-in by account, signed-out by rotating device id, with the A16 notice as the disclosure surface. ⚠️ `/api/events` is a public write endpoint with no rate limiting yet — needs Upstash before public launch
-- [ ] **T0.7** — 🎨 Design system: tokens sampled from the reference, node treatment, core components, CI contrast check (K1, K3, K8, K10) · *M* · deps: T0.1
+- [x] **T0.7** — 🎨 Design system: tokens **sampled by decoding the `shots/` screenshots**, K3 node treatment, 5 components, CI contrast check over 15 pairs × 2 themes, ESLint rule banning hardcoded values (K1, K3, K8, K9, K10) · *M* · deps: T0.1
 - [ ] ~~**T0.6** — SPIKE: Java execution strategy~~ · **suspended** — first task of Phase 9; nothing depends on it
 
 ### ✅ Checkpoint A — Foundation
-- [ ] Tests pass · build clean · CI green
-- [ ] Sign up → sign in → account page reachable; **and content routes reachable signed out** — both asserted
-- [ ] T0.2 spike doc written and **runtime decision recorded**
-- [ ] Design tokens sampled and dated; component gallery renders in both themes; **zero WCAG AA contrast failures in CI**
-- [ ] **Human review before Phase 1**
+- [x] Tests pass (122) · build clean · lint + typecheck green
+- [x] Sign up → sign in → account page reachable; **and content routes reachable signed out** — both asserted
+- [x] T0.2 spike doc written and **runtime decision recorded** — see [docs/spikes/runtime-python-js.md](../docs/spikes/runtime-python-js.md)
+- [x] Design tokens sampled and dated; component gallery at `/components`; **zero WCAG AA contrast failures in CI**
+- [ ] **Human review before Phase 1** ← Phase 0 complete, awaiting sign-off
 
 ---
 

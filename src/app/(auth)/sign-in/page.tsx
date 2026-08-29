@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/Button';
 import { signIn } from '@/lib/auth-client';
 
 function SignInForm() {
@@ -33,17 +34,17 @@ function SignInForm() {
       </div>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <input name="email" type="email" placeholder="Email" required autoComplete="email" className="rounded border border-black/20 px-3 py-2 text-sm" />
-        <input name="password" type="password" placeholder="Password" required autoComplete="current-password" className="rounded border border-black/20 px-3 py-2 text-sm" />
-        <button disabled={busy} className="rounded border border-black bg-black px-3 py-2 text-sm text-white disabled:opacity-40">
+        <input name="email" type="email" placeholder="Email" required autoComplete="email" className="node-surface bg-surface px-3 py-2 text-sm text-foreground" />
+        <input name="password" type="password" placeholder="Password" required autoComplete="current-password" className="node-surface bg-surface px-3 py-2 text-sm text-foreground" />
+        <Button type="submit" disabled={busy} className="w-full justify-center">
           {busy ? 'Signing in…' : 'Sign in'}
-        </button>
+        </Button>
       </form>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       <p className="text-sm">
-        No account? <Link href="/sign-up" className="underline">Create one</Link> — everything works signed out, too.
+        No account? <Link href="/sign-up" className="text-link underline">Create one</Link> — everything works signed out, too.
       </p>
     </main>
   );

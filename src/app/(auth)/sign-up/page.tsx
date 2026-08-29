@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/Button';
 import { signUp } from '@/lib/auth-client';
 import { PrivacyNotice } from '../PrivacyNotice';
 
@@ -37,20 +38,20 @@ function SignUpForm() {
       </div>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <input name="name" placeholder="Name" required className="rounded border border-black/20 px-3 py-2 text-sm" />
-        <input name="email" type="email" placeholder="Email" required autoComplete="email" className="rounded border border-black/20 px-3 py-2 text-sm" />
-        <input name="password" type="password" placeholder="Password" required minLength={8} autoComplete="new-password" className="rounded border border-black/20 px-3 py-2 text-sm" />
-        <button disabled={busy} className="rounded border border-black bg-black px-3 py-2 text-sm text-white disabled:opacity-40">
+        <input name="name" placeholder="Name" required className="node-surface bg-surface px-3 py-2 text-sm text-foreground" />
+        <input name="email" type="email" placeholder="Email" required autoComplete="email" className="node-surface bg-surface px-3 py-2 text-sm text-foreground" />
+        <input name="password" type="password" placeholder="Password" required minLength={8} autoComplete="new-password" className="node-surface bg-surface px-3 py-2 text-sm text-foreground" />
+        <Button type="submit" disabled={busy} className="w-full justify-center">
           {busy ? 'Creating…' : 'Create account'}
-        </button>
+        </Button>
       </form>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       <PrivacyNotice />
 
       <p className="text-sm">
-        Already have one? <Link href="/sign-in" className="underline">Sign in</Link>
+        Already have one? <Link href="/sign-in" className="text-link underline">Sign in</Link>
       </p>
     </main>
   );

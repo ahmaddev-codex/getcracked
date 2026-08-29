@@ -83,7 +83,7 @@ export function SignedOutNotice() {
       <span>
         You&apos;re browsing signed out — your progress is saved on this device only, and
         we record anonymous usage to see which lessons work.{' '}
-        <Link href="/sign-up" className="underline">
+        <Link href="/sign-up" className="underline underline-offset-2">
           Sign in
         </Link>{' '}
         to keep your progress across devices.

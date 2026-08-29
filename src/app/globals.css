@@ -1,21 +1,123 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/**
+ * Design tokens — the only source of visual values (Module K, AD-8).
+ *
+ * Tailwind v4's `@theme` IS the token layer (ADR 0001 §6), so this file is the
+ * single source of truth. Nothing here is duplicated in TypeScript;
+ * `lib/design/tokens.ts` parses these values rather than restating them, which
+ * is what stops the two from drifting.
+ *
+ * ── Provenance ──────────────────────────────────────────────────────────────
+ * Light-theme colours were SAMPLED on 2026-08-29 from roadmap.sh, by decoding
+ * the reference screenshots in `shots/` and reading pixel values — not chosen
+ * by eye. Frequency across the page is noted where it explains the role.
+ *
+ * The dark theme is DERIVED, not sampled: the reference ships light only. Every
+ * derived pair is contrast-checked in CI exactly like the sampled ones.
+ *
+ * Module K reproduces the reference's design *language* as our own
+ * implementation. None of roadmap.sh's assets, content, or markup is used — its
+ * repository is all-rights-reserved (see PRD J3).
+ */
 
-  /* Notice bar (A16). Dark in both themes on purpose: the yellow only clears
-     WCAG AA against a dark ground, and a bar that inverts with the theme would
-     fail contrast in light mode. Measured 11.38:1 — AA and AAA for body text. */
+:root {
+  /* ── Surfaces ─────────────────────────────────────────────────────────── */
+  --background: #f9fafc;        /* sampled, 49.8% of the page — the ground */
+  --surface: #ffffff;           /* sampled, 16.5% — cards and nodes */
+  --surface-muted: #f3f4f6;     /* sampled, 10.8% — secondary panels */
+
+  /* ── Ink ──────────────────────────────────────────────────────────────── */
+  --foreground: #030713;        /* sampled, 7.2% — body text and dark chrome */
+  --foreground-muted: #4b5563;  /* derived: secondary text that still clears AA */
+
+  /* ── Lines ────────────────────────────────────────────────────────────── */
+  --border: #d1d5db;            /* sampled — panel and card edges */
+  --border-strong: #030713;     /* sampled — the node outline (K3) */
+
+  /* ── Accent ───────────────────────────────────────────────────────────── */
+  --accent: #ffe599;            /* sampled, 5.2% — the signature node fill */
+  --accent-strong: #fdfd01;     /* sampled, 2.4% — emphasis nodes */
+  --accent-foreground: #030713; /* black on yellow, as the reference does */
+
+  /* ── Supporting hues ──────────────────────────────────────────────────── */
+  --link: #1d4ed8;              /* derived from the sampled #2A79E4 connector
+                                   blue, darkened to clear AA on --background */
+  --alt: #4136d6;               /* sampled — alternate/indigo nodes */
+  --alt-foreground: #ffffff;
+  --danger: #b91c1c;            /* derived — form and run errors */
+
+  /* ── Notice bar (A16) ─────────────────────────────────────────────────── */
+  /* #0F172B, which also appears in the sampled reference palette. */
   --notice-background: oklch(20.8% 0.042 265.755);
   --notice-foreground: oklch(85.2% 0.199 91.936);
+
+  /* ── Shape ────────────────────────────────────────────────────────────── */
+  /* The K3 node treatment: hard offset shadow, no blur. The single most
+     recognisable property of the reference's language, and the platform's
+     card/button/panel treatment — not a roadmap-only flourish. */
+  --radius-node: 0.375rem;
+  --border-width-node: 2px;
+  --shadow-node: 2px 2px 0 0 var(--border-strong);
+  --shadow-node-lifted: 3px 3px 0 0 var(--border-strong);
+
+  /* ── Motion ───────────────────────────────────────────────────────────── */
+  --duration-fast: 120ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #030713;
+    --surface: #0f172b;
+    --surface-muted: #1a2337;
+
+    --foreground: #f3f4f6;
+    --foreground-muted: #9ca3af;
+
+    --border: #334155;
+    --border-strong: #f3f4f6;
+
+    /* The accent holds across themes: it is the identity, and black-on-yellow
+       already clears AA. */
+    --accent: #ffe599;
+    --accent-strong: #fdfd01;
+    --accent-foreground: #030713;
+
+    --link: #93c5fd;
+    --alt: #a5b4fc;
+    --alt-foreground: #030713;
+    --danger: #fca5a5;
+
+    /* Notice bar is deliberately unchanged: the yellow only clears AA on a dark
+       ground, so inverting it would fail contrast in light mode. */
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+
   --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+
+  --color-border-subtle: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-link: var(--link);
+  --color-danger: var(--danger);
+  --color-alt: var(--alt);
+  --color-alt-foreground: var(--alt-foreground);
+
   --color-notice: var(--notice-background);
   --color-notice-foreground: var(--notice-foreground);
+
+  --radius-node: var(--radius-node);
 
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
@@ -24,16 +126,16 @@
     "Liberation Mono", "Courier New", monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    /* Unchanged from light: see the note above. */
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+/* The K3 treatment as a utility, so every component composes the same shape
+   rather than each restating border/radius/shadow and drifting. */
+@utility node-surface {
+  border: var(--border-width-node) solid var(--border-strong);
+  border-radius: var(--radius-node);
+  box-shadow: var(--shadow-node);
 }
