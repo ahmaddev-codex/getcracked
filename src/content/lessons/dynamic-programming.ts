@@ -23,6 +23,7 @@ export const dynamicProgrammingLesson: LessonInput = {
         table[i] = one_back + two_back
     return table[len(table) - 1]`,
     },
+    visual: 'array',
     args: [[0, 0, 0, 0, 0, 0, 0, 0]],
     caption: "The DP table filling left to right. Each cell reads the two before it \u2014 the recurrence made visible.",
   },

@@ -26,6 +26,7 @@ export const slidingWindowLesson: LessonInput = {
             best = total
     return best`,
     },
+    visual: 'array',
     args: [[2, 1, 5, 1, 3, 2], 3],
     caption: "A fixed window of three sliding right. Each step reads one element entering and one leaving \u2014 never the whole window.",
   },

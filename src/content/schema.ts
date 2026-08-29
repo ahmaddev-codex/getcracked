@@ -168,6 +168,16 @@ export const lessonSchema = z.object({
        */
       entryByLanguage: z.partialRecord(languageSchema, z.string().min(1)).optional(),
       source: z.partialRecord(languageSchema, z.string().min(1)),
+      /**
+       * The shape the animation should draw.
+       *
+       * Cannot be inferred: a heap, a DP table and a queue are all arrays as far
+       * as the trace is concerned. Defaults to `array`, which is always a
+       * truthful picture even when a more specific one would teach more.
+       */
+      visual: z
+        .enum(['array', 'stack', 'queue', 'linked-list', 'tree', 'heap', 'graph'])
+        .default('array'),
       /** The call the animation steps through. */
       args: z.array(z.unknown()),
       caption: z.string().optional(),

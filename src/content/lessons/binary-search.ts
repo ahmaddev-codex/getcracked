@@ -27,6 +27,7 @@ export const binarySearchLesson: LessonInput = {
             high = mid - 1
     return -1`,
     },
+    visual: 'array',
     args: [[1, 3, 5, 7, 9, 11, 13, 15], 13],
     caption: "Eight elements, three comparisons. Watch low and high close in \u2014 each read discards half of what is left.",
   },

@@ -46,6 +46,7 @@ export const graphsLesson: LessonInput = {
         queue.append(node + 1)
     return reached`,
     },
+    visual: 'graph',
     args: [[1, 1, 1, 0, 1, 1, 0, 0]],
     caption:
       "Breadth-first over a row of cells: 1 is open, 0 is a wall. Each cell flips to 2 as it is reached, so the frontier is visible spreading outward until the wall stops it.",

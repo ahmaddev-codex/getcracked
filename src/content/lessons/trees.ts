@@ -25,6 +25,7 @@ export const treesLesson: LessonInput = {
         return 1 + max(left, right)
     return go(0)`,
     },
+    visual: 'tree',
     args: [[1, 2, 3, 4, 5, -1, 6]],
     caption: "A tree stored in an array: node i has children at 2i+1 and 2i+2. Watch the traversal walk down each branch and back.",
   },

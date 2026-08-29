@@ -83,6 +83,7 @@ If you cannot state the invariant, the pointers are guesswork.`,
         j -= 1
     return xs`,
     },
+    visual: 'array',
     args: [[1, 2, 3, 4, 5]],
     caption: 'Watch the two pointers converge, swapping as they go.',
   },

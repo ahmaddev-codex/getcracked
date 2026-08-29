@@ -198,3 +198,49 @@ body {
   background-color: color-mix(in srgb, var(--accent) 22%, transparent);
   box-shadow: inset 2px 0 0 0 var(--accent-strong);
 }
+
+/* Visualizer cells.
+
+   The transition is what turns a sequence of frames into movement a learner can
+   follow: without it a swap is two boxes that were one way and are suddenly the
+   other, which reads as a glitch rather than an exchange. Transitioning colour
+   and the magnitude fill's geometry — not layout — keeps this on the compositor
+   and off the main thread, so it holds at 500 cells (H5).
+
+   Kept short: playback runs at 8 steps/second at 1x, so anything longer than
+   ~180ms is still animating when the next step arrives and the motion smears. */
+.gc-cell {
+  transition:
+    fill var(--duration-fast) var(--ease-out),
+    stroke var(--duration-fast) var(--ease-out);
+}
+.gc-cell-fill {
+  transition:
+    y var(--duration-fast) var(--ease-out),
+    height var(--duration-fast) var(--ease-out),
+    opacity var(--duration-fast) var(--ease-out);
+}
+
+/* A cell whose value just changed gets a brief pop, so the eye lands on it even
+   when several cells are highlighted. Transform on the group, which does not
+   trigger layout. */
+.gc-cell-changed {
+  animation: gc-cell-pop var(--duration-fast) var(--ease-out);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes gc-cell-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gc-cell,
+  .gc-cell-fill {
+    transition: none;
+  }
+  .gc-cell-changed {
+    animation: none;
+  }
+}

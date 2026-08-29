@@ -34,6 +34,23 @@ export interface Renderer {
 
 export type RendererFactory = () => Renderer;
 
+/**
+ * The shape a structure should be drawn in.
+ *
+ * Declared by the lesson author rather than inferred, because it cannot be
+ * inferred: a heap, a DP table, a queue and a plain list are all "an array" as
+ * far as the trace is concerned. The runtime knows what the data *is*; only the
+ * author knows what it *means*.
+ */
+export type VisualKind =
+  | 'array'
+  | 'stack'
+  | 'queue'
+  | 'linked-list'
+  | 'tree'
+  | 'heap'
+  | 'graph';
+
 const REGISTRY = new Map<string, RendererFactory>();
 
 export function registerRenderer(kind: string, factory: RendererFactory): void {
@@ -47,17 +64,22 @@ export function createRenderer(kind: string): Renderer | null {
 /**
  * Picks a renderer for a trace.
  *
- * Returns null rather than a fallback when nothing matches: an empty panel is
+ * `preferred` is the shape the content declares; the array renderer is the
+ * fallback because every trace collection really is an array underneath, so it
+ * is always a truthful picture even when it is not the most illuminating one.
+ *
+ * Returns null when the trace holds no collection at all: an empty panel is
  * honest, whereas a generic "here are some numbers" view would imply the
  * visualizer understands a structure it does not.
  */
-export function selectRenderer(trace: Trace): { kind: string; renderer: Renderer } | null {
-  const array = trace.collections.find((c) => c.kind === 'array');
-  if (array) {
-    const renderer = createRenderer('array');
-    if (renderer) return { kind: 'array', renderer };
-  }
-  return null;
+export function selectRenderer(
+  trace: Trace,
+  preferred: VisualKind = 'array',
+): { kind: string; renderer: Renderer } | null {
+  if (!trace.collections.some((c) => c.kind === 'array')) return null;
+
+  const renderer = createRenderer(preferred) ?? createRenderer('array');
+  return renderer ? { kind: REGISTRY.has(preferred) ? preferred : 'array', renderer } : null;
 }
 
 export function registeredKinds(): string[] {

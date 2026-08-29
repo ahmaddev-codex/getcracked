@@ -1,19 +1,31 @@
-import type { Trace } from '@/lib/trace/protocol';
+import type { Trace, Scalar } from '@/lib/trace/protocol';
 import type { RenderState, Renderer } from './registry';
-import type { Scalar } from '@/lib/trace/protocol';
+import {
+  formatValue,
+  setAttr,
+  setText,
+  statusAt,
+  svgEl,
+  fillFor,
+  strokeFor,
+  textFor,
+} from './svg';
 
 /**
- * Array renderer (B2) — the first structure type, and the pattern the rest
- * follow.
+ * Array renderer (B2) — indexed boxes, the shape an array actually has.
  *
- * **Bars, not boxes.** Height is proportional to value, which is what makes a
- * sort legible: a swap is a visible exchange of two heights rather than two
- * numbers changing in place. Boxes alone show *that* something moved but not
- * whether the array is getting closer to sorted. Values and indices are still
- * labelled, so the representation works for non-numeric arrays too.
+ * **Boxes, because that is what an array is.** A row of numbered slots is how
+ * every textbook, every whiteboard and every debugger draws one, and matching
+ * that is the point: a learner should recognise the picture before they read the
+ * legend. Indices sit below each box because `a[3]` is the thing they will type.
  *
- * **Colour carries meaning**, and the meanings are the ones the trace can
- * actually justify:
+ * **A magnitude bar inside each box**, for numeric arrays only. Boxes alone show
+ * *that* two values swapped but not whether the array is getting closer to
+ * sorted; a proportional fill restores that at no cost to the shape. It is drawn
+ * inside the box rather than replacing it, so the structure stays an array while
+ * the ordering stays visible.
+ *
+ * **Colour carries meaning**, and only the meanings the trace can justify:
  *
  * | state | meaning |
  * |---|---|
@@ -23,206 +35,200 @@ import type { Scalar } from '@/lib/trace/protocol';
  *
  * Deliberately absent: a "sorted" colour. Knowing which elements are in final
  * position requires understanding the algorithm, and the trace does not. Showing
- * a green "done" bar the code has not earned would be a guess presented as fact.
+ * a green "done" box the code has not earned would be a guess presented as fact.
  *
- * Builds one bar per element at mount and then only mutates attributes. Nothing
+ * Builds one box per element at mount and then only mutates attributes. Nothing
  * is created or destroyed per frame, which is what holds 500 elements at 60fps
- * (H5) — allocation is the cost that scales badly, not painting.
- *
- * Deliberately outside React (ADR 0001 §7).
+ * (H5). Deliberately outside React (ADR 0001 §7).
  */
 
-const MAX_CELL = 30;
-const MIN_CELL = 4;
-const GAP = 2;
-const PLOT_HEIGHT = 120;
-const LABEL_BAND = 30;
-/** Headroom above the bars for the "was N" annotation on a write. */
+const MAX_CELL = 44;
+const MIN_CELL = 6;
+const GAP = 4;
+const CELL_HEIGHT = 44;
+const INDEX_BAND = 16;
+/** Headroom for the "was N" annotation above a changed cell. */
 const WAS_BAND = 14;
+const MAX_WIDTH = 680;
 
 interface Cell {
   group: SVGGElement;
-  rect: SVGRectElement;
+  box: SVGRectElement;
+  fill: SVGRectElement | null;
   value: SVGTextElement | null;
   index: SVGTextElement | null;
-  /** "was N" above a cell that just changed. Empty except on a write. */
   was: SVGTextElement | null;
 }
 
-/** Bars stay readable when few, and stay on screen when many. */
 function cellWidth(count: number): number {
   if (count <= 0) return MAX_CELL;
-  return Math.max(MIN_CELL, Math.min(MAX_CELL, Math.floor(640 / count) - GAP));
+  return Math.max(MIN_CELL, Math.min(MAX_CELL, Math.floor(MAX_WIDTH / count) - GAP));
 }
 
 export function createArrayRenderer(): Renderer {
   let svg: SVGSVGElement | null = null;
   let cells: Cell[] = [];
-  let arrayName = '';
-  let scaleMin = 0;
-  let scaleMax = 1;
+  let name = '';
   let width = MAX_CELL;
   let showLabels = true;
+  let scaleMin = 0;
+  let scaleMax = 1;
+  let numeric = false;
 
-  function el<K extends keyof SVGElementTagNameMap>(tag: K): SVGElementTagNameMap[K] {
-    return document.createElementNS('http://www.w3.org/2000/svg', tag);
-  }
-
-  /** Bar height for a value, floored so a zero or minimum still reads as a bar. */
-  function heightFor(value: unknown): number {
-    if (typeof value !== 'number' || !Number.isFinite(value)) return PLOT_HEIGHT * 0.35;
+  /** Height of the magnitude fill for a value, or 0 when not numeric. */
+  function fillHeight(value: unknown): number {
+    if (!numeric || typeof value !== 'number' || !Number.isFinite(value)) return 0;
     const span = scaleMax - scaleMin || 1;
-    return 6 + ((value - scaleMin) / span) * (PLOT_HEIGHT - 6);
+    return Math.max(0, ((value - scaleMin) / span) * CELL_HEIGHT);
   }
 
   return {
-    mount(container, trace: Trace) {
+    mount(container: HTMLElement, trace: Trace) {
       const collection = trace.collections.find((c) => c.kind === 'array');
       if (!collection) return;
 
-      arrayName = collection.name;
+      name = collection.name;
       const values = collection.initial;
 
       const numbers = values.filter((v): v is number => typeof v === 'number');
+      numeric = numbers.length === values.length && values.length > 0;
       scaleMin = numbers.length ? Math.min(0, ...numbers) : 0;
       scaleMax = numbers.length ? Math.max(...numbers) : 1;
 
       width = cellWidth(values.length);
       // Below this the text is unreadable and the labels become noise.
-      showLabels = width >= 16;
+      showLabels = width >= 18;
 
-      svg = el('svg');
-      svg.setAttribute('role', 'img');
-      svg.setAttribute(
-        'aria-label',
-        `Array ${arrayName}, ${values.length} elements, drawn as bars whose height is the value. A text description of each step follows.`,
-      );
-      svg.setAttribute('width', String(values.length * (width + GAP)));
-      svg.setAttribute('height', String(WAS_BAND + PLOT_HEIGHT + LABEL_BAND));
+      svg = svgEl('svg', {
+        role: 'img',
+        'aria-label': `Array ${name}: ${values.length} indexed boxes. A text description of each step follows.`,
+        width: values.length * (width + GAP),
+        height: WAS_BAND + CELL_HEIGHT + INDEX_BAND,
+      });
 
       values.forEach((value, index) => {
-        const group = el('g');
-        group.setAttribute('transform', `translate(${index * (width + GAP)}, ${WAS_BAND})`);
+        const group = svgEl('g', {
+          transform: `translate(${index * (width + GAP)}, ${WAS_BAND})`,
+        });
 
-        const rect = el('rect');
-        rect.setAttribute('width', String(width));
-        rect.setAttribute('rx', '2');
-        const h = heightFor(value);
-        rect.setAttribute('height', String(h));
-        rect.setAttribute('y', String(PLOT_HEIGHT - h));
-        rect.setAttribute('fill', 'var(--surface-muted)');
-        rect.setAttribute('stroke', 'var(--border)');
-        group.append(rect);
+        const box = svgEl('rect', {
+          class: 'gc-cell',
+          width,
+          height: CELL_HEIGHT,
+          rx: 3,
+          fill: 'var(--surface-muted)',
+          stroke: 'var(--border)',
+        });
+        group.append(box);
 
-        let valueText: SVGTextElement | null = null;
-        let indexText: SVGTextElement | null = null;
-        let wasText: SVGTextElement | null = null;
+        // Magnitude, drawn inside the box so the shape stays an array.
+        let fill: SVGRectElement | null = null;
+        if (numeric) {
+          const h = fillHeight(value);
+          fill = svgEl('rect', {
+            class: 'gc-cell-fill',
+            x: 1,
+            width: Math.max(0, width - 2),
+            y: CELL_HEIGHT - h,
+            height: h,
+            fill: 'var(--accent)',
+            opacity: 0.35,
+            'pointer-events': 'none',
+          });
+          group.append(fill);
+        }
+
+        let value_ = null as SVGTextElement | null;
+        let index_ = null as SVGTextElement | null;
+        let was = null as SVGTextElement | null;
 
         if (showLabels) {
-          valueText = el('text');
-          valueText.setAttribute('x', String(width / 2));
-          valueText.setAttribute('y', String(PLOT_HEIGHT + 12));
-          valueText.setAttribute('text-anchor', 'middle');
-          valueText.setAttribute('font-size', '10');
-          valueText.setAttribute('font-family', 'var(--font-mono)');
-          valueText.setAttribute('fill', 'var(--foreground)');
-          valueText.textContent = String(value);
+          value_ = svgEl('text', {
+            x: width / 2,
+            y: CELL_HEIGHT / 2 + 4,
+            'text-anchor': 'middle',
+            'font-size': 12,
+            'font-family': 'var(--font-mono)',
+            fill: 'var(--foreground)',
+          });
+          value_.textContent = formatValue(value);
 
-          indexText = el('text');
-          indexText.setAttribute('x', String(width / 2));
-          indexText.setAttribute('y', String(PLOT_HEIGHT + 24));
-          indexText.setAttribute('text-anchor', 'middle');
-          indexText.setAttribute('font-size', '9');
-          indexText.setAttribute('fill', 'var(--foreground-muted)');
-          indexText.textContent = String(index);
+          index_ = svgEl('text', {
+            x: width / 2,
+            y: CELL_HEIGHT + 12,
+            'text-anchor': 'middle',
+            'font-size': 9,
+            'font-family': 'var(--font-mono)',
+            fill: 'var(--foreground-muted)',
+          });
+          index_.textContent = String(index);
 
-          wasText = el('text');
-          wasText.setAttribute('x', String(width / 2));
-          wasText.setAttribute('y', '-4');
-          wasText.setAttribute('text-anchor', 'middle');
-          wasText.setAttribute('font-size', '9');
-          wasText.setAttribute('font-family', 'var(--font-mono)');
-          wasText.setAttribute('fill', 'var(--foreground-muted)');
+          was = svgEl('text', {
+            x: width / 2,
+            y: -4,
+            'text-anchor': 'middle',
+            'font-size': 9,
+            'font-family': 'var(--font-mono)',
+            fill: 'var(--foreground-muted)',
+          });
 
-          group.append(valueText, indexText, wasText);
+          group.append(value_, index_, was);
         }
 
         svg!.append(group);
-        cells.push({ group, rect, value: valueText, index: indexText, was: wasText });
+        cells.push({ group, box, fill, value: value_, index: index_, was });
       });
 
       container.append(svg);
     },
 
     update(state: RenderState) {
-      const values = state.arrays.get(arrayName);
+      const values = state.arrays.get(name);
       if (!values) return;
 
-      // Index variables become pointer markers — what makes a two-pointer or
-      // sliding-window solution legible rather than a wall of numbers.
-      const pointers = new Map<number, string[]>();
-      for (const [name, value] of state.variables) {
-        if (
-          typeof value === 'number' &&
-          Number.isInteger(value) &&
-          value >= 0 &&
-          value < cells.length
-        ) {
-          pointers.set(value, [...(pointers.get(value) ?? []), name]);
-        }
-      }
-
-      const write = state.lastWrite?.array === arrayName ? state.lastWrite : null;
-      // A write whose value is unchanged is not worth annotating — `a[i] = a[i]`
-      // happens in plenty of correct code and reads as noise.
-      const realChange = write && !Object.is(write.previous, write.value);
+      const write = state.lastWrite?.array === name ? state.lastWrite : null;
+      // A write storing the same value is not worth annotating — `a[i] = a[i]`
+      // appears in plenty of correct code and reads as noise.
+      const changed = write && !Object.is(write.previous, write.value);
 
       cells.forEach((cell, index) => {
-        const isRead = state.lastRead?.array === arrayName && state.lastRead.index === index;
-        const isWrite = write?.index === index;
-        const marked = pointers.get(index);
+        const status = statusAt(state, name, index);
 
-        cell.rect.setAttribute(
-          'fill',
-          isWrite ? 'var(--accent-strong)' : isRead ? 'var(--accent)' : 'var(--surface-muted)',
-        );
-        cell.rect.setAttribute('stroke', marked ? 'var(--link)' : 'var(--border)');
-        cell.rect.setAttribute('stroke-width', marked ? '2' : '1');
+        setAttr(cell.box, 'fill', fillFor(status));
+        setAttr(cell.box, 'stroke', strokeFor(status));
+        setAttr(cell.box, 'stroke-width', status.pointers.length > 0 ? '2' : '1');
 
-        // Height follows the value, so a swap is a visible exchange.
-        const h = heightFor(values[index]);
-        const current = cell.rect.getAttribute('height');
-        if (current !== String(h)) {
-          cell.rect.setAttribute('height', String(h));
-          cell.rect.setAttribute('y', String(PLOT_HEIGHT - h));
+        if (cell.fill) {
+          const h = fillHeight(values[index]);
+          setAttr(cell.fill, 'height', String(h));
+          setAttr(cell.fill, 'y', String(CELL_HEIGHT - h));
+          // Hidden on a highlighted cell: the fill would fight the status colour.
+          setAttr(cell.fill, 'opacity', status.read || status.write ? '0' : '0.35');
         }
 
-        if (cell.value) {
-          const next = String(values[index]);
-          // Guarded: writing textContent unconditionally invalidates layout for
-          // every cell every frame, which is the difference between 60fps and not.
-          if (cell.value.textContent !== next) cell.value.textContent = next;
-          cell.value.setAttribute(
-            'fill',
-            isWrite ? 'var(--accent-foreground)' : 'var(--foreground)',
-          );
-          cell.value.setAttribute('font-weight', isWrite ? '700' : '400');
-        }
+        setText(cell.value, formatValue(values[index]));
+        if (cell.value) setAttr(cell.value, 'fill', textFor(status));
 
-        // "was 9" above the cell that just changed, so the learner can see the
-        // value it replaced rather than having to remember it.
-        if (cell.was) {
-          const label =
-            isWrite && realChange ? `was ${String(write.previous)}` : '';
-          if (cell.was.textContent !== label) cell.was.textContent = label;
+        const justChanged = write?.index === index && changed;
+        setText(cell.was, justChanged ? `was ${formatValue(write.previous)}` : '');
+
+        // Restarting the animation requires removing the class and forcing a
+        // reflow; toggling it alone does nothing when the same cell changes
+        // twice in a row.
+        if (justChanged) {
+          cell.box.classList.remove('gc-cell-changed');
+          void cell.box.getBoundingClientRect();
+          cell.box.classList.add('gc-cell-changed');
+        } else {
+          cell.box.classList.remove('gc-cell-changed');
         }
 
         if (cell.index) {
-          const label = marked ? marked.join(',') : String(index);
-          if (cell.index.textContent !== label) cell.index.textContent = label;
-          cell.index.setAttribute(
+          setText(cell.index, status.pointers.length > 0 ? status.pointers.join(',') : String(index));
+          setAttr(
+            cell.index,
             'fill',
-            marked ? 'var(--link)' : 'var(--foreground-muted)',
+            status.pointers.length > 0 ? 'var(--link)' : 'var(--foreground-muted)',
           );
         }
       });
@@ -245,9 +251,8 @@ export function createArrayRenderer(): Renderer {
  * sentence that says *what changed* — the thing colour alone cannot convey.
  *
  * Leads with the change (a write, then a read) because that is the answer to
- * "what just happened". Variable values follow as context. Reports only what the
- * trace recorded; it never characterises progress toward a solution, which the
- * trace cannot know.
+ * "what just happened". Reports only what the trace recorded; it never
+ * characterises progress toward a solution, which the trace cannot know.
  */
 export function describeStep(state: RenderState, arrayName: string): string {
   const parts: string[] = [];
@@ -261,13 +266,13 @@ export function describeStep(state: RenderState, arrayName: string): string {
       `${arrayName}[${write.index}] changed from ${format(write.previous)} to ${format(write.value)}`,
     );
   } else if (write) {
-    parts.push(`${arrayName}[${write.index}] was rewritten with the same value, ${format(write.value)}`);
+    parts.push(
+      `${arrayName}[${write.index}] was rewritten with the same value, ${format(write.value)}`,
+    );
   } else if (read && values) {
     parts.push(`read ${arrayName}[${read.index}], which is ${format(read.value)}`);
   }
 
-  // Variables that moved on this step, with where they moved from — a loop
-  // counter going 3 → 4 is the clearest signal of what the code is doing.
   const moved = [...state.changed]
     .filter((name) => state.variables.get(name) !== undefined)
     .map((name) => {
@@ -279,9 +284,7 @@ export function describeStep(state: RenderState, arrayName: string): string {
     });
   if (moved.length > 0) parts.push(moved.join(', '));
 
-  if (state.finished) {
-    parts.push(`returned ${format(state.returned as Scalar)}`);
-  }
+  if (state.finished) parts.push(`returned ${format(state.returned as Scalar)}`);
 
   if (parts.length === 0 && state.line !== null) return `Line ${state.line}: no change recorded.`;
   if (parts.length === 0) return 'No state yet.';
@@ -290,7 +293,6 @@ export function describeStep(state: RenderState, arrayName: string): string {
   return `${prefix}${parts.join('. ')}.`;
 }
 
-/** Renders a traced value the way a learner would write it. */
 function format(value: Scalar | unknown): string {
   if (value === null) return 'null';
   if (typeof value === 'string') return `"${value}"`;

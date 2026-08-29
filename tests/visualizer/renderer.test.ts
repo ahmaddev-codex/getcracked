@@ -1,12 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { toProtocol, stateAtStep } from '@/lib/trace/protocol';
 import { createArrayRenderer, describeStep } from '@/lib/visualizer/array-renderer';
-import {
-  registerRenderer,
-  selectRenderer,
-  registeredKinds,
-  type RenderState,
-} from '@/lib/visualizer/registry';
+import { selectRenderer, registeredKinds, type RenderState } from '@/lib/visualizer/registry';
+import '@/lib/visualizer/renderers';
 
 /**
  * The array renderer (B2) and the registry that makes the next eleven cheap.
@@ -14,10 +10,6 @@ import {
  * The renderer is imperative and outside React (ADR 0001 §7), so it is tested
  * by driving it against real DOM rather than by rendering a component.
  */
-
-beforeEach(() => {
-  registerRenderer('array', createArrayRenderer);
-});
 
 const trace = toProtocol([
   { kind: 'line', line: 1, vars: { xs: [3, 1, 2], i: 0 } },
@@ -49,7 +41,7 @@ describe('array renderer', () => {
     const renderer = createArrayRenderer();
     renderer.mount(host, trace);
 
-    expect(host.querySelectorAll('rect')).toHaveLength(3);
+    expect(host.querySelectorAll('rect.gc-cell')).toHaveLength(3);
     renderer.destroy();
   });
 

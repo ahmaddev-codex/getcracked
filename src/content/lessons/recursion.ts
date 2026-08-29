@@ -23,6 +23,7 @@ export const recursionLesson: LessonInput = {
         return here + rest
     return go(0)`,
     },
+    visual: 'array',
     args: [[4, 8, 15, 16, 23]],
     caption: "Recursion unwinding: each call reads one element, then the answers add back up as the stack collapses.",
   },

@@ -26,6 +26,7 @@ export const stacksQueuesLesson: LessonInput = {
             stack.pop()
     return deepest`,
     },
+    visual: 'stack',
     args: [[1, 1, -1, 1, 1, -1, -1, -1]],
     caption: "A stack is just an array with a top. +1 pushes, -1 pops \u2014 watch the depth rise and fall.",
   },

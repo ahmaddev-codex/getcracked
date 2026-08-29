@@ -15,7 +15,17 @@ import type { Language, Lesson, TestSpec } from './schema';
  */
 export type LessonWalkthrough = NonNullable<Lesson['walkthrough']>;
 
-export function walkthroughSpec(walkthrough: LessonWalkthrough): TestSpec {
+/**
+ * Typed on the fields each helper actually reads, rather than on the whole
+ * walkthrough. `visual` has a schema default, so the parsed type requires it
+ * while every hand-written literal — tests, and the component's own call — does
+ * not have one to give. Asking callers for a field the function ignores would be
+ * noise that invites a wrong value.
+ */
+type SpecFields = Pick<LessonWalkthrough, 'entry' | 'args'> &
+  Partial<Pick<LessonWalkthrough, 'entryByLanguage'>>;
+
+export function walkthroughSpec(walkthrough: SpecFields): TestSpec {
   return {
     entry: walkthrough.entry,
     entryByLanguage: walkthrough.entryByLanguage,
@@ -24,6 +34,8 @@ export function walkthroughSpec(walkthrough: LessonWalkthrough): TestSpec {
 }
 
 /** Languages a walkthrough can actually be run in. */
-export function walkthroughLanguages(walkthrough: LessonWalkthrough): Language[] {
+export function walkthroughLanguages(
+  walkthrough: Pick<LessonWalkthrough, 'source'>,
+): Language[] {
   return (Object.keys(walkthrough.source) as Language[]).filter((l) => walkthrough.source[l]);
 }

@@ -9,6 +9,7 @@ import { supportedLanguages } from '@/content/test-runner';
 import { walkthroughSpec } from '@/content/walkthrough';
 import type { Trace } from '@/lib/trace/protocol';
 import type { Language } from '@/content/schema';
+import type { VisualKind } from '@/lib/visualizer/registry';
 
 /**
  * The animated walkthrough slot (B10b), filled by T2.8.
@@ -29,6 +30,16 @@ import type { Language } from '@/content/schema';
  * genuinely different runs of genuinely different code, not one recording
  * relabelled.
  */
+/**
+ * The call being animated, written the way a learner would type it.
+ *
+ * Answers "what problem is being solved" concretely: `running_sum([3, 1, 4])`
+ * says more about what is about to happen than any prose summary of it.
+ */
+function callSignature(entry: string, args: unknown[]): string {
+  return `${entry}(${args.map((a) => JSON.stringify(a)).join(', ')})`;
+}
+
 export function Walkthrough({
   entry,
   entryByLanguage,
@@ -36,6 +47,7 @@ export function Walkthrough({
   args,
   caption,
   title,
+  visual = 'array',
 }: {
   entry: string;
   /**
@@ -50,6 +62,8 @@ export function Walkthrough({
   caption?: string;
   /** What this walkthrough is solving, shown above the animation. */
   title?: string;
+  /** The shape to draw. Declared by the lesson, since it cannot be inferred. */
+  visual?: VisualKind;
 }) {
   /**
    * Only languages this walkthrough actually has code for, intersected with the
@@ -85,7 +99,7 @@ export function Walkthrough({
       setFailure(null);
       try {
         const result = await runtime.current.run({
-          spec: walkthroughSpec({ entry, entryByLanguage, source: sourceByLanguage, args }),
+          spec: walkthroughSpec({ entry, entryByLanguage, args }),
           source: code,
           language: target,
           trace: true,
@@ -154,6 +168,9 @@ export function Walkthrough({
         source={source}
         language={language}
         title={title}
+        caption={caption}
+        call={callSignature(entryByLanguage?.[language] ?? entry, args)}
+        visual={visual}
         toolbar={switcher}
       />
     );

@@ -21,6 +21,7 @@ export const arraysLesson: LessonInput = {
         nums[i] = total
     return nums`,
     },
+    visual: 'array',
     args: [[3, 1, 4, 1, 5]],
     caption: "A single pass carrying a running total \u2014 watch the write follow the read one step behind.",
   },

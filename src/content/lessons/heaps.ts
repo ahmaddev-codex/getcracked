@@ -33,6 +33,7 @@ export const heapsLesson: LessonInput = {
         swaps = swaps + 1
         i = largest`,
     },
+    visual: 'heap',
     args: [[1, 8, 6, 5, 9, 3]],
     caption: "A heap is an array. Sift-down repeatedly swaps a node with its larger child \u2014 watch the bar sink to its level.",
   },

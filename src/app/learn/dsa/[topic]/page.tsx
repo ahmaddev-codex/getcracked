@@ -66,6 +66,7 @@ export default async function LessonPage(props: LessonRouteProps) {
             sourceByLanguage={lesson.walkthrough.source}
             args={lesson.walkthrough.args}
             caption={lesson.walkthrough.caption}
+            visual={lesson.walkthrough.visual}
             title={lesson.title}
           />
         ) : (

@@ -4,13 +4,11 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/Button';
 import { Node } from '@/components/ui/Node';
 import { stateAtStep, type Scalar, type Trace } from '@/lib/trace/protocol';
-import { createArrayRenderer } from '@/lib/visualizer/array-renderer';
 import { describeStep } from '@/lib/visualizer/array-renderer';
-import { registerRenderer, selectRenderer } from '@/lib/visualizer/registry';
+import { selectRenderer, type VisualKind } from '@/lib/visualizer/registry';
+import '@/lib/visualizer/renderers';
 import { CodePanel } from './CodePanel';
 import type { Language } from '@/content/schema';
-
-registerRenderer('array', createArrayRenderer);
 
 /**
  * Playback over a trace (B3).
@@ -99,6 +97,9 @@ export function Visualizer({
   source,
   language = 'javascript',
   title,
+  caption,
+  call,
+  visual = 'array',
   toolbar,
 }: {
   trace: Trace;
@@ -106,6 +107,12 @@ export function Visualizer({
   language?: Language;
   /** What this run is solving, stated rather than left to be inferred. */
   title?: string;
+  /** What to watch for, from the lesson author. Stays on screen while playing. */
+  caption?: string;
+  /** The exact call being animated, e.g. `running_sum([3, 1, 4, 1, 5])`. */
+  call?: string;
+  /** The shape to draw the structure in. Declared by content, not inferred. */
+  visual?: VisualKind;
   /** Caller-supplied controls (e.g. a language switcher) shown in the header. */
   toolbar?: ReactNode;
 }) {
@@ -154,7 +161,7 @@ export function Visualizer({
     const host = hostRef.current;
     if (!host) return;
 
-    const selected = selectRenderer(trace);
+    const selected = selectRenderer(trace, visual);
     rendererRef.current = selected;
     setDrawable(Boolean(selected));
     if (!selected) return;
@@ -166,7 +173,7 @@ export function Visualizer({
       selected.renderer.destroy();
       rendererRef.current = null;
     };
-  }, [trace]);
+  }, [trace, visual]);
 
   useEffect(() => {
     if (!playing) return;
@@ -216,14 +223,7 @@ export function Visualizer({
   return (
     <section className="flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <div className="flex flex-col gap-0.5">
-          <h2 className="text-sm font-semibold">{title ?? 'Watch it run'}</h2>
-          {title && (
-            <p className="text-xs text-foreground-muted">
-              Stepping through the {language} solution one operation at a time.
-            </p>
-          )}
-        </div>
+        <h2 className="text-sm font-semibold">{title ?? 'Watch it run'}</h2>
         <div className="flex items-center gap-3">
           {toolbar}
           <span className="font-mono text-xs text-foreground-muted">
@@ -231,6 +231,24 @@ export function Visualizer({
           </span>
         </div>
       </div>
+
+      {/*
+        What is being solved, kept on screen for the whole run.
+        Previously the caption appeared only on the pre-run card and vanished the
+        moment the animation started — exactly when a learner needs to know what
+        they are looking at.
+      */}
+      {(call || caption) && (
+        <Node tone="muted" className="flex flex-col gap-1 p-3">
+          {call && (
+            <p className="font-mono text-xs">
+              <span className="text-foreground-muted">running </span>
+              <span className="font-semibold">{call}</span>
+            </p>
+          )}
+          {caption && <p className="text-xs text-foreground-muted">{caption}</p>}
+        </Node>
+      )}
 
       {trace.degraded && (
         <p className="text-xs text-foreground-muted">
@@ -251,12 +269,24 @@ export function Visualizer({
               through the run.
             </p>
           )}
-          {drawable && <Legend />}
+          {/*
+            What just happened, next to the thing it happened to. This was a
+            muted line below the scrubber, which is the last place anyone
+            watching the animation looks.
+          */}
+          <p
+            aria-live="polite"
+            className="border-l-2 border-accent-strong pl-2 font-mono text-xs"
+          >
+            {description}
+          </p>
+
           <Inspector
             variables={variables}
             changed={changed}
             previousValues={previousValues}
           />
+          {drawable && <Legend />}
         </Node>
       </div>
 
@@ -313,11 +343,6 @@ export function Visualizer({
         aria-label="Scrub through the trace"
         className="w-full"
       />
-
-      {/* H4: the animation is not the only way to follow the trace. */}
-      <p aria-live="polite" className="font-mono text-xs text-foreground-muted">
-        {description}
-      </p>
 
       {returned && (
         <p className="font-mono text-xs">

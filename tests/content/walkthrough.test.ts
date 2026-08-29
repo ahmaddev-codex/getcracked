@@ -43,7 +43,6 @@ describe('walkthrough spec', () => {
     const spec = walkthroughSpec({
       entry: 'runningSum',
       entryByLanguage: { python: 'running_sum' },
-      source: { javascript: 'x', python: 'y' },
       args: [],
     });
 
@@ -53,11 +52,7 @@ describe('walkthrough spec', () => {
 
   it('offers only languages that have source', () => {
     expect(
-      walkthroughLanguages({
-        entry: 'f',
-        source: { javascript: 'x' },
-        args: [],
-      }),
+      walkthroughLanguages({ source: { javascript: 'x' } }),
     ).toEqual(['javascript']);
   });
 });
