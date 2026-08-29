@@ -9,6 +9,15 @@ export const recursionLesson: LessonInput = {
 
   explainer: "A recursive solution needs exactly two things: a **base case** small enough to\nanswer outright, and a step that makes the problem strictly smaller. If either is\nmissing you get infinite recursion, which is a stack overflow rather than a wrong\nanswer.\n\nThe part worth internalising is that recursion is often *correct but slow* rather\nthan wrong. Naive Fibonacci is a faithful translation of the definition and takes\nexponential time, because it recomputes the same subproblems along every branch\nof the call tree.\n\n**Memoisation** fixes that without changing the shape of the code: cache each\nresult the first time it is computed. The recursion stays readable and the\ncomplexity collapses, usually from exponential to linear in the number of\ndistinct subproblems.\n\nThat is also the bridge to dynamic programming. Memoised recursion is top-down\nDP; filling a table iteratively is the same computation bottom-up.",
 
+  walkthrough: {
+    entry: "sumArray",
+    source: {
+      javascript: "function sumArray(nums) {\n  function go(index) {\n    if (index >= nums.length) {\n      return 0;\n    }\n    const here = nums[index];\n    const rest = go(index + 1);\n    return here + rest;\n  }\n  return go(0);\n}",
+    },
+    args: [[4, 8, 15, 16, 23]],
+    caption: "Recursion unwinding: each call reads one element, then the answers add back up as the stack collapses.",
+  },
+
   complexity: {
     time: "Depends on the recurrence \u2014 O(number of distinct subproblems) once memoised",
     space: "O(depth) for the call stack, plus O(subproblems) for the cache",

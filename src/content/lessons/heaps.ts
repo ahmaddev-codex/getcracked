@@ -9,6 +9,15 @@ export const heapsLesson: LessonInput = {
 
   explainer: "A heap keeps the smallest \u2014 or largest \u2014 element instantly available while\nleaving everything else only loosely ordered. That partial order is the point:\nfull sorting is O(n log n), and most problems never need it.\n\nThe operations are peek in O(1), and push and pop in O(log k) for a heap of size\nk. It is usually stored as an array, with a node's children at `2i+1` and `2i+2`,\nso there are no pointers and no allocation per node.\n\nThe pattern that shows up constantly is **top-k**: keep a heap of size k while\nstreaming through n elements. For the k largest, use a *min*-heap \u2014 the smallest\nof your current best sits on top, ready to be evicted the moment something better\narrives. That is O(n log k), which beats sorting when k is much smaller than n,\nand needs O(k) memory rather than O(n).\n\nThe same structure is a priority queue, which is what makes Dijkstra's algorithm\nwork: always expand the nearest unvisited node.",
 
+  walkthrough: {
+    entry: "siftDown",
+    source: {
+      javascript: "function siftDown(heap) {\n  let i = 0;\n  let swaps = 0;\n  while (true) {\n    const left = 2 * i + 1;\n    const right = 2 * i + 2;\n    let largest = i;\n    if (left < heap.length && heap[left] > heap[largest]) {\n      largest = left;\n    }\n    if (right < heap.length && heap[right] > heap[largest]) {\n      largest = right;\n    }\n    if (largest === i) {\n      return swaps;\n    }\n    const temp = heap[i];\n    heap[i] = heap[largest];\n    heap[largest] = temp;\n    swaps = swaps + 1;\n    i = largest;\n  }\n}",
+    },
+    args: [[1, 8, 6, 5, 9, 3]],
+    caption: "A heap is an array. Sift-down repeatedly swaps a node with its larger child \u2014 watch the bar sink to its level.",
+  },
+
   complexity: {
     time: "O(log k) push and pop, O(1) peek",
     space: "O(k)",

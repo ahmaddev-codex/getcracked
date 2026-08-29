@@ -66,6 +66,15 @@ export function Workspace({
   const starter = starterByLanguage?.[language] ?? starterCode;
 
   const [result, setResult] = useState<SpecResult | null>(null);
+  /**
+   * The source that produced `result`.
+   *
+   * Captured at run time rather than read from the editor during render — the
+   * visualizer must show the code the trace came from, and a learner who edits
+   * after running would otherwise see a highlighted line pointing into code
+   * that never executed.
+   */
+  const [ranSource, setRanSource] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   /** Bumped to remount the editor with fresh starter code. */
@@ -135,6 +144,7 @@ export function Workspace({
         trace: !compact,
       });
       setResult(outcome);
+      setRanSource(codeRef.current);
       if (outcome.passed) {
         track('exercise_solved', { exerciseId, language });
         onSolvedRef.current?.();
@@ -163,6 +173,7 @@ export function Workspace({
     codeRef.current = starter;
     setResetCount((n) => n + 1);
     setResult(null);
+    setRanSource(null);
     setError(null);
   }, [exerciseId, language, starter]);
 
@@ -227,7 +238,9 @@ export function Workspace({
 
       <TestCases spec={spec} result={result} />
 
-      {!compact && result?.trace && <Visualizer trace={result.trace} />}
+      {!compact && result?.trace && (
+        <Visualizer trace={result.trace} source={ranSource ?? undefined} />
+      )}
 
       {!compact && (
         <Complexity

@@ -64,7 +64,7 @@ export function Walkthrough({
     }
   }, [entry, source, args, language, running]);
 
-  if (trace) return <Visualizer trace={trace} />;
+  if (trace) return <Visualizer trace={trace} source={source} />;
 
   return (
     <Node tone="muted" className="flex flex-wrap items-center justify-between gap-3 p-4">

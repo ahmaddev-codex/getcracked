@@ -29,6 +29,15 @@ The cost is memory: you are storing up to n entries to avoid the second loop.
 That trade is the whole idea, and it is why "time complexity" and "space
 complexity" are usually discussed together.`,
 
+  walkthrough: {
+    entry: "countValues",
+    source: {
+      javascript: "function countValues(nums) {\n  const counts = {};\n  let distinct = 0;\n  for (let i = 0; i < nums.length; i++) {\n    const value = nums[i];\n    if (counts[value] === undefined) {\n      counts[value] = 0;\n      distinct = distinct + 1;\n    }\n    counts[value] = counts[value] + 1;\n  }\n  return distinct;\n}",
+    },
+    args: [[2, 7, 2, 5, 7, 2]],
+    caption: "One pass over the array, building a count for each value. Watch how every element is read exactly once.",
+  },
+
   complexity: {
     time: 'O(1) average per lookup or insert',
     space: 'O(n) for n stored entries',

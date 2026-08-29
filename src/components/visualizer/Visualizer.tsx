@@ -7,6 +7,7 @@ import { stateAtStep, type Trace } from '@/lib/trace/protocol';
 import { createArrayRenderer } from '@/lib/visualizer/array-renderer';
 import { describeStep } from '@/lib/visualizer/array-renderer';
 import { registerRenderer, selectRenderer } from '@/lib/visualizer/registry';
+import { CodePanel } from './CodePanel';
 
 registerRenderer('array', createArrayRenderer);
 
@@ -28,7 +29,43 @@ const SPEEDS = [0.5, 1, 2, 4] as const;
 /** Steps per second at 1x. Slow enough to follow, fast enough not to bore. */
 const BASE_STEPS_PER_SECOND = 8;
 
-export function Visualizer({ trace }: { trace: Trace }) {
+/** Colour meanings, stated rather than left to be inferred. */
+function Legend() {
+  const items = [
+    { swatch: 'bg-accent', label: 'read' },
+    { swatch: 'bg-accent-strong', label: 'written' },
+    { swatch: 'border-2 border-link bg-surface-muted', label: 'pointer here' },
+  ];
+  return (
+    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-foreground-muted">
+      {items.map((item) => (
+        <li key={item.label} className="flex items-center gap-1.5">
+          <span className={`inline-block h-3 w-3 rounded-xs ${item.swatch}`} aria-hidden />
+          {item.label}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** The variables the trace can account for at this step. */
+function Inspector({ variables }: { variables: Map<string, string | number | boolean | null> }) {
+  const entries = [...variables].filter(([, v]) => v !== null);
+  if (entries.length === 0) return null;
+
+  return (
+    <dl className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs">
+      {entries.map(([name, value]) => (
+        <div key={name} className="flex gap-1">
+          <dt className="text-foreground-muted">{name}</dt>
+          <dd>{String(value)}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+export function Visualizer({ trace, source }: { trace: Trace; source?: string }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<ReturnType<typeof selectRenderer>>(null);
   const stepRef = useRef(0);
@@ -39,6 +76,11 @@ export function Visualizer({ trace }: { trace: Trace }) {
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(1);
   const [description, setDescription] = useState('');
+  const [currentLine, setCurrentLine] = useState<number | null>(null);
+  const [variables, setVariables] = useState<
+    Map<string, string | number | boolean | null>
+  >(new Map());
+  const [drawable, setDrawable] = useState(true);
 
   const total = trace.events.length;
   const arrayName = trace.collections.find((c) => c.kind === 'array')?.name ?? '';
@@ -53,6 +95,10 @@ export function Visualizer({ trace }: { trace: Trace }) {
       const state = stateAtStep(trace, clamped);
       rendererRef.current?.renderer.update(state);
       setDescription(describeStep(state, arrayName));
+      // React owns the code panel and the inspector; the renderer owns the
+      // canvas. Only these two cheap values cross the boundary per step.
+      setCurrentLine(state.line);
+      setVariables(state.variables);
     },
     [trace, total, arrayName],
   );
@@ -63,6 +109,7 @@ export function Visualizer({ trace }: { trace: Trace }) {
 
     const selected = selectRenderer(trace);
     rendererRef.current = selected;
+    setDrawable(Boolean(selected));
     if (!selected) return;
 
     selected.renderer.mount(host, trace);
@@ -134,9 +181,23 @@ export function Visualizer({ trace }: { trace: Trace }) {
         </p>
       )}
 
-      <Node tone="surface" className="overflow-x-auto p-4">
-        <div ref={hostRef} />
-      </Node>
+      <div className={source ? 'grid gap-3 lg:grid-cols-2' : ''}>
+        {source && <CodePanel source={source} line={currentLine} />}
+
+        <Node tone="surface" className="flex flex-col gap-3 overflow-x-auto p-4">
+          <div ref={hostRef} />
+          {!drawable && (
+            // Saying so beats an empty box that reads as a bug. Only arrays have
+            // a renderer today; the others arrive in Phase 4.
+            <p className="text-sm text-foreground-muted">
+              No picture for this structure yet — the code and variables below still step
+              through the run.
+            </p>
+          )}
+          {drawable && <Legend />}
+          <Inspector variables={variables} />
+        </Node>
+      </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <Button onClick={() => setPlaying((p) => !p)}>{playing ? 'Pause' : 'Play'}</Button>

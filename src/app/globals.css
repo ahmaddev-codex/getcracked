@@ -190,3 +190,11 @@ body {
     transition: none;
   }
 }
+
+/* The executing line in the visualizer's read-only code panel.
+   A left bar rather than a full-width fill: the fill competes with syntax
+   colours, the bar reads at a glance without touching them. */
+.gc-active-line {
+  background-color: color-mix(in srgb, var(--accent) 22%, transparent);
+  box-shadow: inset 2px 0 0 0 var(--accent-strong);
+}

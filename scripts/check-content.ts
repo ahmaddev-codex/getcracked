@@ -142,6 +142,39 @@ async function main() {
     for (const exercise of lesson.exercises) {
       await checkExercise(exerciseId(lesson, exercise.slug), exercise);
     }
+
+    // A walkthrough that produces no visual is a broken lesson, and nothing
+    // else would catch it — the page renders, just empty.
+    if (lesson.walkthrough) {
+      const source = lesson.walkthrough.source.javascript;
+      if (!source) {
+        fail(id, 'walkthrough has no JavaScript source.');
+      } else {
+        const run = await runTestSpec({
+          spec: {
+            entry: lesson.walkthrough.entry,
+            cases: [{ args: lesson.walkthrough.args, expected: null, hidden: false }],
+          },
+          source,
+          language: 'javascript',
+          trace: true,
+        });
+
+        if (run.timedOut) {
+          fail(id, 'walkthrough timed out — it must terminate to be animated.');
+        } else if (run.cases[0]?.error) {
+          fail(id, `walkthrough threw: ${run.cases[0].error}`);
+        } else if (!run.trace || run.trace.events.length === 0) {
+          fail(id, 'walkthrough produced no trace events — nothing to animate.');
+        } else if (!run.trace.collections.some((c) => c.kind === 'array')) {
+          fail(
+            id,
+            'walkthrough traced no array, so the renderer has nothing to draw. ' +
+              'Pass an array argument the code actually reads.',
+          );
+        }
+      }
+    }
   }
 
   if (problems.length > 0) {

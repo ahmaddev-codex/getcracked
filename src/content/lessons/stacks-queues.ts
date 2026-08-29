@@ -9,6 +9,15 @@ export const stacksQueuesLesson: LessonInput = {
 
   explainer: "A stack is last-in-first-out; a queue is first-in-first-out. Both are trivial\nto implement. What is worth learning is recognising the problems whose *structure*\nis one of them.\n\n**Stack** appears whenever the most recent unresolved thing must be resolved\nfirst \u2014 matching brackets, undo history, evaluating nested expressions, and\ndepth-first traversal. If you find yourself saying \"the last one I saw\", it is a\nstack.\n\nThe subtler use is the **monotonic stack**: keep the stack sorted by holding only\nelements that are still candidates, popping any that the current element makes\nirrelevant. That is how \"next greater element\" problems collapse from O(n\u00b2) to\nO(n) \u2014 each index is pushed once and popped once, however nested the loops look.\n\n**Queue** appears when things must be handled in arrival order \u2014 breadth-first\ntraversal, scheduling, rate limiting, buffering between a fast producer and a\nslow consumer.",
 
+  walkthrough: {
+    entry: "stackDepth",
+    source: {
+      javascript: "function stackDepth(operations) {\n  const stack = [];\n  let deepest = 0;\n  for (let i = 0; i < operations.length; i++) {\n    if (operations[i] > 0) {\n      stack.push(i);\n      if (stack.length > deepest) {\n        deepest = stack.length;\n      }\n    } else {\n      stack.pop();\n    }\n  }\n  return deepest;\n}",
+    },
+    args: [[1, 1, -1, 1, 1, -1, -1, -1]],
+    caption: "A stack is just an array with a top. +1 pushes, -1 pops \u2014 watch the depth rise and fall.",
+  },
+
   complexity: {
     time: "O(1) per push, pop, or peek",
     space: "O(n) for n held elements",
