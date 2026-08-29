@@ -122,13 +122,29 @@ describe('test spec runner', () => {
     expect(r.cases[0].error).toMatch(/infinite loop/i);
   }, 60_000);
 
-  it('refuses a language it has not been wired for yet', async () => {
+  it('runs Python through the same spec, with its own entry name', async () => {
+    const r = await runTestSpec({
+      spec: {
+        entry: 'f',
+        entryByLanguage: { python: 'f_py' },
+        cases: [{ args: [2], expected: 4, hidden: false }],
+      },
+      source: 'def f_py(n):\n    return n * 2',
+      language: 'python',
+    });
+
+    expect(r.passed).toBe(true);
+  }, 60_000);
+
+  it('refuses a language with no registered adapter', async () => {
+    // Java is suspended (H1). Asking for it should say so plainly rather than
+    // failing somewhere obscure downstream.
     await expect(
       runTestSpec({
         spec: { entry: 'f', cases: [{ args: [], expected: 1, hidden: false }] },
-        source: 'def f(): return 1',
-        language: 'python',
+        source: 'x',
+        language: 'java' as never,
       }),
-    ).rejects.toThrow(/not yet wired/i);
+    ).rejects.toThrow(/no runtime adapter/i);
   });
 });

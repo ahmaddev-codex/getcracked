@@ -42,17 +42,19 @@ export function Disclosure({
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-controls={panelId}
-          className="flex flex-1 items-center gap-2 py-1 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+          className="flex flex-1 items-center justify-between gap-3 py-1 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
         >
+          {summary}
+          {/* Trailing, so the summary starts at the same left edge as the
+              content below it rather than being indented by a marker. */}
           <span
             aria-hidden
-            className={`inline-block text-xs transition-transform duration-(--duration-fast) ease-(--ease-out) ${
+            className={`inline-block shrink-0 text-xs transition-transform duration-(--duration-fast) ease-(--ease-out) ${
               open ? 'rotate-90' : 'rotate-0'
             }`}
           >
             ▶
           </span>
-          {summary}
         </button>
         {aside}
       </div>

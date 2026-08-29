@@ -76,10 +76,9 @@ export function GuidedExercises({
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="text-sm font-semibold">Try it</h2>
-        {hydrated && <Badge state={BADGE_STATE[state]} />}
-      </div>
+      {/* No aggregate badge here: every exercise card shows its own state, and
+          a summary beside them just repeats what is already visible. */}
+      <h2 className="text-sm font-semibold">Try it</h2>
 
       <p className="text-sm text-foreground-muted">
         Two short checks. They run the same way the practice problems do — write the
