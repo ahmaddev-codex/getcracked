@@ -35,7 +35,12 @@ export const testCaseSchema = z.object({
   name: z.string().min(1).optional(),
   args: z.array(z.unknown()),
   expected: z.unknown(),
-  /** Hidden cases still run but are not shown before a learner passes. */
+  /**
+   * Not listed in the UI, so a learner aims for a general solution.
+   *
+   * Hidden, not secret: tests run in the learner's browser (AD-2), so the whole
+   * spec reaches the client either way.
+   */
   hidden: z.boolean().default(false),
 });
 export type TestCase = z.infer<typeof testCaseSchema>;

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
 import { Button } from '@/components/ui/Button';
 import { Node } from '@/components/ui/Node';
 import { Editor } from './Editor';
-import { TestResults } from './TestResults';
 import { TestCases } from './TestCases';
 import { Complexity } from './Complexity';
 import { RuntimeClient } from '@/lib/runtime/client';
@@ -149,8 +148,6 @@ export function Workspace({
       )}
 
       <TestCases spec={spec} result={result} />
-
-      {result && <TestResults result={result} />}
 
       <Complexity
         target={complexity}

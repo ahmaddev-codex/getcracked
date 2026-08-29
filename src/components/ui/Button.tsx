@@ -13,7 +13,14 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   tone?: NodeTone;
 }
 
-export function Button({ tone = 'accent', className = '', ...props }: ButtonProps) {
+/**
+ * Defaults to the brighter accent (`--accent-strong`).
+ *
+ * The pale `--accent` is the reference's resting node fill; the bright one is
+ * what it reserves for emphasis, which is what a primary action is. Both clear
+ * AA against `--accent-foreground` and are contrast-checked in CI.
+ */
+export function Button({ tone = 'strong', className = '', ...props }: ButtonProps) {
   return (
     <button
       {...props}
