@@ -126,6 +126,8 @@ Module C's diagramming canvas (C1) and Module I's roadmap canvas (I1) are both n
 
 *Rationale:* Roadmaps (Module I) are lower-risk and lower-complexity than System Design labs, so building roadmaps first exercises and hardens the canvas layer before Module C depends on it.
 
+**The reference confirms the choice.** roadmap.sh serves React Flow's stylesheet (`@xyflow`) as one of its six CSS bundles — verified 2026-08-29 — so React Flow is what actually renders the roadmaps we are taking direction from, not a guess at a suitable library.
+
 ### AD-5 — One allowlist, enforced across two layers
 
 Sign-in gates the entire product (PRD §2.6, A2) — dashboard, challenges, labs, roadmap, question bank, and `/learn`. There is a single explicit public allowlist (`/`, `/sign-in`, `/sign-up`, auth callbacks, static assets), so the default for any new route is *denied*.
