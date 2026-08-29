@@ -1,4 +1,5 @@
-import { getQuickJS, shouldInterruptAfterDeadline } from 'quickjs-emscripten';
+import { shouldInterruptAfterDeadline } from 'quickjs-emscripten';
+import { getQuickJS } from './quickjs';
 import { instrument } from './instrument';
 import { DEFAULT_MAX_EVENTS, type TraceEvent } from './trace';
 

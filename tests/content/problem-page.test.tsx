@@ -34,13 +34,29 @@ describe('position within the set', () => {
     expect(total).toBe(getProblemSet('hashing').length);
   });
 
-  it('has no previous or next when the set holds one problem', () => {
-    const problem = findProblem('hashing', 'two-sum')!;
-    const { previous, next } = getSetPosition(problem);
+  it('never points at a neighbour that is not there', () => {
+    // Written against the set's own shape rather than a fixed catalog size, so
+    // it keeps guarding the nav as content is added.
+    for (const topic of getTopics()) {
+      const set = getProblemSet(topic);
+      const first = getSetPosition(set[0]);
+      const last = getSetPosition(set[set.length - 1]);
 
-    // Guards the nav from rendering a link to nowhere.
-    expect(previous).toBeUndefined();
-    expect(next).toBeUndefined();
+      expect(first.previous, `${topic}: first has a previous`).toBeUndefined();
+      expect(last.next, `${topic}: last has a next`).toBeUndefined();
+      if (set.length === 1) expect(first.next).toBeUndefined();
+    }
+  });
+
+  it('links neighbours symmetrically', () => {
+    for (const topic of getTopics()) {
+      const set = getProblemSet(topic);
+      for (let i = 0; i < set.length - 1; i++) {
+        // A next that does not point back is how a nav loop appears.
+        expect(getSetPosition(set[i]).next?.slug).toBe(set[i + 1].slug);
+        expect(getSetPosition(set[i + 1]).previous?.slug).toBe(set[i].slug);
+      }
+    }
   });
 
   it('orders a set warm-up first, so the problem after a lesson is gentle', () => {

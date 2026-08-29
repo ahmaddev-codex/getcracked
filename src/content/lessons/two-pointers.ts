@@ -1,9 +1,9 @@
 import type { LessonInput } from '../schema';
 
-export const twoPointers: LessonInput = {
+export const twoPointersLesson: LessonInput = {
   tier: 'lesson',
   slug: 'two-pointers',
-  order: 2,
+  order: 3,
   title: 'Two Pointers',
   summary: 'Walk an array from both ends, or at two speeds, instead of nesting loops.',
 

@@ -32,7 +32,14 @@ describe('filtering', () => {
   });
 
   it('returns empty for a valid pair that matches nothing', () => {
-    expect(filterProblems({ topic: 'hashing', difficulty: 'stretch' })).toHaveLength(0);
+    // Derived rather than hardcoded: any fixed pair eventually gains content
+    // and the test starts asserting the opposite of what it was written for.
+    const topic = getTopics()[0];
+    const used = new Set(filterProblems({ topic }).map((p) => p.difficulty));
+    const unused = DIFFICULTIES.find((d) => !used.has(d));
+
+    if (!unused) return; // Every difficulty is covered — nothing to assert.
+    expect(filterProblems({ topic, difficulty: unused })).toHaveLength(0);
   });
 });
 

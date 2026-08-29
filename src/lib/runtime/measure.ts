@@ -1,4 +1,5 @@
-import { getQuickJS, shouldInterruptAfterDeadline } from 'quickjs-emscripten';
+import { shouldInterruptAfterDeadline } from 'quickjs-emscripten';
+import { getQuickJS } from './quickjs';
 import { parse } from 'acorn';
 
 /**

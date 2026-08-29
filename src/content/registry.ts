@@ -1,6 +1,34 @@
 import { twoSum } from './problems/hashing/two-sum';
-import { hashing } from './lessons/hashing';
-import { twoPointers } from './lessons/two-pointers';
+import { maxSubarray } from './problems/arrays/max-subarray';
+import { runningSum } from './problems/arrays/running-sum';
+import { binarySearch } from './problems/binary-search/binary-search';
+import { searchInsert } from './problems/binary-search/search-insert';
+import { climbStairs } from './problems/dynamic-programming/climb-stairs';
+import { coinChange } from './problems/dynamic-programming/coin-change';
+import { houseRobber } from './problems/dynamic-programming/house-robber';
+import { countComponents } from './problems/graphs/count-components';
+import { firstUniqueChar } from './problems/hashing/first-unique-char';
+import { groupAnagrams } from './problems/hashing/group-anagrams';
+import { kthLargest } from './problems/heaps/kth-largest';
+import { fibMemo } from './problems/recursion/fib-memo';
+import { longestUniqueSubstring } from './problems/sliding-window/longest-unique-substring';
+import { maxSumSubarrayK } from './problems/sliding-window/max-sum-subarray-k';
+import { dailyTemperatures } from './problems/stacks-queues/daily-temperatures';
+import { validParentheses } from './problems/stacks-queues/valid-parentheses';
+import { maxDepth } from './problems/trees/max-depth';
+import { containerWater } from './problems/two-pointers/container-water';
+import { removeDuplicates } from './problems/two-pointers/remove-duplicates';
+import { hashingLesson } from './lessons/hashing';
+import { arraysLesson } from './lessons/arrays';
+import { slidingWindowLesson } from './lessons/sliding-window';
+import { stacksQueuesLesson } from './lessons/stacks-queues';
+import { binarySearchLesson } from './lessons/binary-search';
+import { recursionLesson } from './lessons/recursion';
+import { treesLesson } from './lessons/trees';
+import { graphsLesson } from './lessons/graphs';
+import { heapsLesson } from './lessons/heaps';
+import { dynamicProgrammingLesson } from './lessons/dynamic-programming';
+import { twoPointersLesson } from './lessons/two-pointers';
 import {
   lessonSchema,
   problemSchema,
@@ -28,7 +56,10 @@ import {
  * the first bad entry and hide the rest — turning one run of the gate into one
  * fix at a time.
  */
-export const RAW_PROBLEMS: readonly ProblemInput[] = [twoSum];
+export const RAW_PROBLEMS: readonly ProblemInput[] = [
+  twoSum,
+  maxSubarray, runningSum, binarySearch, searchInsert, climbStairs, coinChange, houseRobber, countComponents, firstUniqueChar, groupAnagrams, kthLargest, fibMemo, longestUniqueSubstring, maxSumSubarrayK, dailyTemperatures, validParentheses, maxDepth, containerWater, removeDuplicates,
+];
 
 function parseProblem(input: ProblemInput): Problem {
   const parsed = problemSchema.safeParse(input);
@@ -89,7 +120,11 @@ export function getSetPosition(problem: Problem) {
 }
 
 /** Authored lessons, unvalidated — the check script reports on these. */
-export const RAW_LESSONS: readonly LessonInput[] = [hashing, twoPointers];
+export const RAW_LESSONS: readonly LessonInput[] = [
+  hashingLesson,
+  twoPointersLesson,
+  arraysLesson, slidingWindowLesson, stacksQueuesLesson, binarySearchLesson, recursionLesson, treesLesson, graphsLesson, heapsLesson, dynamicProgrammingLesson,
+];
 
 let lessonCache: readonly Lesson[] | undefined;
 

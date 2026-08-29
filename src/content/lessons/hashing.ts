@@ -1,9 +1,9 @@
 import type { LessonInput } from '../schema';
 
-export const hashing: LessonInput = {
+export const hashingLesson: LessonInput = {
   tier: 'lesson',
   slug: 'hashing',
-  order: 1,
+  order: 2,
   title: 'Hash Maps',
   summary: 'Trade memory for time by remembering what you have already seen.',
 
@@ -127,5 +127,5 @@ complexity" are usually discussed together.`,
     },
   ],
 
-  recommendedAfter: [],
+  recommendedAfter: ['arrays'],
 };

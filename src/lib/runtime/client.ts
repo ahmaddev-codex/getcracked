@@ -62,9 +62,40 @@ export class RuntimeClient {
     this.createWorker = createWorker;
   }
 
-  private ensureWorker(): WorkerLike {
-    this.worker ??= this.createWorker();
-    return this.worker;
+  /** Set once a worker has failed; every later run goes in-thread. */
+  private workerUnavailable = false;
+
+  private ensureWorker(): WorkerLike | null {
+    if (this.workerUnavailable) return null;
+    try {
+      this.worker ??= this.createWorker();
+      return this.worker;
+    } catch {
+      // Some bundlers emit a classic worker regardless of `type: 'module'`,
+      // and a few environments block workers outright.
+      this.workerUnavailable = true;
+      return null;
+    }
+  }
+
+  /**
+   * Runs in-thread when no worker is available.
+   *
+   * Losing the worker costs the hard-terminate backstop and a little
+   * responsiveness while a run is in flight — QuickJS's interrupt handler still
+   * stops a runaway loop, measured at 201ms in T0.2. A learner unable to run
+   * their code at all would be a far worse outcome than one whose tab stutters.
+   */
+  private async runInThread(opts: RunOptions): Promise<SpecResult> {
+    const { runTestSpec } = await import('@/content/test-runner');
+    return runTestSpec({
+      spec: opts.spec,
+      source: opts.source,
+      language: opts.language,
+      trace: opts.trace,
+      timeoutMs: opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+      measure: opts.measure,
+    });
   }
 
   /** Discards the current worker; the next run starts a fresh one. */
@@ -81,6 +112,11 @@ export class RuntimeClient {
     this.ensureWorker();
   }
 
+  /** True when execution has fallen back to the main thread. */
+  get usingWorker(): boolean {
+    return !this.workerUnavailable;
+  }
+
   dispose(): void {
     this.reset();
   }
@@ -94,6 +130,7 @@ export class RuntimeClient {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const id = String(this.nextId++);
     const worker = this.ensureWorker();
+    if (!worker) return this.runInThread(opts);
 
     const request: RunRequest = {
       id,
@@ -127,7 +164,16 @@ export class RuntimeClient {
       }, timeoutMs + TERMINATE_GRACE_MS);
 
       worker.addEventListener('message', onMessage);
-      worker.postMessage(request);
+      try {
+        worker.postMessage(request);
+      } catch {
+        // The worker died on startup — a module it imports failed to load, say.
+        cleanup();
+        this.workerUnavailable = true;
+        this.reset();
+        this.runInThread(opts).then(resolve, reject);
+        return;
+      }
     });
   }
 }
