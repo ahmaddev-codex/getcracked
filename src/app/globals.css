@@ -57,6 +57,14 @@
   --syntax-comment: #64748b;
   --syntax-function: #1d4ed8;
 
+  /* ── Site header (K1) ─────────────────────────────────────────────────── */
+  /* The one dark element on a light page. Deliberately not the notice bar's
+     tokens: the notice is yellow-on-dark to read as an interruption, while the
+     header is white-on-dark chrome a learner navigates past. Sharing them once
+     meant a change to one silently restyled the other. */
+  --header-background: oklch(20.8% 0.042 265.755);
+  --header-foreground: #ffffff;
+
   /* ── Notice bar (A16) ─────────────────────────────────────────────────── */
   /* #0F172B, which also appears in the sampled reference palette. */
   --notice-background: oklch(20.8% 0.042 265.755);
@@ -107,6 +115,11 @@
   --accent-strong: #fdfd01;
   --accent-foreground: #030713;
 
+  /* Darker than the dark page surface, so the header still reads as chrome
+     sitting above the content rather than merging into it. */
+  --header-background: #010409;
+  --header-foreground: #f3f4f6;
+
   --link: #93c5fd;
   --alt: #a5b4fc;
   --alt-foreground: #030713;
@@ -150,11 +163,19 @@
   --color-notice: var(--notice-background);
   --color-notice-foreground: var(--notice-foreground);
 
+  --color-header: var(--header-background);
+  --color-header-foreground: var(--header-foreground);
+
   --radius-node: var(--radius-node);
 
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  /* Roadmap node text only — see the note in layout.tsx. Falls back to the
+     body stack, so a failed font load degrades to the rest of the UI rather
+     than to a serif. */
+  --font-node: var(--font-node-family), ui-sans-serif, system-ui, sans-serif;
+
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
 }
@@ -162,7 +183,12 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans);
+  /* The node face carries the body copy, so a card reads as the same object as
+     the node it came from. Page headings opt back out via `font-sans` — the
+     reference sets its own headings in the system stack, and a 48px heading is
+     where a display face's lack of an italic and of intermediate weights shows
+     most. */
+  font-family: var(--font-node);
 }
 
 /* The K3 treatment as a utility, so every component composes the same shape

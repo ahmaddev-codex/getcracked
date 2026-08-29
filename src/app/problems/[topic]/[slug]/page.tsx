@@ -67,7 +67,7 @@ export default async function ProblemPage(props: ProblemRouteProps) {
           Problem {index + 1} of {total}
         </p>
 
-        <h1 className="text-2xl font-semibold tracking-tight">{problem.title}</h1>
+        <h1 className="font-sans text-2xl font-semibold tracking-tight">{problem.title}</h1>
 
         <div className="flex flex-wrap items-center gap-2">
           <Badge state="not-started">{problem.difficulty}</Badge>

@@ -18,7 +18,7 @@ export default function LearnHubPage() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 p-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Learn</h1>
+        <h1 className="font-sans text-2xl font-semibold tracking-tight">Learn</h1>
         <p className="text-sm text-foreground-muted">
           Two tracks. Read either in any order — nothing here is locked.
         </p>

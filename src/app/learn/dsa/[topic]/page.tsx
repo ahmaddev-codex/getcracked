@@ -40,15 +40,20 @@ export default async function LessonPage(props: LessonRouteProps) {
   const problems = getProblemSet(lesson.slug);
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 p-8">
-      <header className="flex flex-col gap-2">
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-8 sm:px-6">
+      {/*
+        The title sits in a card rather than floating on the page ground, which
+        is what gives a lesson a masthead the eye can land on — the reference
+        does the same, and the breadcrumb belongs inside it rather than above.
+      */}
+      <header className="node-surface flex flex-col gap-2 bg-surface p-6">
         <p className="text-xs text-foreground-muted">
           <Link href="/learn/dsa" className="text-link underline underline-offset-2">
-            Learn DSA
+            ← Learn DSA
           </Link>
           {` · Lesson ${index + 1} of ${total}`}
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight">{lesson.title}</h1>
+        <h1 className="font-sans text-4xl font-bold tracking-tight sm:text-5xl">{lesson.title}</h1>
         <p className="text-sm text-foreground-muted">{lesson.summary}</p>
       </header>
 

@@ -1,6 +1,5 @@
-import Link from 'next/link';
-import { Card } from '@/components/ui/Card';
-import { getLessons } from '@/content/registry';
+import { Roadmap } from '@/components/learn/Roadmap';
+import { getLessons, getProblemSet } from '@/content/registry';
 
 /**
  * The DSA Learn surface (B9).
@@ -17,35 +16,22 @@ export const metadata = {
 export default function LearnDsaPage() {
   const lessons = getLessons();
 
+  const topics = lessons.map((lesson) => ({
+    lesson,
+    problems: getProblemSet(lesson.slug),
+  }));
+
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 p-8">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Learn DSA</h1>
-        <p className="text-sm text-foreground-muted">
-          Topics in the order they build on each other, and you can read any of them in any
-          order. The sequence is a suggestion.
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6">
+      <header className="node-surface flex flex-col gap-2 bg-surface p-6">
+        <h1 className="font-sans text-4xl font-bold tracking-tight sm:text-5xl">Learn DSA</h1>
+        <p className="max-w-2xl text-sm text-foreground-muted">
+          The path runs top to bottom, and practice for each topic branches off it. Nothing is
+          locked — the order is a suggestion, so start anywhere.
         </p>
       </header>
 
-      <ol className="flex flex-col gap-3">
-        {lessons.map((lesson, i) => (
-          <li key={lesson.slug}>
-            <Link
-              href={`/learn/dsa/${lesson.slug}`}
-              className="block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
-            >
-              <Card title={`${i + 1}. ${lesson.title}`}>
-                <p className="text-foreground-muted">{lesson.summary}</p>
-                {lesson.recommendedAfter.length > 0 && (
-                  <p className="mt-2 text-xs text-foreground-muted">
-                    Reads best after {lesson.recommendedAfter.join(', ')}
-                  </p>
-                )}
-              </Card>
-            </Link>
-          </li>
-        ))}
-      </ol>
+      <Roadmap topics={topics} />
     </main>
   );
 }

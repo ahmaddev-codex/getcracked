@@ -27,7 +27,7 @@ export default function ConceptMapPage() {
             Learn
           </Link>
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight">System Design concepts</h1>
+        <h1 className="font-sans text-2xl font-semibold tracking-tight">System Design concepts</h1>
         <p className="text-sm text-foreground-muted">
           {conceptCount()} concepts across {categories.length} areas. Definitions, not essays
           — each one links to itself, so you can send someone straight to a term.

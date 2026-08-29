@@ -31,7 +31,7 @@ function SignUpForm() {
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 p-8">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
+        <h1 className="font-sans text-2xl font-semibold tracking-tight">Create an account</h1>
         <p className="text-sm opacity-70">
           Everything is free. An account just keeps your progress.
         </p>

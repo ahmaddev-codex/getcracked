@@ -32,7 +32,7 @@ export default function ComponentGallery() {
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-col gap-10 p-8">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Design system</h1>
+        <h1 className="font-sans text-2xl font-semibold tracking-tight">Design system</h1>
         <p className="text-sm text-foreground-muted">
           Every component composes one shape primitive. Colours are sampled from the
           reference; contrast is verified in CI.

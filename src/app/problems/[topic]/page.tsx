@@ -49,7 +49,7 @@ export default async function ProblemSetPage(props: TopicRouteProps) {
             Problems
           </Link>
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight">{topic}</h1>
+        <h1 className="font-sans text-2xl font-semibold tracking-tight">{topic}</h1>
         <p className="text-sm text-foreground-muted">
           {set.length} {set.length === 1 ? 'problem' : 'problems'}, warm-up first.
         </p>
