@@ -57,5 +57,85 @@ If you cannot state the invariant, the pointers are guesswork.`,
   // Curriculum ordering, not a dependency: two pointers is understandable on its
   // own, and reads better once the hash-map trade-off is familiar so the two can
   // be compared. Nothing is locked either way (§6.6).
+  exercises: [
+    {
+      slug: 'reverse-in-place',
+      title: 'Reverse in place',
+      brief: 'Reverse `xs` without allocating a new array. Converging pointers, swapping as they meet.',
+      hints: [
+        'One index at each end. Swap, then step both inward.',
+        'Stop when they meet. Continuing past that point undoes every swap.',
+      ],
+      starterCode: {
+        javascript: `function reverse(xs) {
+  // TODO: reverse xs in place and return it.
+  return xs;
+}`,
+      },
+      referenceSolution: {
+        javascript: `function reverse(xs) {
+  let i = 0;
+  let j = xs.length - 1;
+  while (i < j) {
+    const t = xs[i];
+    xs[i] = xs[j];
+    xs[j] = t;
+    i++;
+    j--;
+  }
+  return xs;
+}`,
+      },
+      testSpec: {
+        entry: 'reverse',
+        cases: [
+          { name: 'even length', args: [[1, 2, 3, 4]], expected: [4, 3, 2, 1] },
+          { name: 'odd length', args: [[1, 2, 3]], expected: [3, 2, 1] },
+          { name: 'single element', args: [[9]], expected: [9] },
+          { name: 'empty', args: [[]], expected: [], hidden: true },
+        ],
+      },
+    },
+    {
+      slug: 'sorted-pair-sum',
+      title: 'Pair sum, sorted',
+      brief:
+        'Given a **sorted** array and a target, return the indices of the two values that sum to it, or `[]`. Constant extra space — no map.',
+      hints: [
+        'Start wide: one pointer at each end. Their sum is the largest and smallest you can currently make.',
+        'Too big means the right end is too large; too small means the left is. Move exactly one.',
+      ],
+      starterCode: {
+        javascript: `function pairSum(nums, target) {
+  // TODO: converging pointers over a sorted array.
+  return [];
+}`,
+      },
+      referenceSolution: {
+        javascript: `function pairSum(nums, target) {
+  let i = 0;
+  let j = nums.length - 1;
+  while (i < j) {
+    const sum = nums[i] + nums[j];
+    if (sum === target) return [i, j];
+    if (sum < target) i++;
+    else j--;
+  }
+  return [];
+}`,
+      },
+      testSpec: {
+        entry: 'pairSum',
+        cases: [
+          { name: 'pair exists', args: [[1, 3, 4, 7], 7], expected: [1, 2] },
+          { name: 'no pair', args: [[1, 2, 3], 99], expected: [] },
+          { name: 'ends', args: [[2, 5, 9], 11], expected: [0, 2] },
+          // -4 + 5 = 1, and converging pointers meet that pair first.
+          { name: 'negatives', args: [[-4, -1, 2, 5], 1], expected: [0, 3], hidden: true },
+        ],
+      },
+    },
+  ],
+
   recommendedAfter: ['hashing'],
 };

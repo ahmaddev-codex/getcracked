@@ -195,7 +195,13 @@ export const contentSchema = z.discriminatedUnion('tier', [
 ]);
 export type Content = z.infer<typeof contentSchema>;
 
-/** Stable identifier used by progress rows and analytics. Never a database id. */
+/**
+ * Stable identifier used by progress rows and analytics. Never a database id.
+ *
+ * `step` addresses a unit nested inside its parent — a lesson's guided exercise,
+ * or one step of a build-it challenge. Both are the same runnable unit (AD-7),
+ * so both address the same way.
+ */
 export function exerciseId(content: { tier: Tier; slug: string }, step?: string): string {
   const base = `${content.tier}s/${content.slug}`;
   return step ? `${base}/${step}` : base;

@@ -22,8 +22,8 @@ export default function LearnDsaPage() {
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">Learn DSA</h1>
         <p className="text-sm text-foreground-muted">
-          Topics in the order they build on each other. You can read any of them in any
-          order — the sequence is a suggestion, not a gate.
+          Topics in the order they build on each other, and you can read any of them in any
+          order. The sequence is a suggestion.
         </p>
       </header>
 

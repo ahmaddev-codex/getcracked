@@ -160,3 +160,21 @@ body {
   border-radius: var(--radius-node);
   box-shadow: var(--shadow-node);
 }
+
+/* Animated disclosure (components/ui/Disclosure.tsx).
+   Animating grid-template-rows reaches the content's real height, which a
+   guessed max-height cannot — too small clips, too large animates at the wrong
+   speed. */
+.gc-disclosure-panel {
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--duration-fast) var(--ease-out);
+}
+.gc-disclosure-panel[data-open='true'] {
+  grid-template-rows: 1fr;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gc-disclosure-panel {
+    transition: none;
+  }
+}

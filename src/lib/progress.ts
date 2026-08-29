@@ -148,6 +148,42 @@ export async function getLatestSubmission(
 }
 
 /**
+ * Lesson state, derived from its guided exercises (B12).
+ *
+ * The single definition of "this lesson is done", consumed by the recommendation
+ * engine (B16), roadmap nodes (I4), and the analytics funnel (F6). Deriving it
+ * in one place is what stops three surfaces disagreeing about whether a learner
+ * has finished something.
+ *
+ * A lesson with no exercises can never be "complete" — there is nothing to
+ * complete. It reports `not_started` rather than silently counting as done,
+ * which would inflate every roadmap that contains it.
+ */
+export function deriveLessonState(
+  exerciseIds: readonly string[],
+  progress: readonly ExerciseProgressRecord[],
+): ProgressState {
+  if (exerciseIds.length === 0) return 'not_started';
+
+  const byId = new Map(progress.map((p) => [p.exerciseId, p]));
+  const states = exerciseIds.map((id) => byId.get(id)?.state ?? 'not_started');
+
+  if (states.every((s) => s === 'complete')) return 'complete';
+  if (states.some((s) => s !== 'not_started')) return 'in_progress';
+  return 'not_started';
+}
+
+/** Lesson state for a signed-in learner, read through the same derivation. */
+export async function getLessonState(
+  db: Database,
+  userId: string,
+  exerciseIds: readonly string[],
+): Promise<ProgressState> {
+  const all = await getAllProgress(db, userId);
+  return deriveLessonState(exerciseIds, all);
+}
+
+/**
  * Imports progress a learner accumulated before signing up (A15).
  *
  * Explicitly *claimed history*, not proof: local state is trivially forgeable,

@@ -1,7 +1,7 @@
 'use client';
 
 import type { Language, Tier } from '@/content/schema';
-import type { ProgressState } from '@/lib/progress';
+import { deriveLessonState, type ProgressState } from '@/lib/progress';
 
 /**
  * Progress for a signed-out learner (A15).
@@ -48,6 +48,25 @@ export function recordLocalAttempt(entry: LocalProgressEntry): void {
   } catch {
     // Storage refused; the attempt still ran and the result is on screen.
   }
+}
+
+/**
+ * Lesson state for a signed-out learner.
+ *
+ * Uses the same `deriveLessonState` the server does, so the two tiers cannot
+ * drift on what "complete" means — the bug this would otherwise produce is a
+ * lesson that reads as done signed out and not-started signed in.
+ */
+export function readLocalLessonState(exerciseIds: readonly string[]): ProgressState {
+  return deriveLessonState(
+    exerciseIds,
+    readLocalProgress().map((e) => ({
+      exerciseId: e.exerciseId,
+      language: e.language,
+      state: e.state,
+      completedAt: null,
+    })),
+  );
 }
 
 export function clearLocalProgress(): void {

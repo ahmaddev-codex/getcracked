@@ -27,6 +27,8 @@ export function Workspace({
   spec,
   complexity,
   tier = 'problem',
+  compact = false,
+  onSolved,
 }: {
   exerciseId: string;
   language: Language;
@@ -34,6 +36,16 @@ export function Workspace({
   spec: TestSpec;
   complexity?: { time: string; space: string; note?: string };
   tier?: Tier;
+  /**
+   * Trims the surface for a guided exercise embedded in a lesson (B11).
+   *
+   * Same runner, same persistence, same everything — only the framing changes.
+   * A second execution path for lesson exercises is exactly the divergence AD-7
+   * exists to prevent.
+   */
+  compact?: boolean;
+  /** Fires when a run passes, so a lesson can advance its own state. */
+  onSolved?: () => void;
 }) {
   const [result, setResult] = useState<SpecResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +69,10 @@ export function Workspace({
   const codeRef = useRef(starterCode);
 
   const runtime = useRef<RuntimeClient | null>(null);
+  const onSolvedRef = useRef(onSolved);
+  useEffect(() => {
+    onSolvedRef.current = onSolved;
+  });
 
   useEffect(() => {
     track('exercise_started', { exerciseId, language });
@@ -95,10 +111,13 @@ export function Workspace({
         source: codeRef.current,
         language,
         // Costs an extra sandboxed run, so only measure when it will be shown.
-        measure: true,
+        measure: !compact,
       });
       setResult(outcome);
-      if (outcome.passed) track('exercise_solved', { exerciseId, language });
+      if (outcome.passed) {
+        track('exercise_solved', { exerciseId, language });
+        onSolvedRef.current?.();
+      }
       void persistAttempt({
         exerciseId,
         tier,
@@ -114,7 +133,7 @@ export function Workspace({
     } finally {
       setRunning(false);
     }
-  }, [language, spec, running, exerciseId, tier]);
+  }, [language, spec, running, exerciseId, tier, compact]);
 
   const reset = useCallback(() => {
     clearDraft(exerciseId, language);
@@ -128,10 +147,12 @@ export function Workspace({
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold">Your solution</h2>
-        <span className="text-xs text-foreground-muted">{language}</span>
-      </div>
+      {!compact && (
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold">Your solution</h2>
+          <span className="text-xs text-foreground-muted">{language}</span>
+        </div>
+      )}
 
       {/* Remounting on reset restores the starter code and clears undo history,
           which is what "reset" should mean. */}
@@ -163,11 +184,13 @@ export function Workspace({
 
       <TestCases spec={spec} result={result} />
 
-      <Complexity
-        target={complexity}
-        metrics={result?.metrics ?? null}
-        inputSize={largestInputSize(spec)}
-      />
+      {!compact && (
+        <Complexity
+          target={complexity}
+          metrics={result?.metrics ?? null}
+          inputSize={largestInputSize(spec)}
+        />
+      )}
     </section>
   );
 }

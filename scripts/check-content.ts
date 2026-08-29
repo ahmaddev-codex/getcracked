@@ -1,5 +1,5 @@
 import { RAW_LESSONS, RAW_PROBLEMS } from '../src/content/registry';
-import { contentSchema, exerciseId, type Content } from '../src/content/schema';
+import { contentSchema, exerciseId, type RunnableExercise } from '../src/content/schema';
 import { runTestSpec } from '../src/content/test-runner';
 
 /**
@@ -37,12 +37,16 @@ function describe(content: unknown): string {
   return `${c.tier ?? 'content'} "${c.slug ?? '(no slug)'}"`;
 }
 
-async function checkBehaviour(content: Content) {
-  if (content.tier !== 'problem') return; // Lessons/challenges land in T2.1/T2.2.
-
-  const id = exerciseId(content);
-  const reference = content.referenceSolution.javascript;
-  const starter = content.starterCode.javascript;
+/**
+ * Runs one exercise's reference and starter against its own spec.
+ *
+ * Shared by problems and lesson exercises: both are the same runnable unit
+ * (AD-7), so both earn the same check. A lesson exercise nobody verified is a
+ * comprehension check that might teach the wrong thing.
+ */
+async function checkExercise(id: string, exercise: RunnableExercise) {
+  const reference = exercise.referenceSolution.javascript;
+  const starter = exercise.starterCode.javascript;
 
   if (!reference) {
     fail(id, 'No JavaScript reference solution. Phase 1 content is JavaScript-only.');
@@ -54,7 +58,7 @@ async function checkBehaviour(content: Content) {
   }
 
   const ref = await runTestSpec({
-    spec: content.testSpec,
+    spec: exercise.testSpec,
     source: reference,
     language: 'javascript',
   });
@@ -69,7 +73,7 @@ async function checkBehaviour(content: Content) {
   }
 
   const stub = await runTestSpec({
-    spec: content.testSpec,
+    spec: exercise.testSpec,
     source: starter,
     language: 'javascript',
   });
@@ -102,7 +106,8 @@ async function main() {
     if (seen.has(id)) fail(id, 'Duplicate content id — two entries share a tier and slug.');
     seen.add(id);
 
-    await checkBehaviour(content);
+    // Narrowed above: only problems carry a runnable unit at the top level.
+    if (content.tier === 'problem') await checkExercise(id, content);
   }
 
   for (const raw of RAW_LESSONS) {
@@ -127,6 +132,11 @@ async function main() {
       if (!slugs.has(prereq)) {
         fail(id, `recommendedAfter names "${prereq}", which is not an authored lesson.`);
       }
+    }
+
+    // Guided exercises earn the same verification a problem does (B11, AD-7).
+    for (const exercise of lesson.exercises) {
+      await checkExercise(exerciseId(lesson, exercise.slug), exercise);
     }
   }
 

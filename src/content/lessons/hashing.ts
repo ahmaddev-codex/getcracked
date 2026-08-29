@@ -57,5 +57,75 @@ complexity" are usually discussed together.`,
     },
   ],
 
+  exercises: [
+    {
+      slug: 'seen-before',
+      title: 'Have I seen this?',
+      brief: 'Return `true` if any value appears twice in `nums`, otherwise `false`. One pass, using a set.',
+      hints: [
+        'You only ever ask about elements you have already passed — so record each one as you go.',
+        'Check membership *before* adding the current element, or every element matches itself.',
+      ],
+      starterCode: {
+        javascript: `function hasDuplicate(nums) {
+  // TODO: return true if any value repeats.
+  return false;
+}`,
+      },
+      referenceSolution: {
+        javascript: `function hasDuplicate(nums) {
+  const seen = new Set();
+  for (let i = 0; i < nums.length; i++) {
+    if (seen.has(nums[i])) return true;
+    seen.add(nums[i]);
+  }
+  return false;
+}`,
+      },
+      testSpec: {
+        entry: 'hasDuplicate',
+        cases: [
+          { name: 'a repeat', args: [[1, 2, 3, 2]], expected: true },
+          { name: 'all distinct', args: [[1, 2, 3]], expected: false },
+          { name: 'empty', args: [[]], expected: false },
+          { name: 'adjacent repeat', args: [[5, 5]], expected: true, hidden: true },
+        ],
+      },
+    },
+    {
+      slug: 'count-occurrences',
+      title: 'Count each value',
+      brief: 'Return an object mapping each value in `nums` to how many times it appears.',
+      hints: [
+        'This is the same loop, but the map holds a running count instead of an index.',
+        'A missing key needs a default — reading it before writing gives `undefined`, not `0`.',
+      ],
+      starterCode: {
+        javascript: `function countValues(nums) {
+  // TODO: map each value to its number of occurrences.
+  return {};
+}`,
+      },
+      referenceSolution: {
+        javascript: `function countValues(nums) {
+  const counts = {};
+  for (let i = 0; i < nums.length; i++) {
+    const n = nums[i];
+    counts[n] = (counts[n] || 0) + 1;
+  }
+  return counts;
+}`,
+      },
+      testSpec: {
+        entry: 'countValues',
+        cases: [
+          { name: 'mixed', args: [[1, 2, 2, 3]], expected: { 1: 1, 2: 2, 3: 1 } },
+          { name: 'empty', args: [[]], expected: {} },
+          { name: 'all same', args: [[7, 7, 7]], expected: { 7: 3 }, hidden: true },
+        ],
+      },
+    },
+  ],
+
   recommendedAfter: [],
 };

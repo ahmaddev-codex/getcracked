@@ -4,6 +4,8 @@ import { Markdown } from '@/components/Markdown';
 import { LessonSection } from '@/components/learn/LessonSection';
 import { Node } from '@/components/ui/Node';
 import { findLesson, getLessons, getLessonPosition, getProblemSet } from '@/content/registry';
+import { exerciseId } from '@/content/schema';
+import { GuidedExercises } from '@/components/learn/GuidedExercises';
 
 /**
  * One lesson (B10), rendering the five sections in a fixed order so a learner
@@ -108,6 +110,13 @@ export default async function LessonPage(props: LessonRouteProps) {
           </div>
         </LessonSection>
       )}
+
+      {/* (B11) Guided checks, using the same runner a problem does. */}
+      <GuidedExercises
+        lessonSlug={lesson.slug}
+        exercises={lesson.exercises}
+        exerciseIds={lesson.exercises.map((e) => exerciseId(lesson, e.slug))}
+      />
 
       {/* B13: the handoff into practice. Open regardless of progress. */}
       {problems.length > 0 && (
