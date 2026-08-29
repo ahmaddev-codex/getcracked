@@ -15,6 +15,7 @@ export interface RunRequest {
   language: Language;
   trace?: boolean;
   timeoutMs?: number;
+  measure?: boolean;
 }
 
 export type RunResponse =

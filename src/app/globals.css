@@ -47,6 +47,16 @@
   --alt-foreground: #ffffff;
   --danger: #b91c1c;            /* derived — form and run errors */
 
+  /* ── Syntax highlighting ──────────────────────────────────────────────── */
+  /* Derived, and contrast-checked against --surface like any other text: code
+     is the surface a learner stares at longest, so a low-contrast token here
+     costs more than anywhere else in the product. */
+  --syntax-keyword: #7c3aed;
+  --syntax-string: #15803d;
+  --syntax-number: #b45309;
+  --syntax-comment: #64748b;
+  --syntax-function: #1d4ed8;
+
   /* ── Notice bar (A16) ─────────────────────────────────────────────────── */
   /* #0F172B, which also appears in the sampled reference palette. */
   --notice-background: oklch(20.8% 0.042 265.755);
@@ -89,6 +99,12 @@
     --alt-foreground: #030713;
     --danger: #fca5a5;
 
+    --syntax-keyword: #c4b5fd;
+    --syntax-string: #86efac;
+    --syntax-number: #fcd34d;
+    --syntax-comment: #94a3b8;
+    --syntax-function: #93c5fd;
+
     /* Notice bar is deliberately unchanged: the yellow only clears AA on a dark
        ground, so inverting it would fail contrast in light mode. */
   }
@@ -111,6 +127,11 @@
 
   --color-link: var(--link);
   --color-danger: var(--danger);
+  --color-syntax-keyword: var(--syntax-keyword);
+  --color-syntax-string: var(--syntax-string);
+  --color-syntax-number: var(--syntax-number);
+  --color-syntax-comment: var(--syntax-comment);
+  --color-syntax-function: var(--syntax-function);
   --color-alt: var(--alt);
   --color-alt-foreground: var(--alt-foreground);
 

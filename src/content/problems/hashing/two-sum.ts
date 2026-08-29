@@ -51,6 +51,12 @@ The obvious approach compares every pair, which is O(n²). There is an O(n) way.
 }`,
   },
 
+  complexity: {
+    time: 'O(n)',
+    space: 'O(n)',
+    note: 'One pass over the array, with a hash map holding at most n entries. The brute-force pair comparison is O(n²) time and O(1) space — the map trades space for time.',
+  },
+
   testSpec: {
     entry: 'twoSum',
     cases: [

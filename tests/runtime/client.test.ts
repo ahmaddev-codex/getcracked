@@ -48,6 +48,7 @@ function passingResult() {
     timedOut: false,
     trace: [],
     traceDegraded: false,
+    metrics: null,
   };
 }
 

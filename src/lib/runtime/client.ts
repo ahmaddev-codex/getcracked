@@ -27,6 +27,8 @@ export interface RunOptions {
   trace?: boolean;
   /** Passed to QuickJS's interrupt handler. */
   timeoutMs?: number;
+  /** Costs an extra sandboxed run; on only when the UI will show the result. */
+  measure?: boolean;
 }
 
 const DEFAULT_TIMEOUT_MS = 5_000;
@@ -100,6 +102,7 @@ export class RuntimeClient {
       language: opts.language,
       trace: opts.trace,
       timeoutMs,
+      measure: opts.measure,
     };
 
     return new Promise<SpecResult>((resolve, reject) => {

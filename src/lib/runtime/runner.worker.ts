@@ -12,10 +12,10 @@ import type { RunRequest, RunResponse } from './protocol';
  * thread.
  */
 self.onmessage = async (event: MessageEvent<RunRequest>) => {
-  const { id, spec, source, language, trace, timeoutMs } = event.data;
+  const { id, spec, source, language, trace, timeoutMs, measure } = event.data;
 
   try {
-    const result = await runTestSpec({ spec, source, language, trace, timeoutMs });
+    const result = await runTestSpec({ spec, source, language, trace, timeoutMs, measure });
     const response: RunResponse = { id, ok: true, result };
     self.postMessage(response);
   } catch (e) {

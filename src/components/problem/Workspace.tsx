@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { Node } from '@/components/ui/Node';
 import { Editor } from './Editor';
 import { TestResults } from './TestResults';
+import { TestCases } from './TestCases';
+import { Complexity } from './Complexity';
 import { RuntimeClient } from '@/lib/runtime/client';
 import { TIMEOUT_MESSAGE } from '@/lib/runtime/errors';
 import { clearDraft, readDraft, subscribeToDrafts, writeDraft } from '@/lib/drafts';
@@ -23,11 +25,13 @@ export function Workspace({
   language,
   starterCode,
   spec,
+  complexity,
 }: {
   exerciseId: string;
   language: Language;
   starterCode: string;
   spec: TestSpec;
+  complexity?: { time: string; space: string; note?: string };
 }) {
   const [result, setResult] = useState<SpecResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -84,6 +88,8 @@ export function Workspace({
         spec,
         source: codeRef.current,
         language,
+        // Costs an extra sandboxed run, so only measure when it will be shown.
+        measure: true,
       });
       setResult(outcome);
       if (outcome.passed) track('exercise_solved', { exerciseId, language });
@@ -142,7 +148,24 @@ export function Workspace({
         </Node>
       )}
 
+      <TestCases spec={spec} result={result} />
+
       {result && <TestResults result={result} />}
+
+      <Complexity
+        target={complexity}
+        metrics={result?.metrics ?? null}
+        inputSize={largestInputSize(spec)}
+      />
     </section>
   );
+}
+
+/** Elements in the largest test input, so measured counts can be read against it. */
+function largestInputSize(spec: TestSpec): number | undefined {
+  const sizes = spec.cases
+    .flatMap((c) => c.args)
+    .filter(Array.isArray)
+    .map((a) => (a as unknown[]).length);
+  return sizes.length ? Math.max(...sizes) : undefined;
 }

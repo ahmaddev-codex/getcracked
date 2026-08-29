@@ -1,5 +1,6 @@
 import { runJavaScript } from '@/lib/runtime/javascript';
 import type { RunResult } from '@/lib/runtime/javascript';
+import { measureRun, type RuntimeMetrics } from '@/lib/runtime/measure';
 import type { Language, TestSpec } from './schema';
 
 /**
@@ -35,6 +36,11 @@ export interface SpecResult {
   /** Present when tracing was requested; empty otherwise. */
   trace: RunResult['events'];
   traceDegraded: boolean;
+  /**
+   * Measured cost of the largest passing case — null when the code could not be
+   * measured, or when nothing passed and there is nothing meaningful to measure.
+   */
+  metrics: RuntimeMetrics | null;
 }
 
 /**
@@ -59,10 +65,12 @@ export interface RunSpecOptions {
   language: Language;
   trace?: boolean;
   timeoutMs?: number;
+  /** Off by default: measurement costs an extra sandboxed run. */
+  measure?: boolean;
 }
 
 export async function runTestSpec(opts: RunSpecOptions): Promise<SpecResult> {
-  const { spec, source, language, trace = false, timeoutMs } = opts;
+  const { spec, source, language, trace = false, timeoutMs, measure = false } = opts;
 
   if (language !== 'javascript') {
     // Python's adapter exists (T0.2) but content is JavaScript-only for the
@@ -117,11 +125,25 @@ export async function runTestSpec(opts: RunSpecOptions): Promise<SpecResult> {
     });
   }
 
-  return {
-    passed: cases.length === spec.cases.length && cases.every((c) => c.passed),
-    cases,
-    timedOut,
-    trace: traceEvents,
-    traceDegraded,
-  };
+  const passed = cases.length === spec.cases.length && cases.every((c) => c.passed);
+
+  /**
+   * Measured on the largest input, since cost is what a learner cares about as
+   * input grows — and only when everything passed, because measuring broken
+   * code reports the cost of the wrong algorithm.
+   */
+  let metrics: RuntimeMetrics | null = null;
+  if (measure && passed && !timedOut) {
+    const largest = [...spec.cases].sort(
+      (a, b) => JSON.stringify(b.args).length - JSON.stringify(a.args).length,
+    )[0];
+    metrics = await measureRun({
+      source,
+      entry: spec.entry,
+      args: largest.args,
+      timeoutMs,
+    });
+  }
+
+  return { passed, cases, timedOut, trace: traceEvents, traceDegraded, metrics };
 }

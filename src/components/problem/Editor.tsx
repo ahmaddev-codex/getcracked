@@ -1,10 +1,29 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { EditorView, keymap, lineNumbers, highlightActiveLine } from '@codemirror/view';
+import {
+  EditorView,
+  keymap,
+  lineNumbers,
+  highlightActiveLine,
+  highlightActiveLineGutter,
+  highlightSpecialChars,
+  drawSelection,
+  rectangularSelection,
+} from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { javascript } from '@codemirror/lang-javascript';
+import {
+  bracketMatching,
+  indentOnInput,
+  indentUnit,
+  foldGutter,
+  foldKeymap,
+} from '@codemirror/language';
+import { closeBrackets, closeBracketsKeymap, autocompletion, completionKeymap } from '@codemirror/autocomplete';
+import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
+import { editorTheme, syntaxExtension } from './editor-theme';
 
 /**
  * Code editor (A6).
@@ -64,9 +83,25 @@ export function Editor({
       doc: value,
       extensions: [
         lineNumbers(),
+        foldGutter(),
         highlightActiveLine(),
+        highlightActiveLineGutter(),
+        highlightSpecialChars(),
+        // CodeMirror's own selection layer; the browser's is invisible against
+        // a themed background in dark mode.
+        drawSelection(),
+        rectangularSelection(),
+        highlightSelectionMatches(),
         history(),
         javascript(),
+        syntaxExtension,
+        bracketMatching(),
+        closeBrackets(),
+        autocompletion(),
+        indentOnInput(),
+        // Two spaces, matching the starter code the learner is editing.
+        indentUnit.of('  '),
+        EditorState.tabSize.of(2),
         keymap.of([
           {
             key: 'Mod-Enter',
@@ -78,6 +113,10 @@ export function Editor({
           // Tab indents rather than leaving the editor. Placed after the run
           // binding so it cannot shadow it.
           indentWithTab,
+          ...closeBracketsKeymap,
+          ...completionKeymap,
+          ...searchKeymap,
+          ...foldKeymap,
           ...defaultKeymap,
           ...historyKeymap,
         ]),
@@ -87,16 +126,7 @@ export function Editor({
           if (docRefHolder.current) docRefHolder.current.current = next;
           onChangeRef.current(next);
         }),
-        EditorView.theme({
-          '&': { fontSize: '13px', backgroundColor: 'transparent' },
-          '.cm-content': { fontFamily: 'var(--font-mono)', padding: '12px 0' },
-          '.cm-gutters': {
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: 'var(--foreground-muted)',
-          },
-          '&.cm-focused': { outline: 'none' },
-        }),
+        editorTheme,
       ],
     });
 

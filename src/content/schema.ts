@@ -67,6 +67,22 @@ export const runnableExerciseSchema = z.object({
   /** Per language. Used to validate the spec itself — see checkExercise. */
   referenceSolution: z.partialRecord(languageSchema, z.string().min(1)),
   testSpec: testSpecSchema,
+  /**
+   * The target asymptotic cost, stated by the author.
+   *
+   * Deliberately authored rather than inferred: Big-O is a claim about growth,
+   * and no amount of running a function on one input can establish it. The
+   * runtime measures what actually happened (lib/runtime/measure.ts); this is
+   * what the learner is aiming for.
+   */
+  complexity: z
+    .object({
+      time: z.string().min(1),
+      space: z.string().min(1),
+      /** Why that bound holds — shown once a learner passes. */
+      note: z.string().optional(),
+    })
+    .optional(),
 });
 export type RunnableExercise = z.infer<typeof runnableExerciseSchema>;
 

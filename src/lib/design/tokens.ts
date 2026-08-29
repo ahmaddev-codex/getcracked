@@ -119,6 +119,12 @@ export const CONTRAST_PAIRS: ReadonlyArray<{
   { name: 'link on surface', fg: 'link', bg: 'surface' },
   { name: 'error text on page', fg: 'danger', bg: 'background' },
   { name: 'error text on surface', fg: 'danger', bg: 'surface' },
+  // Code is the surface a learner stares at longest.
+  { name: 'keyword in editor', fg: 'syntax-keyword', bg: 'surface' },
+  { name: 'string in editor', fg: 'syntax-string', bg: 'surface' },
+  { name: 'number in editor', fg: 'syntax-number', bg: 'surface' },
+  { name: 'comment in editor', fg: 'syntax-comment', bg: 'surface' },
+  { name: 'function name in editor', fg: 'syntax-function', bg: 'surface' },
   { name: 'text on accent node', fg: 'accent-foreground', bg: 'accent' },
   { name: 'text on strong accent', fg: 'accent-foreground', bg: 'accent-strong' },
   { name: 'text on alt node', fg: 'alt-foreground', bg: 'alt' },
