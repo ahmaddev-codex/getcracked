@@ -1,6 +1,6 @@
 # ADR 0001 — Technology Stack
 
-**Status:** Proposed — awaiting human review · *Decision 5 amended 2026-08-29 following T0.2*
+**Status:** Proposed — awaiting human review · *Decision 5 amended 2026-08-29 following T0.2; Decisions 1 and 4 amended 2026-08-29 following the §2.6 access-model change*
 **Date:** 2026-08-28
 **Context sources:** [docs/getcracked-prd.md](../getcracked-prd.md) (v1.0), [tasks/plan.md](../../tasks/plan.md)
 **Supersedes:** nothing. **Constrains:** every task in Phases 0–2.
@@ -23,9 +23,9 @@ Pyodide, the test runner, and trace capture are all client-side. The server's jo
 
 The rest lines up:
 
-- Every route is auth-gated (§2.6), so SEO is irrelevant except for `/` — the usual "we need SSR for crawlers" pressure is absent, and the usual "SSR is wasted on a logged-in app" objection is answered by content-as-code static rendering.
+- ~~Every route is auth-gated (§2.6), so SEO is irrelevant except for `/`~~ — **reversed 2026-08-29.** §2.6 no longer gates content behind sign-in; lessons, the concept map, roadmaps, problems, and the question bank are all public. SEO therefore moves from *irrelevant* to *a primary acquisition channel*, and this **strengthens** the decision rather than weakening it: content-as-code (AD-1) makes the entire public catalog statically renderable at build time, which is close to the ideal case for a framework with SSG plus ISR. Had this ADR been written against the new access model, SEO would have been an argument *for* Next.js rather than a dismissed non-issue.
 - Content-as-code (AD-1) means most pages are statically renderable at build time.
-- AD-5's fail-closed middleware allowlist is a clean single-chokepoint pattern *because* there is one app. Split the frontend and backend and that guarantee has to be re-established on the other side of a network boundary.
+- AD-5's fail-closed chokepoint is clean *because* there is one app. Split the frontend and backend and that guarantee has to be re-established on the other side of a network boundary. (What that chokepoint protects narrowed on 2026-08-29 — see §4 — but it did not disappear.)
 
 **Rejected alternatives.** A Vite SPA plus a separate API would iterate faster on the editor and visualizer and avoid RSC complexity, but it forfeits the single auth chokepoint, the single deploy, and static content rendering — and still needs a backend. Remix/React Router 7 and TanStack Start are comparable on merit with a thinner ecosystem for the specific pieces this product needs.
 
@@ -80,7 +80,22 @@ The working pattern splits the check across two layers:
 | Edge middleware | Verify the session cookie's **presence and signature** only. No session record lookup. Redirect to `/sign-in?next=…` when absent or malformed. |
 | Server component / route handler | The **authoritative** session lookup — record exists, not revoked, not expired — and all authorization. |
 
-This still fails closed and still has one allowlist, so AD-5's actual guarantee survives intact. What changes is that middleware is a cheap fast-path rejection, not the security boundary. **T0.4's acceptance criteria must state which layer asserts what**, or the middleware test will pass while the real check is missing.
+This still fails closed, so AD-5's actual guarantee survives intact. What changes is that middleware is a cheap fast-path rejection, not the security boundary. **T0.4's acceptance criteria must state which layer asserts what**, or the middleware test will pass while the real check is missing.
+
+### What the gate protects, after the 2026-08-29 access-model change
+
+§2.6 no longer requires sign-in to use the product. That changes *what* is gated, and it is worth being precise, because the naive reading — "flip the allowlist to a denylist" — quietly discards the fail-closed property.
+
+Two categories, with different defaults:
+
+| | Default | Enforcement |
+|---|---|---|
+| **Content routes** — lessons, problems, challenges, labs, roadmaps, concept map, question bank | **Public.** No session needed, no redirect. | None. These render for anyone. |
+| **Account-scoped routes and every API touching a user row** — progress sync, study plans, community, assistant, admin | **Denied.** Fail closed exactly as before. | Both layers, as above. |
+
+The fail-closed default therefore still holds where it matters: **any handler that reads or writes user-owned data is denied unless it proves a session.** A new API route added without thought is refused, not exposed. What is no longer gated is *content*, which is not user-owned data and never needed protecting.
+
+The failure mode to design against has changed shape. It used to be "a route was added and forgotten, so it leaked." It is now "a route reads user data on a public page and forgets to scope it to the session" — which is an authorization bug, not a routing one, and will not be caught by a middleware test. T0.4 must assert at the data-access layer, not only at the edge.
 
 ---
 

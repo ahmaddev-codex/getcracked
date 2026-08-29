@@ -9,7 +9,7 @@
 
 ## Overview
 
-GetCracked is a single Next.js fullstack application (PRD H8) delivering three learning surfaces — animated DSA challenges, System Design labs, and a company-tagged interview question bank — plus visual roadmaps over all of it. Every feature is free; every feature requires sign-in (PRD §2.6).
+GetCracked is a single Next.js fullstack application (PRD H8) delivering three learning surfaces — animated DSA challenges, System Design labs, and a company-tagged interview question bank — plus visual roadmaps over all of it. Every feature is free, and sign-in is required only for account-scoped behaviour — progress sync, personalization, community, and the assistant. Every learning surface works signed out (PRD §2.6).
 
 This plan sequences ~117 PRD features (A1–A14, B1–B21, C1–C10, D1–D10, E1–E5, F1–F6, G1–G4, H1–H10, I1–I10, J1–J12, K1–K10, L1–L10) into vertical slices. Phases 0–2 are broken into implementable S/M tasks with acceptance criteria. Phases 3–8 are epic-level and will be decomposed when reached, per the agreed planning depth.
 
@@ -128,9 +128,20 @@ Module C's diagramming canvas (C1) and Module I's roadmap canvas (I1) are both n
 
 **The reference confirms the choice.** roadmap.sh serves React Flow's stylesheet (`@xyflow`) as one of its six CSS bundles — verified 2026-08-29 — so React Flow is what actually renders the roadmaps we are taking direction from, not a guess at a suitable library.
 
-### AD-5 — One allowlist, enforced across two layers
+### AD-5 — Content is public; user data fails closed
 
-Sign-in gates the entire product (PRD §2.6, A2) — dashboard, challenges, labs, roadmap, question bank, and `/learn`. There is a single explicit public allowlist (`/`, `/sign-in`, `/sign-up`, auth callbacks, static assets), so the default for any new route is *denied*.
+**Amended 2026-08-29** following the §2.6 access-model change. Sign-in no longer gates the product. It gates *account-scoped data*.
+
+Two categories with opposite defaults:
+
+| | Default | Examples |
+|---|---|---|
+| **Content** | **Public** — no session, no redirect | lessons, problems, challenges, labs, roadmaps, `/learn`, question bank |
+| **User-owned data** | **Denied** — fails closed, as before | progress sync, study plans, community, assistant, admin, and *every* API route touching a user row |
+
+The fail-closed property survives where it matters: **any handler reading or writing user data is refused unless it proves a session**, so a route added without thought is denied rather than exposed. Content was never user-owned data and never needed protecting.
+
+**The failure mode has changed shape, and this is the part most likely to be got wrong.** It used to be "a route was added and forgotten, so it leaked." It is now "a public page reads user data and forgets to scope it to the session" — an *authorization* bug, not a routing one. No middleware test will catch it. The guard has to sit at the data-access layer.
 
 **The check is split, because the edge runtime cannot reach Postgres over TCP** and therefore cannot validate a database-backed session ([ADR 0001 §4](../docs/adr/0001-stack.md#decision-4--auth-better-auth-fallback-authjs-v5-and-ad-5-needs-a-correction)):
 
@@ -139,7 +150,9 @@ Sign-in gates the entire product (PRD §2.6, A2) — dashboard, challenges, labs
 | Edge middleware | Session cookie **presence and signature** only — no record lookup. Redirects to `/sign-in?next=…` when absent or malformed. |
 | Server component / route handler | The **authoritative** lookup: record exists, not revoked, not expired — plus all authorization. |
 
-*Rationale:* An allowlist fails closed. Per-page guards fail open every time someone adds a route and forgets. Splitting the layers preserves that guarantee — middleware is a cheap fast-path rejection, not the security boundary. The failure mode to guard against is a middleware test passing while the real check was never written, which is why T0.4 asserts both layers separately.
+*Rationale:* Defaulting user-data access to denied fails closed; per-handler guards fail open every time someone adds one and forgets. Splitting the layers preserves that guarantee — middleware is a cheap fast-path rejection, not the security boundary. The failure mode to guard against is a middleware test passing while the real check was never written, which is why T0.4 asserts both layers separately.
+
+*On anonymous progress:* signed-out learners keep progress in local browser storage and are offered migration at sign-up (PRD A15). That path is **not** a security boundary — local state is trivially forgeable — so migrated progress is imported as claimed history, never trusted as proof of completion for anything that matters. Since nothing is locked (§6.6) and progress unlocks nothing (B18), forging it gains a learner nothing but a dishonest streak.
 
 *Implementation:* **Better Auth** with sessions in our own Postgres. Per-MAU vendors (Clerk, WorkOS) are rejected: MAU is the metric §8 exists to maximize and §2.6 removes any revenue that scales with it.
 
@@ -270,23 +283,24 @@ Highest-risk work first. If T0.2/T0.6 fail, the entire product architecture chan
 
 ---
 
-#### Task 0.4: Auth hard gate (A2, §2.6)
+#### Task 0.4: Auth for account-scoped data (A2, A15, §2.6)
 
-**Description:** Sign-in/sign-up with session persistence (**Better Auth**, sessions in our own Postgres), plus the two-layer fail-closed gate of AD-5: edge middleware rejects on a missing or malformed session cookie against an explicit public allowlist, and the server layer performs the authoritative session lookup. Implements the PRD's defining access constraint: everything free, nothing anonymous.
+**Description:** Sign-in/sign-up with session persistence (**Better Auth**, sessions in our own Postgres), plus the two-layer guard of AD-5 — but guarding *user data*, not content. Content routes stay public and unauthenticated. Also reconciles the T0.3 auth tables against Better Auth's generator.
 
 **Acceptance criteria:**
 - [ ] A user can sign up, sign out, and sign back in; the session survives a full page reload
-- [ ] Requesting any non-allowlisted route while signed out redirects to `/sign-in` with a return URL that is honored after auth
-- [ ] The public allowlist is a single named constant, and a test asserts a representative protected route is denied while signed out
+- [ ] **Content routes render for a signed-out visitor** — a representative lesson and problem route return 200 with no session and no redirect. This is asserted, because the easy mistake is to gate everything by reflex
+- [ ] Every route or handler that reads or writes a user row is denied without a valid session, and a test asserts a representative one
 - [ ] **Both AD-5 layers are asserted separately:** middleware rejects a request with no cookie, *and* the server layer rejects a syntactically valid cookie whose session record was deleted. A middleware-only test would pass with the real check missing
-- [ ] The privacy notice required by PRD Open Question 7 is presented at sign-up (see R-6 — it ships with this task, not after)
+- [ ] **T0.3's `users`/`sessions` tables are reconciled against `better-auth generate`**, and any drift lands as a migration rather than a hand edit
+- [ ] The privacy notice required by PRD Open Question 7 is presented at sign-up, and its signed-out half (anonymous device identifier, F6) is answered before any anonymous tracking ships
 
 **Verification:**
-- [ ] Tests pass: middleware test covering signed-out denial, signed-in pass, and return-URL round trip
-- [ ] Manual check: sign up → land on dashboard → sign out → direct-navigate to `/dashboard` → redirected
+- [ ] Tests pass: signed-out content access; user-data denial at both layers; return-URL round trip
+- [ ] Manual check: browse a lesson and solve a problem entirely signed out, then sign up and confirm the A15 migration prompt appears
 
 **Dependencies:** T0.3
-**Files likely touched:** `middleware.ts`, `lib/auth.ts`, `app/(auth)/sign-in/page.tsx`, `app/(auth)/sign-up/page.tsx`, `tests/middleware.test.ts`
+**Files likely touched:** `middleware.ts`, `lib/auth.ts`, `app/(auth)/sign-in/page.tsx`, `app/(auth)/sign-up/page.tsx`, `db/migrations/*`, `tests/auth/*`
 **Estimated scope:** M
 
 ---
@@ -346,7 +360,7 @@ The obligation that survives suspension is architectural, not scheduled: **T2.3'
 ### ✅ Checkpoint A — Foundation
 
 - [ ] All tests pass; `pnpm build` clean; CI green
-- [ ] A user can sign up, sign in, and reach a protected empty dashboard; signed-out access is denied
+- [ ] A user can sign up, sign in, and reach an account-scoped page; **and a signed-out visitor can reach content routes** — both directions asserted
 - [ ] The T0.2 spike document is written, with a **decision recorded** on the Python and JavaScript runtimes
 - [ ] Design tokens sampled and recorded; component gallery renders in both themes; **zero WCAG AA contrast failures in CI**
 - [ ] **Human review required before proceeding**
@@ -721,9 +735,11 @@ Discussion threads (G1), opt-in solution sharing (G2), toggleable leaderboards (
 | R-4 | **Scraping is a legal exposure, not a technical problem**, and Module J widens it from question text to whole learning content. | **High** | J3's classification gate plus H7 sign-off before any crawler runs. Start with unambiguously permissive sources; Restricted sources yield canonicalized substance only (J5), never their text. |
 | R-2 | **Trace-driven animation may not generalize.** `sys.settrace` gives Python this nearly free. JavaScript was the harder half — AST instrumentation of learner source — until AD-2 moved it to QuickJS, which is instrumentable directly. | **Medium** (was High) | T0.2 and T2.7 prove the protocol on both languages before committing; T0.2 now has an explicit criterion for QuickJS tracing without AST rewriting. **If that criterion fails, this returns to High** and the AST path comes back. Fallback either way: launch animation Python-deep and reach parity incrementally — permitted by the amended H1. |
 | R-5 | **Zero revenue meets compute-heavy features.** Pyodide bundles, trace payloads, the ingestion pipeline, and now a Groq-backed assistant all cost money with no offsetting income. | **Medium** | Client-side execution (AD-2) keeps the dominant learning cost near zero. L9's hard ceiling bounds the assistant. PRD Open Question 4 needs an answer before Phase 3. |
-| R-6 | **Mandatory sign-in with full-funnel tracking is a privacy-disclosure obligation** (§2.6, F6) — and Module L now sends learner code to a third party. | **Medium** | Answer PRD Open Question 7 and ship the privacy notice *with* T0.4. Extend it to cover Groq before Module L ships (L10). |
+| R-6 | **Two privacy obligations, and the easier one to forget is the anonymous half.** Signed-in tracking needs disclosure at sign-up; signed-out tracking against an anonymous device identifier (F6) has **no natural consent moment at all**, because nobody signs up. Module L also sends learner code to a third party. | **Medium** | Answer both halves of PRD Open Question 7 and ship the notice *with* T0.4. Treat the signed-out half as the default-risk case, not the edge case. Extend to Groq before Module L ships (L10). |
 | R-9 | ~~Gating enforced only in the UI.~~ **Retired — nothing is locked.** Replaced by: guidance is *too easy to ignore*, and beginners get no more of a path than a bare problem bank would give them — losing the product's stated advantage. | **Medium** | Guidance must earn attention rather than compel it: recommended ordering as the default, the B16 struggle-triggered nudge at the moment of real need, and the roadmap as primary navigation. §8's guidance-effectiveness metrics exist to detect this failing — and unlike under a gate, they can actually measure it. |
 | R-10 | **Assistant cost is unbounded by default.** Module L is the largest recurring variable cost on a free platform, and spend scales with engagement — success makes it worse. | **Medium** | L9's ceiling ships with the first version: per-user rate limits, daily token budgets, prompt caching, context trimming, and a hard global cap with graceful degradation. Cost per active user is tracked (§8), not discovered monthly. |
+| R-15 | **A public page leaks another learner's data.** The access-model change turns the main auth failure mode from a routing bug into an authorization one: a content page that also renders progress can forget to scope the query to the session, and no middleware test will catch it. | **Medium** | AD-5's guard sits at the data-access layer, not only the edge. Every query touching a user row takes the session as a required argument rather than reading it ambiently, so omitting it is a type error rather than a silent leak. |
+| R-16 | **Anonymous progress is lost at the moment it becomes valuable.** A learner solves several problems signed out, then clears storage, switches device, or dismisses the prompt — and the work is gone. That is precisely the beginner the ungated model exists to serve. | **Medium** | A15 makes migration an explicit prompt tied to accumulated work rather than a passive banner. Track the conversion metric (§8) from the first release so the prompt's effectiveness is measurable rather than assumed. |
 | R-13 | **Design system arrives too late.** If Module K slips past Phase 0, every component built meanwhile needs restyling and "make it look like roadmap.sh" becomes a UI rewrite. | **Medium** | T0.7 lands in Phase 0, before the first product surface. The hardcoded-value lint and CI contrast check make drift a build failure rather than a code-review argument. |
 | R-14 | **Prompt injection via scraped content.** Module J ingests untrusted third-party text; Module L reads platform content into its context. A crafted problem brief could steer the assistant. | **Medium** | L10 treats pipeline-sourced content as untrusted data, never instructions. J10's review is a second filter. Worth an explicit test case — the two modules are built phases apart and the interaction is easy to miss. |
 | R-1 | ~~Java has no viable in-browser runtime.~~ **Retired by suspending Java.** Replaced by: the codebase quietly hardcodes two-language assumptions, making Java's return a rewrite. | Low (was High) | T2.6's stub-adapter criterion — a third-language adapter passes conformance with zero changes to editor, results, progress, or content. If that criterion is quietly dropped, this risk returns at full strength. |
@@ -744,7 +760,7 @@ Carried from PRD §10, plus questions this plan surfaced. Those marked **blockin
 4. **[Blocking Phase 3]** Is there any funding path for compute-heavy features, or must every feature be cost-free? (PRD Q4 — now bites earlier: the pipeline and the assistant are both recurring costs)
 5. ~~Must C6's "build it" bridge require prior completion?~~ **Resolved: no — nothing is locked** (PRD Q5, Q10).
 6. **[Blocking Phase 7]** Are company-specific roadmaps auto-generated or editorially reviewed? (PRD Q6)
-7. **[Blocking Phase 0]** What is the data-retention and privacy-disclosure policy, and does the sign-up flow need a privacy notice? (PRD Q7 — gates T0.4)
+7. **[Blocking Phase 0]** Both halves of the privacy policy: signed-in retention and disclosure at sign-up, **and** what is disclosed to signed-out learners tracked by anonymous device identifier — including whether that needs a consent banner in the EU. (PRD Q7 — gates T0.4)
 8. ~~Is B16's gate absolute?~~ **Resolved: nothing is locked** (PRD §6.6, Q8). Newly open, and blocking Phase 2: how aggressive should the struggle-triggered nudge be before it reads as nagging, and after how many dismissals does the platform stop suggesting a topic's lesson entirely?
 9. ~~Tier-2 catalog provenance?~~ **Resolved: pipeline-sourced** (Module J). Newly open, and **blocking Phase 3**: what is the v1 target catalog size, and what proportion of pipeline output must pass human review (J10) — since that ratio, not extraction throughput, sets the real publish rate.
 10. ~~Do tier-3 challenges gate?~~ **Resolved: nothing gates on anything.**

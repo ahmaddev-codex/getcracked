@@ -87,15 +87,34 @@ Two challenges per category are free (`kv-store`, `rate-limiter` in Real-World; 
 5. **No community layer** (discussion, solutions sharing, leaderboards).
 6. **No progress analytics / spaced repetition** beyond a raw completion percentage.
 
-### 2.6 Target Pricing & Access Model — Everything Free, Sign-In Required
+### 2.6 Target Pricing & Access Model — Everything Free, Sign In Only Where It Earns Its Keep
 
-**Every feature in this document, existing and net-new, is free — no paywall, no subscription tier, no paid add-on.** At the same time, **a signed-in account is required to access any feature**, including browsing. This is a deliberate trade: nothing costs money, but nothing is anonymous either. Concretely:
+**Every feature in this document, existing and net-new, is free — no paywall, no subscription tier, no paid add-on.** Sign-in is required **only where an account is genuinely needed**: to keep progress, to personalize, or to spend money on the learner's behalf. Everything else works signed out.
 
-- A11 (free-vs-paid gating) and A12 (subscription billing) are **removed** from scope — see the updated Module A in Section 7.1. There is no distinction between a "free" and "paid" account; there is only "signed in."
-- A2 (Auth) becomes a **hard gate** in front of the entire product — dashboard, challenges, labs, roadmap, question bank, and the concept map all require sign-in. There is no signed-out/anonymous browsing mode.
-- Requiring sign-in for every feature is intentional: it lets the platform **track usage data** end-to-end per user (progress, time-on-task, drop-off points, which hints were used, which company tracks are studied, roadmap-node completion) — this data feeds Module F's personalization/analytics and the product's own understanding of engagement, independent of any monetization plan.
-- Module D's company-wise question bank ships fully free but still requires sign-in like everything else.
-- Monetization, if pursued at all, must come from something outside the product's core learning/practice surface (e.g. optional donations, sponsorships, job-board placements, or a separate B2B/enterprise offering) — none of that is in scope for this PRD.
+**The line, and why it falls there.** The expensive part of this product — running code, capturing traces, animating — happens **in the learner's browser** (AD-2). An anonymous visitor solving a problem costs the platform essentially nothing. So there is no cost argument for a sign-in wall, and no product argument either: a wall in front of the first lesson is the single most effective way to lose the beginner this platform exists to serve.
+
+What an account *is* needed for is anything that must outlive the browser tab, follow the learner between devices, know who they are, or bill someone.
+
+| Works signed out | Requires sign-in |
+|---|---|
+| Browse the catalog and dashboard | Progress that persists across devices, streaks, badges, certificates (F3) |
+| Read any DSA lesson (B9) and the 129-entry concept map (A14) | Roadmap per-node progress synced to an account (I4) |
+| Open **and solve** any problem, challenge, or lab — editor, test runner, and animation all included | Study plans (F5), spaced repetition (F2), skill diagnostic (F1), personal analytics (F4) |
+| View every roadmap (I1–I8) | Discussions, solution sharing, leaderboards (Module G) — these need an identity |
+| Browse and search the company question bank (D6) | The AI assistant (Module L) — it costs real money per use (L9) and needs abuse limits |
+| | Question-bank alerts and subscriptions (D9); admin and editorial tooling (D10, J10) |
+
+Concretely:
+
+- A11 (free-vs-paid gating) and A12 (subscription billing) remain **removed** from scope. There is no "free" versus "paid" account; there is only "signed out" and "signed in," and the difference is persistence and personalization, never access to content.
+- A2 (Auth) is **not** a hard gate in front of the product. It gates account-scoped data, not the curriculum.
+- **Anonymous progress is kept locally** and offered for migration at sign-up: a learner who solves three problems signed out should be invited to "keep your progress" rather than told their work is gone. See A15.
+- Module D's question bank is browsable signed out; only alerts (D9) need an account.
+- Monetization, if pursued at all, must come from outside the core learning surface (donations, sponsorships, job-board placements, or a separate B2B/enterprise offering) — none of that is in scope for this PRD.
+
+**What this costs, stated honestly.** The previous model justified mandatory sign-in as the trade that "funds free access with usage data." That justification is now gone, and F6's analytics weaken accordingly: signed-out activity can be measured in aggregate against an anonymous device identifier, but it cannot be tied to a person, followed across devices, or joined to later signed-in behaviour except at the moment of migration (A15). That is a real loss of analytical fidelity, accepted deliberately in exchange for not putting a wall in front of a beginner.
+
+**What this gains.** Public content is indexable. The lessons, the concept map, and the question bank become an organic acquisition channel rather than an invisible walled garden — which for a free product built for the tech community is likely worth more than the analytics given up. See the SEO note in [ADR 0001 §1](adr/0001-stack.md).
 
 ---
 
@@ -109,7 +128,7 @@ Two challenges per category are free (`kv-store`, `rate-limiter` in Real-World; 
 2. **G2 — System Design Labs:** A new lab type, distinct from "Real-World Systems" code labs, focused on System Design interview practice: interactive whiteboard/diagramming, capacity estimation calculators, guided trade-off decision trees, and scored design reviews — built on top of the existing 129-concept knowledge base.
 3. **G3 — Company-Wise Interview Problems:** A structured, regularly-updated database of interview questions tagged by company, role, and round type, sourced by scraping/aggregating public data (LeetCode discuss, Glassdoor, Blind, GitHub interview-question repos, company engineering blogs), with de-duplication, tagging, and freshness tracking.
 4. **G4 — Competitive Parity+:** Close feature gaps versus NeetCode, AlgoExpert, LeetCode, HelloInterview, ByteByteGo/DesignGurus (Grokking) — see Section 4 — while keeping GetCracked's differentiator (real code, real tests, real systems) as the core identity.
-5. **G5 — Fully Free, Fully Signed-In:** Every feature ships with no paywall and no paid tier, but every feature also requires an account — see Section 2.6.
+5. **G5 — Fully Free, Minimally Gated:** Every feature ships with no paywall and no paid tier, and sign-in is required only where an account genuinely earns its keep — persisting progress, personalization, or per-use cost. Every learning surface works signed out — see Section 2.6.
 6. **G6 — Pipeline-Sourced Curriculum:** The problem catalog is built by ingesting and canonicalizing public, appropriately-licensed material at scale (Module J) rather than hand-authored, because hand-authoring several hundred multi-language problems is not a realistic commitment for this team.
 7. **G7 — One Visual Language:** The whole platform adopts a single, consistent design system modelled on roadmap.sh's visual language (Module K), so a lesson card, a problem row, and a roadmap node visibly belong to the same product.
 
@@ -164,7 +183,7 @@ Research into the leading DSA and System Design prep platforms surfaced the foll
 2. **Real code, real systems, real tests — never compromise this identity** even as System Design and company-prep features are added.
 3. **Progressive disclosure.** Hints, animations, and solutions unlock progressively so learners aren't spoiled.
 4. **Freshness as a feature.** Company-wise content must visibly show "last verified" / "last seen asked" dates — staleness kills trust in this category.
-5. **Everything is free, but nothing is anonymous.** No feature — browsing, execution, labs, roadmap, or company question bank — sits behind a paywall, but sign-in is required for all of it. This is the trade-off that funds free access with usage data instead of subscriptions.
+5. **Everything is free, and most of it is anonymous.** Nothing sits behind a paywall, and nothing sits behind a sign-in wall unless an account is genuinely required — to persist progress, to personalize, or because the feature costs money per use. A learner should be able to arrive, read a lesson, solve a problem, and watch their own code animate without ever creating an account. Sign-in is offered when it starts to *earn* something: keeping the work. See §2.6.
 6. **Guide, never gate.** The platform has a strong opinion about the order to learn things in — and expresses it through sequencing, defaults, and visible progress, **never through locks**. Nothing on GetCracked is locked: no lesson, no problem, no challenge, no lab. A beginner is given a path; a senior engineer who already knows sliding window can go straight to the problems. The recommended order is a handrail, not a turnstile. See B16.
 
 ---
@@ -174,7 +193,8 @@ Research into the leading DSA and System Design prep platforms surfaced the foll
 ### 7.1 Module A — Core Platform (existing, to retain/harden — now 100% free, see 2.6)
 
 - A1. Landing page with value prop, CTAs (no pricing page needed — platform is entirely free)
-- A2. Auth (sign in / sign up) — **required to access anything**, including browsing; no anonymous/signed-out mode. Powers per-user data tracking (F4) from day one.
+- A2. Auth (sign in / sign up) — gates **account-scoped data only** (progress sync, personalization, community identity, assistant access), never content. Every learning surface works signed out (§2.6). Powers per-user tracking (F4) for those who do sign in
+- A15. **Anonymous progress with migration on sign-up**: a signed-out learner's progress, submissions, and revealed hints are kept in local browser storage and surfaced as an explicit prompt to keep them ("You've solved 3 problems — create an account to save them"). On sign-up, local state is merged into the account rather than discarded. Losing a beginner's first hour of work is the fastest way to lose the beginner
 - A3. Dashboard with category tabs and aggregate progress (X/N done, %), plus top-level navigation across the three DSA tiers — Learn (`/learn/dsa`), Problems (`/problems`), and Challenges (`/challenges`) — per §2.1a
 - A4. Category-level filters: difficulty (beginner/intermediate/advanced), topic/domain tags
 - A5. Challenge detail page: multi-step flow, step sidebar, per-step progress
@@ -186,7 +206,7 @@ Research into the leading DSA and System Design prep platforms surfaced the foll
 - A11. ~~Free-vs-paid gating~~ — removed; all challenges are fully runnable by everyone, no tier distinction
 - A12. ~~Subscription billing~~ — removed; no paid tier exists
 - A13. Newsletter-linked new-challenge cadence
-- A14. System Design Concept Map (129 concepts, 20 categories, expand/collapse all) — **moves from `/learn` to `/learn/system-design`** now that `/learn` is a hub over both tracks (§2.1a); a permanent redirect from the old path is required. Stays free, but requires sign-in like everything else (§2.6). This is the System Design track's tier-1 equivalent of the DSA Learn surface (B9)
+- A14. System Design Concept Map (129 concepts, 20 categories, expand/collapse all) — **moves from `/learn` to `/learn/system-design`** now that `/learn` is a hub over both tracks (§2.1a); a permanent redirect from the old path is required. Free and readable signed out (§2.6) — it is one of the platform's strongest organic-acquisition surfaces. This is the System Design track's tier-1 equivalent of the DSA Learn surface (B9)
 
 ### 7.2 Module B — DSA Learn & Practice (G1 — net new)
 
@@ -308,7 +328,8 @@ The System Design concept map (A14) is the System Design track's equivalent of t
 - F3. Streaks, badges, and completion certificates per category/company track
 - F4. Personal dashboard analytics: time spent, pattern-level strength/weakness breakdown (e.g. "strong on trees, weak on DP"), not just raw % complete
 - F5. Custom study plans (e.g. "Amazon SDE2 in 4 weeks") that sequence DSA challenges + System Design labs + company question bank items into a day-by-day plan
-- F6. **Full-funnel usage data collection**, enabled by mandatory sign-in (Section 2.6): every user action (challenge starts/completions, hint reveals, test-run attempts and outcomes, time-on-task, animation interactions, roadmap-node progress, company-track selections) is attributed to the account and stored for product analytics — this is the direct payoff of requiring sign-in everywhere
+- F6. **Full-funnel usage data collection, in two tiers.** Signed-in activity (challenge starts/completions, hint reveals, test-run attempts and outcomes, time-on-task, animation interactions, roadmap-node progress, company-track selections) is attributed to the account. Signed-out activity is recorded against a rotating **anonymous device identifier** so aggregate funnels, drop-off points, and content effectiveness remain measurable — but it is not tied to a person and cannot be followed across devices. The two join only at the moment of migration (A15), if the learner chooses to sign up.
+  - This is a deliberate reduction in fidelity from the earlier mandatory-sign-in model (§2.6). Metrics that require a stable identity — retention cohorts, cross-device journeys, per-user tier progression — are only computable over the signed-in population, and every §8 metric must state which population it covers rather than silently mixing them
 
 ### 7.7 Module G — Community & Content Layer
 
@@ -350,7 +371,7 @@ A dedicated, visual, node-and-connector learning roadmap for each major track (D
 - I7. **Shareable/embeddable roadmap view**: a read-only link or embeddable image of a roadmap (or the learner's personal progress-annotated version of it), matching roadmap.sh's shareable-roadmap growth loop
 - I8. **Downloadable/exportable roadmap** (PDF or PNG snapshot) for offline reference — a well-known roadmap.sh feature
 - I9. **Community/custom roadmap creation** (lower priority, later phase): let advanced users fork/remix a roadmap or build their own from GetCracked content, mirroring roadmap.sh's user-generated-roadmap feature
-- I10. Fully free; requires sign-in like every other feature per Section 2.6 (no anonymous roadmap viewing) so per-node progress (I4) is tracked against the user's account from the first view
+- I10. Fully free and **viewable signed out** (§2.6) — roadmaps are the platform's most shareable artifact (I7) and gating them would defeat that. Per-node progress (I4) is held locally for anonymous visitors and synced to the account on sign-in (A15)
 
 
 ### 7.10 Module J — Content Sourcing & Ingestion Pipeline (net new)
@@ -445,6 +466,7 @@ A platform-wide AI assistant, available in-context on every learning surface, po
 | G6 Content pipeline (J) | Problems published per week; automated-check pass rate before review (J11); editorial approve/reject ratio (J10); dedup precision; median time from crawl to publish; **license-bucket distribution of published content** |
 | G7 Design system (K) | % of UI built from tokenized components vs. bespoke styles; WCAG AA contrast failures in CI (target: zero) |
 | Module L Assistant | Assistant sessions per active user; **solve-rate lift for learners who use it vs. those who don't**; Socratic-mode adherence (rate of direct-solution requests); cost per active user per month against the L9 cap |
+| Signed-out to signed-in conversion | % of anonymous learners who sign up; **what they had completed when they did** (the A15 migration prompt's effectiveness); organic search traffic to public lessons and the concept map |
 | G4 Overall | Monthly active users; retention/streaks; NPS vs. named competitors (monetization is out of scope per Section 2.6 — platform is fully free) |
 
 ---
@@ -456,7 +478,7 @@ When this PRD is handed to Claude to produce `features.md`, the output should:
 1. Flatten every feature ID in Section 7 (A1–A14, B1–B21, C1–C10, D1–D10, E1–E5, F1–F6, G1–G4, H1–H10, I1–I10, J1–J12, K1–K10, L1–L10) into a single checklist-style markdown file, one feature per line/section. Note A11 and A12 are removed (struck through) — do not carry them into `features.md` as active items; they may be listed under a short "deprecated/removed" note for traceability if useful.
 2. For each feature, include: a one-line description (from this doc), status (`existing` for Module A items, `planned` for all others), and a short acceptance-criteria bullet list derived from the feature's description above.
 3. Group by module using the same A–I structure so the file mirrors this PRD's structure exactly (traceability).
-3a. Note prominently at the top of `features.md` that **every feature is free but every feature requires sign-in** (Section 2.6) — no feature list entry should reference a paywall, tier, or subscription gate, and no feature should be listed as accessible while signed out.
+3a. Note prominently at the top of `features.md` that **every feature is free, and sign-in is required only for account-scoped behaviour** (Section 2.6) — no entry should reference a paywall, tier, or subscription gate, and each entry should state whether it works signed out. Use §2.6's table as the authority on which side of the line a feature falls.
 4. Do not invent new features beyond what's listed here — this PRD is the authoritative source of scope. If gaps are noticed while drafting, flag them as open questions at the bottom of `features.md` rather than silently adding scope.
 5. Keep `features.md` implementation-agnostic (no framework/library choices) — this is a product scope document, not a technical design document — **with one exception**: note H8 (single Next.js fullstack app) once, up top, as a standing architectural constraint, since it affects how every other feature is scoped for engineering (no separate frontend/backend feature split).
 
@@ -470,7 +492,7 @@ When this PRD is handed to Claude to produce `features.md`, the output should:
 4. With the platform now fully free (Section 2.6), is there any monetization path planned outside the product surface (donations, sponsorships, job-board placements, B2B/enterprise), or is the platform intended to run without direct revenue? This affects infrastructure-cost planning for compute-heavy features (B1 live visualizer, Module D scraping pipeline, E3 AI mock interviewer) but is out of scope for this PRD's feature list.
 5. Should Module C's "build it" bridge (C6) require the learner to already have completed the matching code challenge, or can it be attempted standalone?
 6. For Module I roadmaps: should the Company-Specific Roadmap (I5) be generated fully automatically from Module D data, or curated/reviewed editorially before publishing (similar to D10's review queue)?
-7. With sign-in mandatory for every feature and full-funnel data tracking in place (F6), what is the data-retention and privacy-disclosure policy for user activity data, and does the sign-in flow need to present this before first use (e.g. a privacy notice at sign-up)?
+7. With most of the product now usable signed out (§2.6), the privacy question splits in two and both halves need answering: (a) what is the data-retention and disclosure policy for **signed-in** activity, and does sign-up need to present it before first use; and (b) what is disclosed to **signed-out** learners, whose activity is still recorded against an anonymous device identifier (F6) — this half is the one most likely to be overlooked, because no consent moment naturally occurs when nobody signs up. Whether that identifier needs a cookie/consent banner in the EU is a legal question, not a product one.
 8. ~~Is B16's gate absolute, or is there a test-out path?~~ **Resolved: there is no gate.** Nothing on the platform is locked (§6 principle 6, B14, B16). Sequencing is expressed through ordering, defaults, and nudges only. This resolves the senior-engineer problem outright — they simply go where they want — and, as a side effect, makes §8's guidance-effectiveness metrics measurable rather than tautological. Newly open: how aggressive should the struggle-triggered nudge be before it becomes nagging, and after how many dismissals does the platform stop suggesting a topic's lesson entirely?
 9. ~~What is the tier-2 problem catalog's provenance?~~ **Resolved: sourced by pipeline, not hand-authored** — see the new **Module J** (§7.10). The catalog is built by ingesting public, appropriately-licensed material from GitHub repositories, educational sites, and other public platforms, then canonicalizing it into GetCracked's own content model. Still open: (a) what is the target catalog size for v1 — roughly 10–20 problems per topic across ~20 topics is several hundred problems, and pipeline throughput, not authoring capacity, now sets that ceiling; (b) what proportion must pass human editorial review (J10) before publishing, and does that review become the new bottleneck?
 10. ~~Do the tier-3 build-it challenges gate on anything?~~ **Resolved: nothing gates on anything.** Every tier is open from day one.

@@ -6,7 +6,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 
 **Standing constraints:**
 - Single Next.js fullstack app (H8) — pipeline jobs (H10) resolved to Inngest step functions inside the same deployment, so no H8 deviation; the inference provider (H9) remains a live dependency. Full stack in [docs/adr/0001-stack.md](../docs/adr/0001-stack.md)
-- Everything free, sign-in required for everything (§2.6)
+- Everything free; **sign-in only for account-scoped behaviour** — progress sync, personalization, community, assistant. Every learning surface works signed out (§2.6)
 - **Nothing is locked** — every lesson, problem, challenge, and lab is open to every signed-in user from minute one (§6.6, B14, B16)
 - Launch languages **Python + JavaScript**; Java suspended, first to be added back (H1)
 - Catalog is **pipeline-sourced**, not hand-authored (Module J)
@@ -19,14 +19,14 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 - [x] **T0.1** — Next.js app skeleton and CI · *S* · deps: none
 - [x] **T0.2** — 🔥 SPIKE: Python + JavaScript in-browser execution and trace capture · *M* · deps: T0.1 — findings: [docs/spikes/runtime-python-js.md](../docs/spikes/runtime-python-js.md). **QuickJS cannot trace without AST rewriting → R-2 stays High.** Trace payload is O(n²) — T2.7 must fix.
 - [x] **T0.3** — Database schema and migrations · *M* · deps: T0.1 — Drizzle + Neon per [ADR 0001 §3](../docs/adr/0001-stack.md). Tests run on embedded PGlite. ⚠️ auth tables need reconciling against Better Auth's generator in T0.4; live-Neon seed run pending `DATABASE_URL`.
-- [ ] **T0.4** — Auth hard gate (A2, §2.6) · *M* · deps: T0.3
+- [ ] **T0.4** — Auth for account-scoped data + reconcile Better Auth tables (A2, A15, §2.6) · *M* · deps: T0.3
 - [ ] **T0.5** — Analytics event pipeline (F6) · *S* · deps: T0.3, T0.4
 - [ ] **T0.7** — 🎨 Design system: tokens sampled from the reference, node treatment, core components, CI contrast check (K1, K3, K8, K10) · *M* · deps: T0.1
 - [ ] ~~**T0.6** — SPIKE: Java execution strategy~~ · **suspended** — first task of Phase 9; nothing depends on it
 
 ### ✅ Checkpoint A — Foundation
 - [ ] Tests pass · build clean · CI green
-- [ ] Sign up → sign in → protected dashboard reachable; signed-out access denied
+- [ ] Sign up → sign in → account page reachable; **and content routes reachable signed out** — both asserted
 - [ ] T0.2 spike doc written and **runtime decision recorded**
 - [ ] Design tokens sampled and dated; component gallery renders in both themes; **zero WCAG AA contrast failures in CI**
 - [ ] **Human review before Phase 1**
@@ -139,7 +139,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 
 ## Blocking questions (answer before the named phase)
 
-- [ ] **Phase 0** — Data-retention / privacy-disclosure policy; privacy notice at sign-up? *(PRD Q7 — gates T0.4)*
+- [ ] **Phase 0** — Privacy policy, **both halves**: signed-in disclosure at sign-up, and what signed-out learners are told about anonymous device tracking *(PRD Q7 — gates T0.4)*
 - [ ] **Phase 0** — Who samples the design reference for K1's tokens — designer in the loop, or engineering direct? *(new)*
 - [ ] **Phase 1** — Which language does the first vertical slice use? *(new)*
 - [ ] **Phase 1** — Animation parity across both launch languages, or Python-deep first? *(PRD Q1a)*
@@ -164,7 +164,7 @@ Every task clears this bar in addition to its own acceptance criteria:
 
 - [ ] `pnpm build` · `pnpm lint` · `pnpm typecheck` · `pnpm test` all pass
 - [ ] New behavior has tests; changed behavior has updated tests
-- [ ] Every new route is behind the auth gate unless deliberately added to the public allowlist (§2.6)
+- [ ] Content routes render signed out; every handler touching a user row is denied without a session (§2.6, AD-5)
 - [ ] **No route locks content behind progress** — prerequisites recommend, never restrict (§6.6, B16)
 - [ ] Progress and completion are computed server-side from real results, never client-reported (B21)
 - [ ] UI is built from K1 tokens and K8 components — no hardcoded colors or spacing, no bespoke variants
