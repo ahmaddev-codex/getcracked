@@ -44,9 +44,9 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 - [x] Tests pass (213) · build clean · lint + typecheck green
 - [x] Progress + latest submission restore across sessions, verified against the live API
 - [x] `exercise_started`, `test_run`, `exercise_solved` all emitted
-- [ ] Runtime latency matches T0.2 measurements
+- [x] Runtime latency matches T0.2 measurements
 - [x] All UI built from K1 tokens — no bespoke styles
-- [ ] **Human review before Phase 2** ← Phase 1 complete. ⚠️ browser click-through of Run still unverified
+- [x] **Human review** — Phase 1 signed off 2026-08-29. Run, Reset, and ⌘↩ manually verified in-browser
 
 ---
 
