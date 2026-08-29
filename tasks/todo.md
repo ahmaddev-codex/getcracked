@@ -20,7 +20,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 - [x] **T0.2** — 🔥 SPIKE: Python + JavaScript in-browser execution and trace capture · *M* · deps: T0.1 — findings: [docs/spikes/runtime-python-js.md](../docs/spikes/runtime-python-js.md). **QuickJS cannot trace without AST rewriting → R-2 stays High.** Trace payload is O(n²) — T2.7 must fix.
 - [x] **T0.3** — Database schema and migrations · *M* · deps: T0.1 — Drizzle + Neon per [ADR 0001 §3](../docs/adr/0001-stack.md). Tests run on embedded PGlite. ✅ verified end-to-end against local Docker Postgres (migrate + seed twice, idempotent). ⚠️ auth tables still need reconciling against Better Auth's generator in T0.4.
 - [x] **T0.4** — Auth for account-scoped data + reconcile Better Auth tables (A2, A15, §2.6) · *M* · deps: T0.3 — Better Auth on our schema, verified end-to-end. ⚠️ A15 anonymous-progress migration is **not** built (needs local progress from T1.4 to migrate)
-- [ ] **T0.5** — Analytics event pipeline (F6) · *S* · deps: T0.3, T0.4
+- [x] **T0.5** — Analytics event pipeline, **both tiers** (F6, A16) · *S* · deps: T0.3, T0.4 — signed-in by account, signed-out by rotating device id, with the A16 notice as the disclosure surface. ⚠️ `/api/events` is a public write endpoint with no rate limiting yet — needs Upstash before public launch
 - [ ] **T0.7** — 🎨 Design system: tokens sampled from the reference, node treatment, core components, CI contrast check (K1, K3, K8, K10) · *M* · deps: T0.1
 - [ ] ~~**T0.6** — SPIKE: Java execution strategy~~ · **suspended** — first task of Phase 9; nothing depends on it
 
@@ -139,7 +139,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 
 ## Blocking questions (answer before the named phase)
 
-- [x] **Phase 0** — Privacy. **Decided:** notice at sign-up for signed-in tracking; **no signed-out tracking at all** until a policy exists — no device id, no anonymous events. Costs the anonymous funnel metric; carries zero disclosure exposure *(PRD Q7)*
+- [x] **Phase 0** — Privacy. **Decided:** track **both** tiers — signed-in by account, signed-out by rotating device id — and make the disclosure a visible product surface (A16: "your progress is on this device only; sign in to keep it") rather than a buried policy. ⚠️ Still open (legal): whether a device id needs an EU consent banner *(PRD Q7)*
 - [x] **Phase 0** — Design tokens. **Decided:** engineering samples from the live site and the `shots/` references, author reviews the token file *(K1)*
 - [x] **Phase 1** — First slice language. **Decided: JavaScript.** QuickJS is 15ms cold / 0.7ms warm vs Pyodide's 1.3s cold (worse in a real browser), so it keeps a multi-MB download out of the loop while the content model and editor churn. Python lands in T2.6 *(T0.2 measurements)*
 - [ ] **Phase 1** — Animation parity across both launch languages, or Python-deep first? *(PRD Q1a)*

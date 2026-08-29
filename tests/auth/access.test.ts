@@ -56,7 +56,6 @@ describe('API routes fail closed', () => {
     '/api/progress/sync',
     '/api/submissions',
     '/api/assistant',
-    '/api/events',
   ])('%s is not public', (path) => {
     expect(isPublicPath(path)).toBe(false);
   });
@@ -66,6 +65,15 @@ describe('API routes fail closed', () => {
     // than exposed until someone remembers to list it.
     expect(isPublicPath('/api/billing/charge')).toBe(false);
     expect(isPublicPath('/api/some-future-endpoint')).toBe(false);
+  });
+});
+
+describe('the analytics endpoint is deliberately public', () => {
+  it('accepts writes without a session, because signed-out visitors are tracked', () => {
+    // F6 tier two. The learner is told this is happening by the A16 notice
+    // rather than by a policy page nobody opens. It defends itself with a
+    // closed event allowlist and a payload cap instead of an auth check.
+    expect(isPublicPath('/api/events')).toBe(true);
   });
 });
 

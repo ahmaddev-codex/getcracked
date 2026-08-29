@@ -141,16 +141,22 @@ export const submissions = pgTable(
  * survives a single account being removed — anonymising rather than cascading
  * keeps the aggregate honest without retaining the person.
  *
- * It is *also* nullable because signed-out tracking is a deliberate future
- * option (F6 tier two). That tier is currently unbuilt: per the Open Question 7
- * decision, **no event is written for a signed-out visitor at all** until a
- * disclosure policy exists. The column shape does not commit us to collecting.
+ * It is *also* nullable because signed-out visitors are tracked by `deviceId`
+ * instead (F6 tier two). Exactly one of the two is always present; the pair is
+ * what lets an anonymous funnel be joined to an account at sign-up (A15).
  */
 export const events = pgTable(
   'events',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+    /**
+     * Rotating anonymous identifier for a signed-out visitor (A16). Client
+     * generated, never derived from anything about the person, and rotated so
+     * it cannot accumulate into a long-term profile. Kept on signed-in events
+     * too, so a learner's pre-signup funnel can be joined at migration (A15).
+     */
+    deviceId: text('device_id'),
     name: text('name').notNull(),
     route: text('route'),
     props: jsonb('props').$type<Record<string, unknown>>(),
@@ -159,6 +165,7 @@ export const events = pgTable(
   (t) => [
     index('events_name_created_idx').on(t.name, t.createdAt),
     index('events_user_idx').on(t.userId),
+    index('events_device_idx').on(t.deviceId),
   ],
 );
 

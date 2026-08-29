@@ -23,6 +23,11 @@
 const PUBLIC_API_PREFIXES = [
   // Better Auth's own routes — sign-in could never happen otherwise.
   '/api/auth',
+  // Signed-out visitors are tracked (F6 tier two) and told so (A16), so this
+  // must accept writes without a session. It is the only public write endpoint,
+  // and it defends itself: closed event-name allowlist, payload cap, and a user
+  // id taken from the session rather than the request body.
+  '/api/events',
 ] as const;
 
 /** Page subtrees that are account-scoped despite not being APIs. */
