@@ -18,7 +18,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 
 - [x] **T0.1** — Next.js app skeleton and CI · *S* · deps: none
 - [x] **T0.2** — 🔥 SPIKE: Python + JavaScript in-browser execution and trace capture · *M* · deps: T0.1 — findings: [docs/spikes/runtime-python-js.md](../docs/spikes/runtime-python-js.md). **QuickJS cannot trace without AST rewriting → R-2 stays High.** Trace payload is O(n²) — T2.7 must fix.
-- [ ] **T0.3** — Database schema and migrations · *M* · deps: T0.1
+- [x] **T0.3** — Database schema and migrations · *M* · deps: T0.1 — Drizzle + Neon per [ADR 0001 §3](../docs/adr/0001-stack.md). Tests run on embedded PGlite. ⚠️ auth tables need reconciling against Better Auth's generator in T0.4; live-Neon seed run pending `DATABASE_URL`.
 - [ ] **T0.4** — Auth hard gate (A2, §2.6) · *M* · deps: T0.3
 - [ ] **T0.5** — Analytics event pipeline (F6) · *S* · deps: T0.3, T0.4
 - [ ] **T0.7** — 🎨 Design system: tokens sampled from the reference, node treatment, core components, CI contrast check (K1, K3, K8, K10) · *M* · deps: T0.1
