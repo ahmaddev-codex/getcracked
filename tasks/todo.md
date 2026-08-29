@@ -139,9 +139,9 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 
 ## Blocking questions (answer before the named phase)
 
-- [ ] **Phase 0** — Privacy policy, **both halves**: signed-in disclosure at sign-up, and what signed-out learners are told about anonymous device tracking *(PRD Q7 — gates T0.4)*
-- [ ] **Phase 0** — Who samples the design reference for K1's tokens — designer in the loop, or engineering direct? *(new)*
-- [ ] **Phase 1** — Which language does the first vertical slice use? *(new)*
+- [x] **Phase 0** — Privacy. **Decided:** notice at sign-up for signed-in tracking; **no signed-out tracking at all** until a policy exists — no device id, no anonymous events. Costs the anonymous funnel metric; carries zero disclosure exposure *(PRD Q7)*
+- [x] **Phase 0** — Design tokens. **Decided:** engineering samples from the live site and the `shots/` references, author reviews the token file *(K1)*
+- [x] **Phase 1** — First slice language. **Decided: JavaScript.** QuickJS is 15ms cold / 0.7ms warm vs Pyodide's 1.3s cold (worse in a real browser), so it keeps a multi-MB download out of the loop while the content model and editor churn. Python lands in T2.6 *(T0.2 measurements)*
 - [ ] **Phase 1** — Animation parity across both launch languages, or Python-deep first? *(PRD Q1a)*
 - [ ] **Phase 2** — How aggressive should the struggle-nudge be, and after how many dismissals does it stop? *(PRD Q8, reopened)*
 - [ ] **Phase 2** — Does "100 challenges" survive the rebuild, or does v1 launch fewer topics complete across all tiers? *(new)*
@@ -152,9 +152,9 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 - [ ] **Phase 8** — 🔑 **Which Groq model, and what monthly spend ceiling does L9 enforce?** *(new)*
 - [ ] **Phase 8** — E3 voice, chat, or both? *(PRD Q3)*
 - [ ] **Phase 9** — When Java returns: in-browser or server-side, and is server-side an acceptable H8 deviation? *(PRD Q1c)*
-- [ ] **Anytime** — Confirm PRD §9 should mark Module A as `planned`, not `existing` *(new)*
+- [x] **Anytime** — PRD §9 corrected: every feature is `planned`, Module A included — this is a greenfield rebuild
 
-**Resolved:** B16 gating *(nothing is locked)* · tier-3 gating *(nothing gates)* · C6 bridge prerequisite *(no)* · tier-2 provenance *(pipeline-sourced)*
+**Resolved:** B16 gating *(nothing is locked)* · tier-3 gating *(nothing gates)* · C6 bridge prerequisite *(no)* · tier-2 provenance *(pipeline-sourced)* · privacy *(no signed-out tracking yet)* · token sampling *(engineering)* · first-slice language *(JavaScript)* · Module A status *(planned)*
 
 ---
 

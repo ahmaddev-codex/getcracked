@@ -293,7 +293,8 @@ Highest-risk work first. If T0.2/T0.6 fail, the entire product architecture chan
 - [ ] Every route or handler that reads or writes a user row is denied without a valid session, and a test asserts a representative one
 - [ ] **Both AD-5 layers are asserted separately:** middleware rejects a request with no cookie, *and* the server layer rejects a syntactically valid cookie whose session record was deleted. A middleware-only test would pass with the real check missing
 - [ ] **T0.3's `users`/`sessions` tables are reconciled against `better-auth generate`**, and any drift lands as a migration rather than a hand edit
-- [ ] The privacy notice required by PRD Open Question 7 is presented at sign-up, and its signed-out half (anonymous device identifier, F6) is answered before any anonymous tracking ships
+- [ ] A privacy notice is presented at sign-up describing what is recorded for a signed-in account (PRD Q7)
+- [ ] **No analytics event is emitted for a signed-out visitor** — asserted by test. Per the Q7 decision, signed-out tracking is deferred entirely rather than built and disclosed later
 
 **Verification:**
 - [ ] Tests pass: signed-out content access; user-data denial at both layers; return-URL round trip
@@ -373,12 +374,12 @@ The goal is one learner solving one real problem — signed in, code written, te
 
 #### Task 1.1: Content schema, exercise model, and test-spec format (AD-1, AD-3, AD-7)
 
-**Description:** Define the typed content model: one `RunnableExercise` (signature, starter code per language, reference solution, test spec, hints) plus the three tier wrappers that package it — `Lesson`, `Problem`/`ProblemSet`, and `Challenge`. Define the declarative test spec that compiles to a runnable suite per language. Author one real problem end-to-end to prove the model.
+**Description:** Define the typed content model (JavaScript only for this slice — see Open Question 11): one `RunnableExercise` (signature, starter code per language, reference solution, test spec, hints) plus the three tier wrappers that package it — `Lesson`, `Problem`/`ProblemSet`, and `Challenge`. Define the declarative test spec that compiles to a runnable suite per language. Author one real problem end-to-end to prove the model.
 
 **Acceptance criteria:**
 - [ ] `RunnableExercise` is defined once and reused by all three tier wrappers — no tier redefines starter code, hints, or test-spec shape
 - [ ] Content is typed and validated at build time; a malformed exercise fails `pnpm build` with a message naming the file and field
-- [ ] One problem (`two-sum`, topic `hashing`) is authored with brief, ≥2 progressive hints, starter code, and reference solution
+- [ ] One problem (`two-sum`, topic `hashing`) is authored with brief, ≥2 progressive hints, starter code, and reference solution — **JavaScript only** for this slice; Python arrives in T2.6
 - [ ] The test spec compiles to a runnable suite for the Phase 1 language; the reference solution passes every case and the starter stub fails
 - [ ] **Content is loaded through a build-time generated index and `import()`ed by slug, never statically imported en masse** ([ADR 0001 §8](../docs/adr/0001-stack.md#decision-8--content-as-code-needs-a-generated-index)). With several hundred problems ahead (AD-3), static imports make builds slow and risk bundling the whole catalog into a client chunk — the index costs little now and cannot be retrofitted cheaply
 - [ ] Validation is **Zod** schemas run in CI, and the same schemas are declared as Module J's output contract (J8), so pipeline-generated and hand-authored content pass through one gate
@@ -760,16 +761,16 @@ Carried from PRD §10, plus questions this plan surfaced. Those marked **blockin
 4. **[Blocking Phase 3]** Is there any funding path for compute-heavy features, or must every feature be cost-free? (PRD Q4 — now bites earlier: the pipeline and the assistant are both recurring costs)
 5. ~~Must C6's "build it" bridge require prior completion?~~ **Resolved: no — nothing is locked** (PRD Q5, Q10).
 6. **[Blocking Phase 7]** Are company-specific roadmaps auto-generated or editorially reviewed? (PRD Q6)
-7. **[Blocking Phase 0]** Both halves of the privacy policy: signed-in retention and disclosure at sign-up, **and** what is disclosed to signed-out learners tracked by anonymous device identifier — including whether that needs a consent banner in the EU. (PRD Q7 — gates T0.4)
+7. ~~Privacy policy.~~ **Decided 2026-08-29:** privacy notice at sign-up for signed-in tracking; **no signed-out tracking is built at all** until a disclosure policy exists. Tracking anonymously and disclosing later creates an obligation with no consent moment, since nobody signs up. Cost: the anonymous funnel and the signed-out-to-signed-in conversion metric are uncomputable for now. (PRD Q7)
 8. ~~Is B16's gate absolute?~~ **Resolved: nothing is locked** (PRD §6.6, Q8). Newly open, and blocking Phase 2: how aggressive should the struggle-triggered nudge be before it reads as nagging, and after how many dismissals does the platform stop suggesting a topic's lesson entirely?
 9. ~~Tier-2 catalog provenance?~~ **Resolved: pipeline-sourced** (Module J). Newly open, and **blocking Phase 3**: what is the v1 target catalog size, and what proportion of pipeline output must pass human review (J10) — since that ratio, not extraction throughput, sets the real publish rate.
 10. ~~Do tier-3 challenges gate?~~ **Resolved: nothing gates on anything.**
-11. **[Blocking Phase 1]** Which language does the Phase 1 vertical slice use — whichever T0.2 proves easiest, or Python as the PRD's incumbent?
+11. ~~Which language does the Phase 1 vertical slice use?~~ **Decided: JavaScript.** QuickJS cold-starts in 15ms against Pyodide's 1.3s (and Pyodide's real browser figure is materially worse — T0.2 §2), so JS keeps a multi-megabyte download out of the loop while the content model, editor, and progress plumbing are still churning. Python follows in T2.6, which is where the adapter abstraction gets proven anyway.
 12. **[Blocking Phase 3]** Which sources seed the pipeline's initial registry (J1), and who signs off on each one's license classification? The gate is automated; the registry is a human decision.
 13. **[Blocking Phase 8]** Which Groq model, selected against their live catalog at implementation time (L1)? And what monthly spend ceiling does the L9 cap enforce?
-14. **[Blocking Phase 0]** Who samples the design reference for K1's tokens — is there a designer in the loop, or does engineering sample values directly from the live site?
+14. ~~Who samples the design reference for K1's tokens?~~ **Decided:** engineering samples from the live site and the `shots/` reference captures; the author reviews the resulting token file rather than specifying values up front.
 15. **[Blocking Phase 2]** Does the PRD's "100 challenges" figure survive a greenfield rebuild, or does v1 launch a narrow set of topics complete across all three tiers?
-16. **[New]** The PRD marks Module A as `existing`. Section 9's handover instruction should be corrected to `planned` before `features.md` is generated — confirm.
+16. ~~PRD §9 marks Module A as `existing`.~~ **Corrected:** every feature is `planned`. This is a greenfield rebuild, and telling a reader to skip Module A would skip the foundation the product stands on.
 
 ---
 
