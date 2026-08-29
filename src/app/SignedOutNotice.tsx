@@ -78,7 +78,7 @@ export function SignedOutNotice() {
   return (
     <aside
       role="status"
-      className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-black/10 px-4 py-2 text-xs"
+      className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-notice px-4 py-2 text-xs text-notice-foreground"
     >
       <span>
         You&apos;re browsing signed out — your progress is saved on this device only, and
@@ -88,7 +88,7 @@ export function SignedOutNotice() {
         </Link>{' '}
         to keep your progress across devices.
       </span>
-      <button onClick={dismiss} className="underline opacity-60">
+      <button onClick={dismiss} className="underline underline-offset-2">
         Dismiss
       </button>
     </aside>

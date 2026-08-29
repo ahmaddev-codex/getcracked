@@ -3,11 +3,19 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Notice bar (A16). Dark in both themes on purpose: the yellow only clears
+     WCAG AA against a dark ground, and a bar that inverts with the theme would
+     fail contrast in light mode. Measured 11.38:1 — AA and AAA for body text. */
+  --notice-background: oklch(20.8% 0.042 265.755);
+  --notice-foreground: oklch(85.2% 0.199 91.936);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-notice: var(--notice-background);
+  --color-notice-foreground: var(--notice-foreground);
 
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
@@ -20,6 +28,7 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    /* Unchanged from light: see the note above. */
   }
 }
 
