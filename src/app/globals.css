@@ -318,6 +318,20 @@ body {
   }
 }
 
+/* Overlay dialog geometry (components/search/SearchDialog.tsx).
+   Viewport-relative, which the spacing scale deliberately does not cover: the
+   panel is positioned against the *screen*, not against the type scale, and it
+   has to stay usable on a short laptop window as well as a tall monitor.
+   A tenth from the top puts it under the eye line without hiding the page it
+   was opened from; capping the height at 70vh keeps the footer hint on screen
+   so the keyboard shortcuts stay visible while scrolling results. */
+.gc-overlay {
+  padding-top: 10vh;
+}
+.gc-overlay-panel {
+  max-height: 70vh;
+}
+
 /* The executing line in the visualizer's read-only code panel.
    A left bar rather than a full-width fill: the fill competes with syntax
    colours, the bar reads at a glance without touching them. */
@@ -417,6 +431,34 @@ body {
 }
 .gc-scrim[data-closing='true'] {
   animation: gc-scrim-in 180ms var(--ease-out) reverse forwards;
+}
+
+/* Reference popover (components/learn/ConceptPopover.tsx).
+   Scales up from the term that was clicked rather than sliding in from the
+   edge: a definition belongs next to the word it defines, and motion that
+   starts anywhere else implies it came from somewhere else. */
+@keyframes gc-popover-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.gc-popover {
+  animation: gc-popover-in 140ms var(--ease-out);
+  /* Width is the reading measure's short cousin: a definition is two sentences,
+     and a line longer than this reads as a paragraph rather than a gloss. */
+  width: min(22rem, calc(100vw - 2rem));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gc-popover {
+    animation: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

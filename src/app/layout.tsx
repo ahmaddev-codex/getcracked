@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     "Build real systems. Step by step. In your browser. Interactive DSA, System Design labs, and company-wise interview prep.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`h-full antialiased ${nodeFont.variable}`} suppressHydrationWarning>
       <head>

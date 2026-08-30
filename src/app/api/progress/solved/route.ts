@@ -18,6 +18,8 @@ import { getActivity, streaks } from '@/lib/account';
  * authorise: the listing renders for everyone (§2.6), and a signed-out learner's
  * progress lives in their browser, which the client merges in.
  */
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const session = await getAuth().api.getSession({ headers: await headers() });
   if (!session) return NextResponse.json({ solved: [], currentStreak: 0, longestStreak: 0 });

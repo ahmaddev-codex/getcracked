@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Search } from 'lucide-react';
 import { ConnectorFan, FAN_ORIGIN, FAN_TARGET } from './ConnectorFan';
 import type { Concept, ConceptCategory } from '@/content/concepts';
+import { ConceptPopover } from './ConceptPopover';
 
 /**
  * The concept reference as a mind map (A14, I2).
@@ -44,86 +45,6 @@ export function matchesQuery(concept: Concept, query: string): boolean {
     concept.term.toLowerCase().includes(q) ||
     concept.definition.toLowerCase().includes(q) ||
     concept.matters.toLowerCase().includes(q)
-  );
-}
-
-/** The definition, opened over the map rather than replacing it. */
-function ConceptPanel({ concept, onClose }: { concept: Concept; onClose: () => void }) {
-  const [closing, setClosing] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  const requestClose = useCallback(() => {
-    if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
-      onClose();
-      return;
-    }
-    setClosing(true);
-  }, [onClose]);
-
-  useEffect(() => {
-    if (!closing) return;
-    const timer = setTimeout(onClose, 180);
-    return () => clearTimeout(timer);
-  }, [closing, onClose]);
-
-  useEffect(() => {
-    const opener = document.activeElement as HTMLElement | null;
-    panelRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') requestClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      opener?.focus?.();
-    };
-  }, [requestClose]);
-
-  return (
-    <div className="fixed inset-0 z-60 flex justify-end">
-      <button
-        type="button"
-        aria-label="Close"
-        onClick={requestClose}
-        data-closing={closing}
-        className="gc-scrim absolute inset-0 bg-black/45"
-      />
-      <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={concept.term}
-        tabIndex={-1}
-        data-closing={closing}
-        className="gc-panel relative flex h-full w-full max-w-md flex-col gap-4 overflow-y-auto bg-surface p-5 shadow-2xl outline-none"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="font-sans text-2xl font-bold tracking-tight">{concept.term}</h3>
-          <button
-            type="button"
-            onClick={requestClose}
-            aria-label="Close"
-            className="rounded-md border border-border-subtle p-1.5 text-foreground-muted transition-colors hover:bg-surface-muted hover:text-foreground"
-          >
-            <X size={15} aria-hidden />
-          </button>
-        </div>
-
-        <section className="rounded-lg border border-border-subtle p-3">
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-foreground-muted">
-            What it is
-          </h4>
-          <p className="mt-1.5 text-sm leading-6">{concept.definition}</p>
-        </section>
-
-        <section className="rounded-lg border border-border-subtle p-3">
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-foreground-muted">
-            Why it matters
-          </h4>
-          <p className="mt-1.5 text-sm leading-6">{concept.matters}</p>
-        </section>
-      </div>
-    </div>
   );
 }
 
@@ -289,7 +210,7 @@ export function ConceptMindMap({ categories }: { categories: readonly ConceptCat
         </div>
       )}
 
-      {open && <ConceptPanel concept={open} onClose={() => setOpen(null)} />}
+      {open && <ConceptPopover concept={open} onClose={() => setOpen(null)} />}
     </div>
   );
 }

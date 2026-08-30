@@ -52,6 +52,9 @@ const EXPECTED: Record<string, PageWidth> = {
   // `<Page>`, because the sidebar sits beside its content rather than under it.
   'src/app/challenges/[slug]/[step]/page.tsx': 'canvas',
 
+  // One column of editor, controls and animation — no second column, no graph.
+  'src/app/sandbox/page.tsx': 'reading',
+
   'src/app/(dev)/components/page.tsx': 'catalog',
 };
 

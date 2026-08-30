@@ -3,11 +3,13 @@ import { notFound } from 'next/navigation';
 import { Markdown } from '@/components/Markdown';
 import { LessonSection } from '@/components/learn/LessonSection';
 import { Node } from '@/components/ui/Node';
-import { findLesson, getLessons, getLessonPosition, getProblemSet } from '@/content/registry';
+import { findLesson, getLessons, getLessonPosition, getChallengesForTopic, getProblemSet } from '@/content/registry';
 import { trackIndex } from '@/components/learn/difficulty';
 import { findConcept } from '@/content/concepts';
 import { exerciseId } from '@/content/schema';
 import { GuidedExercises } from '@/components/learn/GuidedExercises';
+import { BuildItBridge } from '@/components/learn/BuildItBridge';
+import { DecisionTree } from '@/components/learn/DecisionTree';
 import { Walkthrough } from '@/components/learn/Walkthrough';
 import { Page } from '@/components/ui/Page';
 
@@ -44,6 +46,8 @@ export default async function LessonPage(props: LessonRouteProps) {
 
   const { index, total, previous, next } = getLessonPosition(lesson);
   const problems = getProblemSet(lesson.slug);
+  // C6: the builds this topic actually applies, authored on the challenge.
+  const builds = getChallengesForTopic(lesson.slug);
   const lessonConcepts = lesson.concepts
     .map((slug) => findConcept(slug))
     .filter((c): c is NonNullable<typeof c> => Boolean(c));
@@ -144,6 +148,18 @@ export default async function LessonPage(props: LessonRouteProps) {
         </LessonSection>
       )}
 
+      {/*
+        C4. Straight after "when to reach for it", because it is the same
+        material in the form an interview asks for — a decision you make rather
+        than a list you read — and it lands hardest while the prose version is
+        still on screen to compare against.
+      */}
+      {lesson.decisionTree && (
+        <LessonSection title={lesson.decisionTree.title}>
+          <DecisionTree tree={lesson.decisionTree} lessonSlug={lesson.slug} />
+        </LessonSection>
+      )}
+
       {/* Vocabulary this lesson covers, merged from the concept reference. */}
       {lessonConcepts.length > 0 && (
         <LessonSection title="Key terms">
@@ -215,6 +231,8 @@ export default async function LessonPage(props: LessonRouteProps) {
           </ul>
         </LessonSection>
       )}
+
+      <BuildItBridge lesson={lesson} challenges={builds} />
 
       <nav className="flex justify-between gap-3 border-t border-border-subtle pt-4 text-sm">
         {previous ? (

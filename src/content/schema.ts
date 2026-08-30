@@ -141,6 +141,69 @@ export type Problem = z.infer<typeof problemSchema>;
 export type ProblemInput = z.input<typeof problemSchema>;
 
 /**
+ * Where a path through a trade-off ends.
+ *
+ * `because` is required and `recommend` is deliberately short: an answer with
+ * no reasoning is a flowchart, and a learner who can only produce the answer
+ * has learned the one thing an interview does not ask for.
+ */
+export const decisionOutcomeSchema = z.object({
+  kind: z.literal('outcome'),
+  recommend: z.string().min(1),
+  because: z.string().min(1),
+  /** What still bites after choosing correctly. */
+  caveat: z.string().optional(),
+});
+export type DecisionOutcome = z.infer<typeof decisionOutcomeSchema>;
+
+export interface DecisionQuestion {
+  kind: 'question';
+  ask: string;
+  /** Why this question is the one worth asking at this point. */
+  why?: string;
+  options: Array<{
+    label: string;
+    /**
+     * What choosing this tells you, shown *without* choosing it.
+     *
+     * The reason this is not a quiz: an interview asks "why not the other
+     * one?", so a tree that hides the branches you did not take teaches
+     * recitation. Every option's note is readable before and after answering.
+     */
+    note?: string;
+    next: DecisionQuestion | DecisionOutcome;
+  }>;
+}
+
+export const decisionQuestionSchema: z.ZodType<DecisionQuestion> = z.lazy(() =>
+  z.object({
+    kind: z.literal('question'),
+    ask: z.string().min(1),
+    why: z.string().optional(),
+    options: z
+      .array(
+        z.object({
+          label: z.string().min(1),
+          note: z.string().optional(),
+          next: z.union([decisionQuestionSchema, decisionOutcomeSchema]),
+        }),
+      )
+      // One option is not a decision, and more than four is a menu nobody
+      // reads — at that point the question is really several questions.
+      .min(2, 'A decision needs at least two options')
+      .max(4, 'More than four options is a menu, not a decision'),
+  }),
+);
+
+export const decisionTreeSchema = z.object({
+  title: z.string().min(1),
+  /** The question the whole tree answers, in the words a learner would use. */
+  prompt: z.string().min(1),
+  root: decisionQuestionSchema,
+});
+export type DecisionTree = z.infer<typeof decisionTreeSchema>;
+
+/**
  * Tier-1 lesson (B9, B10).
  *
  * The five sections are separate fields rather than one markdown blob, because
@@ -322,6 +385,22 @@ export const lessonSchema = z.object({
   pitfalls: z
     .array(z.object({ title: z.string().min(1), body: z.string().min(1) }))
     .default([]),
+
+  /**
+   * A walkable trade-off (C4).
+   *
+   * The lesson already states its trade-offs as prose — `whenToUse.reachFor`
+   * and `insteadOf`. This is the same material as a decision you make rather
+   * than a list you read, which is the form an interview actually asks for:
+   * nobody is asked to recite when to use a relational database, they are asked
+   * which one they would choose here and why.
+   *
+   * **Nested rather than a node graph with ids.** A tree with `next: nodeId`
+   * needs the content gate to prove there are no cycles and no orphans; nesting
+   * makes both structurally impossible, which is a better guarantee than a
+   * check.
+   */
+  decisionTree: z.lazy(() => decisionTreeSchema).optional(),
 
   /** Guided exercises — the same runnable unit as a problem (AD-7, B11). */
   exercises: z.array(runnableExerciseSchema).default([]),

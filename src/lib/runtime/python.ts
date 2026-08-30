@@ -132,19 +132,23 @@ def _index_variables(src):
     return {name: sorted(vars) for name, vars in found.items()}
 
 class _TracedList(list):
-    def __init__(self, values, name, sink):
+    def __init__(self, values, name, sink, full):
         super().__init__(values)
         self._name = name
         self._sink = sink
+        # Asked before building an event, never after - see the note on _run's
+        # own full(). Snapshotting a value for an event that is about to be
+        # dropped is the whole cost of tracing, paid for nothing.
+        self._full = full
 
     def __getitem__(self, i):
         v = super().__getitem__(i)
-        if isinstance(i, int):
+        if isinstance(i, int) and not self._full():
             self._sink({"kind": "array_read", "array": self._name, "index": i, "value": _snap(v)})
         return v
 
     def __setitem__(self, i, v):
-        if isinstance(i, int):
+        if isinstance(i, int) and not self._full():
             self._sink({"kind": "array_write", "array": self._name, "index": i, "value": _snap(v)})
         super().__setitem__(i, v)
 
@@ -211,6 +215,22 @@ def _run(source, entry, args_json, tracing, max_events, deadline, modules_json="
     events = []
     dropped = [0]
 
+    def full():
+        # True once nothing more will be recorded.
+        #
+        # Checked by every call site *before* it builds an event, because the
+        # cap has to bound the work and not only the payload. A line event
+        # snapshots every live local, so a loop over a 1000-element list paid a
+        # 1000-element snapshot on each of 1000 iterations to keep the first 50
+        # - quadratic work for a fixed-size result. The JavaScript harness draws
+        # the line in the same place, so a capped trace costs the same in both.
+        if not tracing:
+            return True
+        if len(events) >= max_events:
+            dropped[0] += 1
+            return True
+        return False
+
     def sink(e):
         if not tracing:
             return
@@ -250,7 +270,7 @@ def _run(source, entry, args_json, tracing, max_events, deadline, modules_json="
     wrapped = []
     for i, a in enumerate(args):
         name = names[i] if i < len(names) else "arg%d" % i
-        wrapped.append(_TracedList(a, name, sink) if isinstance(a, list) else a)
+        wrapped.append(_TracedList(a, name, sink, full) if isinstance(a, list) else a)
 
     def tracer(frame, event, arg):
         # Runs on every line, so it doubles as the deadline check. Pyodide's
@@ -264,6 +284,8 @@ def _run(source, entry, args_json, tracing, max_events, deadline, modules_json="
         # call lives in an inner helper - animated nothing in Python while
         # animating fully in JavaScript.
         if event == "line" and tracing and frame.f_code.co_filename == _SOURCE_FILE:
+            if full():
+                return tracer
             sink({
                 "kind": "line",
                 "line": frame.f_lineno,

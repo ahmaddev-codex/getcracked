@@ -58,6 +58,11 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
       title: 'Build it',
       detail: `${counts.challenges} multi-step builds, ${counts.challengeSteps} steps in all`,
     },
+    {
+      href: '/sandbox',
+      title: 'Sandbox',
+      detail: 'Your own code, your own input, animated — nothing graded',
+    },
   ];
 
   return (

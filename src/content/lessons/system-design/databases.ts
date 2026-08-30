@@ -78,6 +78,128 @@ trade you can also make deliberately in a relational system.`,
     ],
   },
 
+  /**
+   * C4. The classic interview question, and the one people answer worst — the
+   * reflex is to reach for NoSQL to "scale", which the tree makes you argue for
+   * rather than assume.
+   */
+  decisionTree: {
+    title: 'Which database?',
+    prompt:
+      'Answer for a system you are actually designing. Every option says where it leads before you pick it — the follow-up in an interview is always "why not the other one?".',
+    root: {
+      kind: 'question',
+      ask: 'Do the records reference each other in ways you will query across?',
+      why: 'This is the first question because it is the one that rules things out. Everything else is a performance argument; this is a correctness one.',
+      options: [
+        {
+          label: 'Yes — orders belong to users, items belong to orders, and I will join them',
+          note: 'Relationships are what relational databases are named after.',
+          next: {
+            kind: 'question',
+            ask: 'Does more than one record have to change together, correctly, every time?',
+            why: 'Transactions are the thing that is genuinely hard to add later. A store without them pushes the problem into your application, where it becomes your bug.',
+            options: [
+              {
+                label: 'Yes — money moves, or inventory is decremented',
+                note: 'This is close to a hard requirement.',
+                next: {
+                  kind: 'outcome',
+                  recommend: 'Relational — Postgres unless something specific rules it out',
+                  because:
+                    'Joins and transactions are what you asked for, and they are the two things every other option gives up first. A single Postgres instance with correct indexes, read replicas and a cache in front handles systems far larger than most people expect.',
+                  caveat:
+                    'The limit you will actually hit is write throughput on one primary. Know roughly where that is for your workload before you design around it — and know that sharding is what you do then, not instead.',
+                },
+              },
+              {
+                label: 'No — records are updated independently',
+                next: {
+                  kind: 'outcome',
+                  recommend: 'Still relational, and revisit only when you can name the limit',
+                  because:
+                    'You have joins, which is the expensive thing to give up. Not needing transactions today does not buy anything by moving off — it just means you would not miss them yet.',
+                  caveat:
+                    '"We might need to scale" is not a limit you have named. Move a workload out when you can say which query, at what volume, is failing.',
+                },
+              },
+            ],
+          },
+        },
+        {
+          label: 'No — each record is read and written whole',
+          note: 'This is what opens up the non-relational options honestly.',
+          next: {
+            kind: 'question',
+            ask: 'How do you reach a record?',
+            why: 'The access pattern is the whole design for a non-relational store. Choosing one before you know it is how people end up with a key-value store they have to scan.',
+            options: [
+              {
+                label: 'Always by a key I already have',
+                note: 'Sessions, carts, feature flags, counters.',
+                next: {
+                  kind: 'outcome',
+                  recommend: 'Key-value — Redis if it can be lost, DynamoDB if it cannot',
+                  because:
+                    'A hash map with durability is exactly the shape of the workload, and it is the fastest thing available precisely because it does nothing else.',
+                  caveat:
+                    'The moment a second access pattern appears — "list all carts abandoned yesterday" — this store cannot answer it, and you will be scanning. That is the signal to move, not a reason not to start here.',
+                },
+              },
+              {
+                label: 'By key, but I also query fields inside the record',
+                next: {
+                  kind: 'outcome',
+                  recommend: 'Document — MongoDB or DynamoDB with secondary indexes',
+                  because:
+                    'A self-contained record with queryable fields is what a document store is for, and it keeps the whole record in one read.',
+                  caveat:
+                    'Documents drift. Nothing enforces that last year\u2019s records have this year\u2019s fields, so the schema ends up in your application code whether you wanted it there or not.',
+                },
+              },
+              {
+                label: 'By a time range, and writes are relentless and append-only',
+                note: 'Metrics, events, sensor readings.',
+                next: {
+                  kind: 'outcome',
+                  recommend: 'Time series — InfluxDB or Timescale',
+                  because:
+                    'Append-heavy, time-ordered, queried by range is a specific enough shape that a general store wastes most of its work on it — and these compress it by orders of magnitude.',
+                  caveat:
+                    'Retention is a design decision here, not an afterthought. Data that is never dropped is what turns this from cheap into the largest line on the bill.',
+                },
+              },
+              {
+                label: 'By walking relationships many hops deep',
+                note: 'Friends-of-friends, dependency chains, fraud rings.',
+                next: {
+                  kind: 'outcome',
+                  recommend: 'Graph — Neo4j, and only if the traversal *is* the workload',
+                  because:
+                    'A five-hop traversal is five joins in SQL and one query here. When that is the product rather than a report, the difference is not marginal.',
+                  caveat:
+                    'If you can express it as two or three joins, use the relational database you already run. A second datastore is a permanent operational cost.',
+                },
+              },
+            ],
+          },
+        },
+        {
+          label: 'I do not know yet — the product is still moving',
+          note: 'The most common honest answer, and it has a real recommendation.',
+          next: {
+            kind: 'outcome',
+            recommend: 'Relational. Unknown future queries is the argument *for* it',
+            because:
+              'A relational schema lets you ask questions you had not thought of when you wrote it. Every other option requires you to know the access pattern up front, which is exactly what you have just said you do not.',
+            caveat:
+              'This is a real decision, not a deferral. Say so out loud in an interview — "I would start relational because the query patterns are unsettled" is a stronger answer than a confident wrong one.',
+          },
+        },
+      ],
+    },
+  },
+
   patternCues: [
     'The interviewer describes the data model — that is the input to this decision.',
     'The question mentions transactions, money, or inventory, which points hard at relational.',

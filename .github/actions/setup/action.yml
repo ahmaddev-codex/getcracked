@@ -1,0 +1,25 @@
+name: Set up the project
+description: >-
+  pnpm, Node and dependencies. Extracted because every CI job needs exactly
+  these three steps, and five copies of them is five places to forget a version
+  bump.
+
+  Checkout is deliberately NOT here: a local composite action cannot run until
+  the repository holding it is on disk, so every job has to check out first
+  anyway. Including it as well would just check out twice.
+
+runs:
+  using: composite
+  steps:
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: pnpm
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile

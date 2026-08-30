@@ -115,20 +115,114 @@ describe('cross-language trace equivalence', () => {
     TIMEOUT,
   );
 
+  /**
+   * The cap is a correctness property, so this must not also be a speed test.
+   *
+   * It failed in CI and passed locally, and the reason was neither flakiness nor
+   * the runtime: a traced run that trips the sandbox deadline returns
+   * `timedOut: true` with `truncated: false` and no events, so a slow machine
+   * turned "the cap works" into "expected false to be true". Raising the loop
+   * from 500 to 1000 in an earlier attempt to stabilise it made that strictly
+   * worse, because the tracing cost was quadratic in the loop length.
+   *
+   * The runtime fix — checking the cap before building an event rather than
+   * after — is what makes the work bounded. This keeps the deadline generous
+   * anyway and asserts it was not hit, so if the cost ever regresses the failure
+   * names the cause instead of pointing at the assertion after it.
+   */
   it(
     'truncates rather than flooding when a run exceeds the event cap',
     async () => {
+      const SIZE = 500;
+      const CAP = 50;
+
       const js = await runJavaScript({
-        source: 'function fill(xs) { for (let i = 0; i < xs.length; i++) { xs[i] = i; } return xs.length; }',
+        source: `function fill(xs) { for (let i = 0; i < ${SIZE}; i++) { xs[i] = i; } return xs.length; }`,
         entry: 'fill',
-        args: [new Array(500).fill(0)],
+        args: [new Array(SIZE).fill(0)],
         trace: true,
-        maxEvents: 50,
+        maxEvents: CAP,
+        // Ten times the deadline a learner gets, so this measures the cap and
+        // not the runner.
+        timeoutMs: 50_000,
       });
 
+      expect(js.timedOut, 'the run hit the deadline, so the cap was never reached').toBe(
+        false,
+      );
       expect(js.truncated).toBe(true);
       expect(js.events.at(-1)).toMatchObject({ kind: 'truncated' });
-      expect(js.events.length).toBeLessThanOrEqual(51);
+      // The cap, plus the one marker that says it was reached.
+      expect(js.events.length).toBeLessThanOrEqual(CAP + 1);
+    },
+    TIMEOUT,
+  );
+
+  /**
+   * The cap keeps exactly the cap, whatever the input.
+   *
+   * Deterministic, and the half of "bounded" that can be asserted without
+   * measuring the machine: ten times the input must still yield one capped
+   * trace, in both languages.
+   */
+  it.each(['javascript', 'python'] as const)(
+    'keeps the same capped trace at any input size (%s)',
+    async (language) => {
+      const run = (size: number) =>
+        (language === 'javascript' ? runJavaScript : runPython)({
+          source:
+            language === 'javascript'
+              ? `function fill(xs) { for (let i = 0; i < ${size}; i++) { xs[i] = i; } return xs.length; }`
+              : `def fill(xs):\n    for i in range(${size}):\n        xs[i] = i\n    return len(xs)\n`,
+          entry: 'fill',
+          args: [new Array(size).fill(0)],
+          trace: true,
+          maxEvents: 50,
+          timeoutMs: 50_000,
+        });
+
+      const small = await run(200);
+      const large = await run(2000);
+
+      expect(small.truncated).toBe(true);
+      expect(large.truncated).toBe(true);
+      expect(small.events.length).toBe(large.events.length);
+      expect(large.value).toBe(2000);
+    },
+    TIMEOUT,
+  );
+
+  /**
+   * The other half: past the cap, more iterations must cost ~nothing.
+   *
+   * Asserted through the deadline a learner actually gets rather than through a
+   * stopwatch, because a wall-clock ratio on a shared CI runner measures the
+   * runner. This is the exact failure that was being debugged — the cost was
+   * quadratic in the loop length, and a 1000-iteration run took 1491ms locally
+   * and blew the 5s deadline in CI.
+   *
+   * 3000 iterations is ~139ms once the cap bounds the work and would be tens of
+   * seconds without it, so the margin is large in the direction that matters and
+   * there is nothing to tune. JavaScript only: this is where the quadratic
+   * snapshot lived, and Python's interpreter baseline is high enough that any
+   * size with a comparable margin would no longer be testing the cap.
+   */
+  it(
+    'stays inside a learner’s own deadline once the cap is reached',
+    async () => {
+      const SIZE = 3000;
+      const js = await runJavaScript({
+        source: `function fill(xs) { for (let i = 0; i < ${SIZE}; i++) { xs[i] = i; } return xs.length; }`,
+        entry: 'fill',
+        args: [new Array(SIZE).fill(0)],
+        trace: true,
+        maxEvents: 50,
+        // Deliberately not raised: the default is the point.
+      });
+
+      expect(js.timedOut, 'tracing past the cap is costing more than it should').toBe(false);
+      expect(js.truncated).toBe(true);
+      expect(js.value).toBe(SIZE);
     },
     TIMEOUT,
   );

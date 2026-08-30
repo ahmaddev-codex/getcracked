@@ -25,6 +25,21 @@ import type { Language } from '@/content/schema';
  */
 
 const SPEEDS = [0.5, 1, 2, 4] as const;
+/**
+ * How much the panel has to change width before the picture is rebuilt (B8).
+ *
+ * Renderers size their cells to the container once, at mount, because
+ * re-measuring per frame is exactly the per-frame layout read H5 forbids. That
+ * is right until the container changes — a phone rotating, a desktop window
+ * dragged — after which the picture is drawn for a width that no longer exists:
+ * too small and it wastes the screen, too large and the panel scrolls
+ * sideways when it did not need to.
+ *
+ * A threshold rather than a straight remount, because a drag-resize fires
+ * continuously and rebuilding the SVG on every pixel would be far worse than
+ * the stale size it fixes.
+ */
+const REMEASURE_THRESHOLD_PX = 48;
 /** Steps per second at 1x. Slow enough to follow, fast enough not to bore. */
 const BASE_STEPS_PER_SECOND = 8;
 
@@ -236,6 +251,8 @@ export function Visualizer({
   const [maps, setMaps] = useState<Map<string, Map<string, Scalar>>>(new Map());
   const [returned, setReturned] = useState<{ value: unknown } | null>(null);
   const [drawable, setDrawable] = useState(true);
+  /** Bumped when the panel's width changes materially — see the threshold above. */
+  const [measureKey, setMeasureKey] = useState(0);
 
   const total = trace.events.length;
   // The collection the chosen shape draws, so the narration and the picture
@@ -269,6 +286,40 @@ export function Visualizer({
     [trace, total, arrayName, onLineChange],
   );
 
+  /**
+   * Rebuilds the picture when the panel changes width (B8).
+   *
+   * `setState` in a ResizeObserver callback rather than in an effect body: this
+   * is a subscription to an external system reporting, which is the one shape
+   * React asks for.
+   */
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host || typeof ResizeObserver === 'undefined') return;
+
+    let measured = host.clientWidth;
+    const observer = new ResizeObserver(() => {
+      const width = host.clientWidth;
+      if (width > 0 && Math.abs(width - measured) >= REMEASURE_THRESHOLD_PX) {
+        measured = width;
+        setMeasureKey((n) => n + 1);
+      }
+    });
+
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, []);
+
+  /**
+   * What the renderer was last built for.
+   *
+   * A rebuild has two causes and they want opposite things. A **new run** starts
+   * at the beginning. A **re-measure** must keep the learner exactly where they
+   * were — rebuilding at step 0 because someone rotated their phone would throw
+   * away the position they were studying.
+   */
+  const mountedFor = useRef<{ trace: Trace; visual?: VisualKind } | null>(null);
+
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
@@ -278,14 +329,18 @@ export function Visualizer({
     setDrawable(Boolean(selected));
     if (!selected) return;
 
+    const sameRun =
+      mountedFor.current?.trace === trace && mountedFor.current?.visual === visual;
+    mountedFor.current = { trace, visual };
+
     selected.renderer.mount(host, trace);
-    selected.renderer.update(stateAtStep(trace, 0));
+    selected.renderer.update(stateAtStep(trace, sameRun ? stepRef.current : 0));
 
     return () => {
       selected.renderer.destroy();
       rendererRef.current = null;
     };
-  }, [trace, visual]);
+  }, [trace, visual, measureKey]);
 
   useEffect(() => {
     if (!playing) return;

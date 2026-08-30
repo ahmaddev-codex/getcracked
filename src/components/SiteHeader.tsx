@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AccountSlot } from '@/components/auth/AccountMenu';
+import { SearchTrigger } from '@/components/search/SearchTrigger';
 
 /**
  * The site header (K1).
@@ -29,6 +30,7 @@ const LINKS = [
   { href: '/learn/design-patterns', label: 'Patterns' },
   { href: '/problems', label: 'Problems' },
   { href: '/challenges', label: 'Build' },
+  { href: '/sandbox', label: 'Sandbox' },
 ];
 
 export function SiteHeader() {
@@ -60,7 +62,17 @@ export function SiteHeader() {
           <span className="text-base font-semibold tracking-tight">GetCracked</span>
         </Link>
 
-        <ul className="flex flex-wrap items-center gap-x-5 gap-y-1">
+        {/*
+          One row that scrolls on a phone, rather than three rows that wrap.
+
+          Six destinations do not fit 375px at a readable size, and wrapping
+          them pushed the header to roughly a third of the viewport before any
+          content appeared. Scrolling keeps it to two rows — wordmark and
+          account, then the links — and `order` puts the links on their own row
+          below the breakpoint so the account actions stay reachable at the top
+          right where they are on desktop.
+        */}
+        <ul className="order-last flex w-full min-w-0 flex-nowrap items-center gap-x-5 overflow-x-auto whitespace-nowrap sm:order-none sm:mx-auto sm:w-auto sm:flex-wrap sm:overflow-x-visible">
           {LINKS.map((link) => {
             const active = pathname.startsWith(link.href);
             return (
@@ -79,7 +91,16 @@ export function SiteHeader() {
           })}
         </ul>
 
-        <div className="ml-auto flex items-center gap-3">
+        {/*
+          `ml-auto` only below the breakpoint, where it pushes the account
+          actions to the right of the wordmark on their shared row. Above it the
+          links carry `mx-auto`, and auto margins share free space between
+          *every* auto in the line — so leaving this one on would give the row
+          three claims on the space and the links would sit a third of the way
+          across rather than centred.
+        */}
+        <div className="ml-auto flex shrink-0 items-center gap-3 sm:ml-0">
+          <SearchTrigger />
           <AccountSlot />
         </div>
       </nav>
