@@ -61,7 +61,17 @@ export function SiteHeader() {
           <span className="text-base font-semibold tracking-tight">GetCracked</span>
         </Link>
 
-        <ul className="flex flex-wrap items-center gap-x-5 gap-y-1">
+        {/*
+          One row that scrolls on a phone, rather than three rows that wrap.
+
+          Six destinations do not fit 375px at a readable size, and wrapping
+          them pushed the header to roughly a third of the viewport before any
+          content appeared. Scrolling keeps it to two rows — wordmark and
+          account, then the links — and `order` puts the links on their own row
+          below the breakpoint so the account actions stay reachable at the top
+          right where they are on desktop.
+        */}
+        <ul className="order-last flex w-full min-w-0 flex-nowrap items-center gap-x-5 overflow-x-auto whitespace-nowrap sm:order-none sm:w-auto sm:flex-wrap sm:overflow-x-visible">
           {LINKS.map((link) => {
             const active = pathname.startsWith(link.href);
             return (
@@ -80,7 +90,7 @@ export function SiteHeader() {
           })}
         </ul>
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex shrink-0 items-center gap-3">
           <AccountSlot />
         </div>
       </nav>
