@@ -93,6 +93,17 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 - [ ] Editorial review queue — nothing publishes unreviewed (J10) · observability (J12)
 - [ ] **Resolve H10** — long-running jobs vs. serverless limits; record the H8 deviation if there is one
 
+## Curriculum — two tracks, 20 lessons
+
+- [x] **Data Structures track (9)** — arrays · linked lists · stacks & queues · hash maps · trees · heaps · graphs · tries · union-find
+- [x] **Algorithms track (11)** — two pointers · sliding window · prefix sums · binary search · sorting · recursion · backtracking · greedy · dynamic programming · intervals · bit manipulation
+- [x] **Every lesson answers "why this one"** — `whenToUse.reachFor` plus `insteadOf`, which names the thing a learner would otherwise have used and says what it costs. Knowing how a heap works does not tell you when to reach for one, and that is the skill an interview tests
+- [x] **Per-operation asymptotics** — separate from the pattern-level `complexity`, because "insert is O(1) but lookup is O(n)" is the sentence that decides between a list and an array, and one summary figure cannot express it
+- [x] **Variants, and further reading** — named kinds worth recognising, plus external links carrying their source. Linked rather than ingested, so they raise no licence question (contrast Module J, which reproduces text)
+- [x] **Difficulty ranking** — foundational · core · advanced, so a learner knows where to start. Guidance only: every topic stays one click away (§6.6, B14). Shown in the panel and explained in the legend, deliberately *not* on the node, where a badge per card competes with the name
+- [x] Order restarts per track, so adding a structure does not renumber every algorithm
+- [ ] **System Design track** — the third track the schema now allows; `/learn/system-design` still holds the concept map (58 of 129 concepts) rather than lessons
+
 ## Phase 4 — Animation breadth (Module B) · *epic* — **in progress**
 *Sequence by **lesson** coverage — a topic's lesson is much weaker without its animation.*
 - [x] **Structure-shaped renderers, driven by a content-declared `visual`** — the shape cannot be inferred, since a heap, a DP table and a queue are all arrays to the trace. Registry selects by declared kind; unknown falls back to the array picture, which is always truthful (B2)
@@ -103,7 +114,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
   - [x] graphs — nodes joined to their neighbours (the adjacency the lesson's algorithm actually uses; not a general force-directed layout the trace cannot justify)
   - [x] hash maps — key-to-value entries appearing as they are inserted, telling a first sighting apart from an increment. **Not drawn as buckets**: the trace knows nothing about placement, so numbered slots would invent a hash the code never chose. Rows are pre-allocated from the trace's own future and hidden until inserted, which keeps H5's no-allocation-per-frame rule without leaking where the run is going
     - The blocker turned out to be imaginary: both adapters already snapshot every live variable on every line, so the map's contents were in the raw trace all along and `toProtocol` was discarding them. Diffing consecutive snapshots recovers `map_put`/`map_delete` with **no runtime change in either language**
-  - [ ] DP tables · union-find · tries/segment trees · probabilistic · spatial — no lesson uses them yet; building them now would be speculative
+  - [ ] DP tables · segment trees · probabilistic · spatial — no lesson uses them yet; building them now would be speculative
 - [x] **B4 complexity overlay and operation counters** — measured steps/reads/writes/time/memory, stated as measurements of one run, never as a complexity proof
 - [x] **B5 "explain this state"** — narration generated from the same state the renderer draws, so the two cannot describe different things. Reports the change (`nums[1] changed from 1 to 4`), not just the position
 - [x] **Pointer marks earn their claim** — a variable is drawn on the structure only where the source subscripts that collection with it, read statically because no trace can tell an index from a number that happens to be in range
@@ -115,7 +126,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 - [x] **Canvas (I1)** — a spine of lesson nodes with each topic's problems fanning off on curved dotted connectors, measured from the reference. Drawn with layout + measured SVG rather than a fixed viewBox, so it reflows and every node stays a focusable link read in curriculum order
 - [x] **Node detail panel (I3)** — opens over the roadmap instead of navigating, so a learner keeps their place in the path they were scanning. Lesson pages remain the canonical URLs and the SEO surface; nodes stay real anchors, so only a plain left click is intercepted
 - [x] **Self-reported topic status** — Learning · Done · Skip, deliberately *separate* from `deriveLessonState`. That derives what was completed; this is what the learner says. Merging them would let a click count as a completion in the F6 funnel
-- [ ] **I2 colour-coded legend** — the roadmap has no key yet
+- [x] **I2 colour-coded legend** — a bordered key beside the graph, as the reference does: what each node fill means, what the done marker means, and what each difficulty rank means. A graph whose colour carries meaning needs a key, or the meaning is decoration
 - [ ] **I4 tri-state per-node progress** (lesson · problem set · challenge) — only the self-reported mark exists; derived progress is not yet shown on the node
 - [ ] **I5** System Design and Design Patterns roadmaps — DSA only so far
 - [ ] Search-within-roadmap (I6) · share/embed (I7) · PDF/PNG export (I8)

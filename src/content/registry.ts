@@ -29,6 +29,15 @@ import { graphsLesson } from './lessons/graphs';
 import { heapsLesson } from './lessons/heaps';
 import { dynamicProgrammingLesson } from './lessons/dynamic-programming';
 import { twoPointersLesson } from './lessons/two-pointers';
+import { linkedListsLesson } from './lessons/linked-lists';
+import { triesLesson } from './lessons/tries';
+import { unionFindLesson } from './lessons/union-find';
+import { sortingLesson } from './lessons/sorting';
+import { prefixSumsLesson } from './lessons/prefix-sums';
+import { backtrackingLesson } from './lessons/backtracking';
+import { greedyLesson } from './lessons/greedy';
+import { intervalsLesson } from './lessons/intervals';
+import { bitManipulationLesson } from './lessons/bit-manipulation';
 import {
   lessonSchema,
   problemSchema,
@@ -123,6 +132,15 @@ export function getSetPosition(problem: Problem) {
 export const RAW_LESSONS: readonly LessonInput[] = [
   hashingLesson,
   twoPointersLesson,
+  linkedListsLesson,
+  triesLesson,
+  unionFindLesson,
+  sortingLesson,
+  prefixSumsLesson,
+  backtrackingLesson,
+  greedyLesson,
+  intervalsLesson,
+  bitManipulationLesson,
   arraysLesson, slidingWindowLesson, stacksQueuesLesson, binarySearchLesson, recursionLesson, treesLesson, graphsLesson, heapsLesson, dynamicProgrammingLesson,
 ];
 
@@ -135,6 +153,9 @@ let lessonCache: readonly Lesson[] | undefined;
  * nothing here consults progress, which is what makes read-ahead structural
  * rather than a behaviour someone has to remember not to break.
  */
+/** You hold state in a structure before you do anything to it. */
+const TRACK_ORDER: ReadonlyArray<Lesson['track']> = ['data-structures', 'algorithms'];
+
 export function getLessons(): readonly Lesson[] {
   lessonCache ??= RAW_LESSONS.map((l) => {
     const parsed = lessonSchema.safeParse(l);
@@ -145,8 +166,22 @@ export function getLessons(): readonly Lesson[] {
       throw new Error(`Invalid lesson "${l.slug}" — ${detail}. Run \`pnpm content:check\`.`);
     }
     return parsed.data;
-  }).sort((a, b) => a.order - b.order || a.slug.localeCompare(b.slug));
+  })
+    // Data structures before algorithms, then by each track's own order. The
+    // tracks are numbered independently so adding a structure does not
+    // renumber every algorithm, and vice versa.
+    .sort(
+      (a, b) =>
+        TRACK_ORDER.indexOf(a.track) - TRACK_ORDER.indexOf(b.track) ||
+        a.order - b.order ||
+        a.slug.localeCompare(b.slug),
+    );
   return lessonCache;
+}
+
+/** Lessons in one track, in that track's order. */
+export function getTrack(track: Lesson['track']): readonly Lesson[] {
+  return getLessons().filter((l) => l.track === track);
 }
 
 export function findLesson(slug: string): Lesson | undefined {

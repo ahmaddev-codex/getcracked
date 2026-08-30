@@ -3,9 +3,57 @@ import type { LessonInput } from '../schema';
 export const binarySearchLesson: LessonInput = {
   tier: 'lesson',
   slug: "binary-search",
-  order: 6,
+  order: 4,
+  track: 'algorithms',
   title: "Binary Search",
   summary: "Halve the search space with every comparison.",
+
+  difficulty: 'foundational',
+
+  operations: [
+    {
+      name: 'search a sorted array',
+      time: 'O(log n)',
+      note: 'About 20 steps for a million, 30 for a billion.',
+    },
+    {
+      name: 'find a boundary',
+      time: 'O(log n)',
+      note: 'First or last position satisfying a predicate.',
+    },
+    {
+      name: 'search the answer space',
+      time: 'O(log(range) x cost of check)',
+      note: 'When feasibility is monotonic.',
+    },
+    {
+      name: 'extra space',
+      time: 'O(1) iterative, O(log n) recursive',
+    },
+  ],
+
+  variants: [
+    {
+      name: 'Exact match',
+      what: 'The textbook form.',
+    },
+    {
+      name: 'Lower / upper bound',
+      what: 'First element not less than, or first greater than. What most problems actually want.',
+    },
+    {
+      name: 'Binary search on the answer',
+      what: 'Search a numeric range with a monotonic feasibility test.',
+    },
+  ],
+
+  furtherReading: [
+    {
+      label: 'Binary search algorithm',
+      url: 'https://en.wikipedia.org/wiki/Binary_search_algorithm',
+      source: 'Wikipedia',
+    },
+  ],
 
   explainer: "Binary search needs one property: the ability to discard half the remaining\ncandidates after a single comparison. On a sorted array that comes free, since\ncomparing against the middle tells you which half the target cannot be in.\n\nThe version most people can write from memory is finding an exact value. The\nversion that shows up in interviews is **searching for a boundary** \u2014 the first\nelement satisfying some condition, the insertion point, the smallest workable\nanswer. Same halving, different exit condition.\n\nThat generalisation is the useful one: the array does not have to be the thing\nyou search. If you can ask \"is `x` big enough?\" and the answer is monotonic \u2014\nfalse, false, false, true, true \u2014 you can binary search over the *answer space*,\nnot the input.\n\n```\nlow, high = smallest_possible, largest_possible\nwhile low < high:\n    mid = low + (high - low) // 2\n    if feasible(mid): high = mid\n    else:             low = mid + 1\nreturn low\n```",
 
@@ -36,6 +84,25 @@ export const binarySearchLesson: LessonInput = {
     time: "O(log n)",
     space: "O(1) iteratively, O(log n) recursively",
     note: "About 20 steps for a million elements, 30 for a billion. The recursive form costs stack frames the iterative one does not.",
+  },
+
+  whenToUse: {
+    reachFor: [
+      'The input is sorted, or can be sorted without losing what you need.',
+      'You are asked for a boundary: first, last, smallest that works, largest that fits.',
+      'The answer space is numeric and the feasibility test is monotonic — search the answer, not the array.',
+      'The input is large enough that O(n) is being ruled out deliberately.',
+    ],
+    insteadOf: [
+      {
+        alternative: 'A linear scan',
+        why: '20 steps for a million elements against a million. Worth it whenever the data is already sorted; not worth sorting for a single lookup.',
+      },
+      {
+        alternative: 'A hash map',
+        why: 'O(1) exact lookup, but it cannot answer "the smallest value at least x". Binary search is for order, not membership.',
+      },
+    ],
   },
 
   patternCues: [

@@ -4,8 +4,62 @@ export const arraysLesson: LessonInput = {
   tier: 'lesson',
   slug: "arrays",
   order: 1,
+  track: 'data-structures',
   title: "Arrays & Traversal",
   summary: "The one pass that replaces the nested loop.",
+
+  difficulty: 'foundational',
+
+  operations: [
+    {
+      name: 'access by index',
+      time: 'O(1)',
+      note: 'The defining operation. Nothing else on this page is free.',
+    },
+    {
+      name: 'search unsorted',
+      time: 'O(n)',
+      note: 'Every element may need checking.',
+    },
+    {
+      name: 'append at end',
+      time: 'O(1) amortised',
+      note: 'A dynamic array doubles occasionally; the doubling averages out.',
+    },
+    {
+      name: 'insert or remove in middle',
+      time: 'O(n)',
+      note: 'Everything after the position shifts.',
+    },
+  ],
+
+  variants: [
+    {
+      name: 'Static array',
+      what: 'Fixed size, allocated once. What the hardware actually offers.',
+    },
+    {
+      name: 'Dynamic array',
+      what: 'Grows by reallocating and copying — JavaScript Array, Python list, C++ vector.',
+    },
+    {
+      name: 'Matrix / 2-D array',
+      what: 'Rows of rows. Index arithmetic is row * width + column when flattened.',
+    },
+  ],
+
+  furtherReading: [
+    {
+      label: 'Array data structure',
+      url: 'https://en.wikipedia.org/wiki/Array_(data_structure)',
+      source: 'Wikipedia',
+    },
+    {
+      label: 'Big-O cheat sheet',
+      url: 'https://www.bigocheatsheet.com/',
+      source: 'Know Thy Complexities',
+    },
+  ],
 
   explainer: "An array gives you two things in constant time: the element at an index, and\nthe length. Almost every array technique is about turning a problem that *looks*\nlike it needs to compare everything with everything into one that needs a single\nwalk.\n\nThe tell is a nested loop where the inner one is doing bookkeeping rather than\nreal work \u2014 counting, searching for a partner, tracking a running best. That\ninner loop is usually replaceable by state you carry along.\n\n```\n// O(n^2): the inner loop re-derives what you already passed\nfor i in range(n):\n    for j in range(i):\n        ...\n\n// O(n): carry the answer with you\nrunning = initial\nfor i in range(n):\n    running = combine(running, a[i])\n```\n\nThe three shapes worth recognising: a **running aggregate** (prefix sums, max so\nfar), a **decision per element** (extend or restart, as in Kadane's), and\n**two indices moving independently** \u2014 which is its own topic.",
 
@@ -30,6 +84,25 @@ export const arraysLesson: LessonInput = {
     time: "O(n) for a single pass",
     space: "O(1) if you carry state, O(n) if you build an output array",
     note: "Nested loops over the same array are the signal. The question to ask is what the inner loop actually needs \u2014 often it is one number you could have been tracking all along.",
+  },
+
+  whenToUse: {
+    reachFor: [
+      'You need any element by position in constant time — the one thing only an array gives you.',
+      'You are scanning in order, where contiguous memory makes it far faster in practice than the notation suggests.',
+      'The size is known, or grows only at the end.',
+      'You need the data laid out for a two-pointer, sliding-window, or binary-search technique.',
+    ],
+    insteadOf: [
+      {
+        alternative: 'A linked list',
+        why: 'A list only wins when you insert and remove in the middle constantly. An array beats it on nearly everything else, including scans, because its elements sit together in memory.',
+      },
+      {
+        alternative: 'A hash map',
+        why: 'If your keys are already 0..n-1, an array is a hash map with no hashing, no collisions and no overhead. Reach for the map only when the keys are sparse or not integers.',
+      },
+    ],
   },
 
   patternCues: [

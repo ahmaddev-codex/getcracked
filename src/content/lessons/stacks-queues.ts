@@ -3,9 +3,69 @@ import type { LessonInput } from '../schema';
 export const stacksQueuesLesson: LessonInput = {
   tier: 'lesson',
   slug: "stacks-queues",
-  order: 5,
+  order: 3,
+  track: 'data-structures',
   title: "Stacks & Queues",
   summary: "When the order you process things in is the whole problem.",
+
+  difficulty: 'foundational',
+
+  operations: [
+    {
+      name: 'push / enqueue',
+      time: 'O(1)',
+    },
+    {
+      name: 'pop / dequeue',
+      time: 'O(1)',
+      note: 'On a real queue. Array.shift() is O(n) and quietly ruins a BFS.',
+    },
+    {
+      name: 'peek',
+      time: 'O(1)',
+    },
+    {
+      name: 'search',
+      time: 'O(n)',
+      note: 'Neither structure is for searching.',
+    },
+  ],
+
+  variants: [
+    {
+      name: 'Stack',
+      what: 'Last in, first out. Function calls, undo, matching brackets.',
+    },
+    {
+      name: 'Queue',
+      what: 'First in, first out. BFS, task scheduling, buffering.',
+    },
+    {
+      name: 'Deque',
+      what: 'Both ends in O(1). Sliding-window maximum runs on one.',
+    },
+    {
+      name: 'Monotonic stack',
+      what: 'Kept sorted as you push. Answers next-greater-element in O(n) total.',
+    },
+    {
+      name: 'Priority queue',
+      what: 'Not a queue by arrival — see Heaps.',
+    },
+  ],
+
+  furtherReading: [
+    {
+      label: 'Stack (abstract data type)',
+      url: 'https://en.wikipedia.org/wiki/Stack_(abstract_data_type)',
+      source: 'Wikipedia',
+    },
+    {
+      label: 'Stack and queue visualiser',
+      url: 'https://visualgo.net/en/list',
+      source: 'VisuAlgo',
+    },
+  ],
 
   explainer: "A stack is last-in-first-out; a queue is first-in-first-out. Both are trivial\nto implement. What is worth learning is recognising the problems whose *structure*\nis one of them.\n\n**Stack** appears whenever the most recent unresolved thing must be resolved\nfirst \u2014 matching brackets, undo history, evaluating nested expressions, and\ndepth-first traversal. If you find yourself saying \"the last one I saw\", it is a\nstack.\n\nThe subtler use is the **monotonic stack**: keep the stack sorted by holding only\nelements that are still candidates, popping any that the current element makes\nirrelevant. That is how \"next greater element\" problems collapse from O(n\u00b2) to\nO(n) \u2014 each index is pushed once and popped once, however nested the loops look.\n\n**Queue** appears when things must be handled in arrival order \u2014 breadth-first\ntraversal, scheduling, rate limiting, buffering between a fast producer and a\nslow consumer.",
 
@@ -35,6 +95,29 @@ export const stacksQueuesLesson: LessonInput = {
     time: "O(1) per push, pop, or peek",
     space: "O(n) for n held elements",
     note: "A monotonic stack processes each element exactly twice \u2014 once pushed, once popped \u2014 so the total is linear even though the code contains a loop inside a loop.",
+  },
+
+  whenToUse: {
+    reachFor: [
+      'The most recently seen item is the first one you need to resolve — that is a stack.',
+      'Items must be handled in arrival order, or you are exploring level by level — that is a queue.',
+      'You are matching pairs or tracking nesting.',
+      'You need the next greater or next smaller element, which is a monotonic stack.',
+    ],
+    insteadOf: [
+      {
+        alternative: 'Recursion',
+        why: 'A stack is what recursion uses underneath. Making it explicit is how you avoid stack overflow on deep inputs, and how you pause and resume a traversal.',
+      },
+      {
+        alternative: 'An array with shift()',
+        why: 'Removing from the front of an array is O(n) because everything shifts. A real queue or deque makes it O(1), which matters inside a BFS loop.',
+      },
+      {
+        alternative: 'Sorting',
+        why: 'For next-greater-element problems a monotonic stack is O(n) where sorting is O(n log n) and loses the positions you needed.',
+      },
+    ],
   },
 
   patternCues: [

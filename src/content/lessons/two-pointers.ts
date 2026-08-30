@@ -3,9 +3,53 @@ import type { LessonInput } from '../schema';
 export const twoPointersLesson: LessonInput = {
   tier: 'lesson',
   slug: 'two-pointers',
-  order: 3,
+  order: 1,
+  track: 'algorithms',
   title: 'Two Pointers',
   summary: 'Walk an array from both ends, or at two speeds, instead of nesting loops.',
+
+  difficulty: 'foundational',
+
+  operations: [
+    {
+      name: 'converging scan',
+      time: 'O(n)',
+      note: 'Both pointers only move inward.',
+    },
+    {
+      name: 'fast and slow',
+      time: 'O(n)',
+      note: 'Cycle detection, midpoint finding.',
+    },
+    {
+      name: 'extra space',
+      time: 'O(1)',
+      note: 'The main reason to prefer it over a hash map.',
+    },
+  ],
+
+  variants: [
+    {
+      name: 'Opposite ends',
+      what: 'Start and end move toward each other. Sorted input.',
+    },
+    {
+      name: 'Same direction',
+      what: 'Read and write pointers — in-place filtering and dedup.',
+    },
+    {
+      name: 'Fast and slow',
+      what: 'One moves twice as fast. Floyd cycle detection.',
+    },
+  ],
+
+  furtherReading: [
+    {
+      label: 'Two pointers technique',
+      url: 'https://en.wikipedia.org/wiki/Two_pointers_technique',
+      source: 'Wikipedia',
+    },
+  ],
 
   explainer: `Two pointers is the other common way a nested loop collapses into a
 single pass — and it is the one to reach for when a hash map would be overkill or
@@ -30,6 +74,25 @@ If you cannot state the invariant, the pointers are guesswork.`,
     time: 'O(n) for a single pass',
     space: 'O(1) — the pointers are the only extra state',
     note: 'Often the reason to prefer this over a hash map: same linear time, but constant space instead of O(n). If the input needs sorting first, that sort dominates at O(n log n).',
+  },
+
+  whenToUse: {
+    reachFor: [
+      'The array is sorted, or can be sorted without losing what you need.',
+      'You are looking for a pair, a triple, or a partition point.',
+      'You want O(1) extra space where a hash map would cost O(n).',
+      'Something is being compared from both ends inward, or two sequences are being merged.',
+    ],
+    insteadOf: [
+      {
+        alternative: 'A hash map',
+        why: 'For pair-sum on an unsorted array the map is O(n) and two pointers is O(n log n) because of the sort. Two pointers wins when the input is already sorted, or when O(1) space is required.',
+      },
+      {
+        alternative: 'A nested loop',
+        why: 'The technique exists to remove exactly this: both pointers only move forward, so each element is handled a constant number of times.',
+      },
+    ],
   },
 
   patternCues: [

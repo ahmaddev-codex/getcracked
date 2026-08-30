@@ -102,6 +102,37 @@ export default async function LessonPage(props: LessonRouteProps) {
         </LessonSection>
       )}
 
+      {/*
+        (f) Why this one, and not the obvious alternative.
+
+        Placed straight after the cost, because the cost is the argument: a heap
+        is worth reaching for precisely when O(log n) insertion beats re-sorting,
+        and the comparison lands hardest while those figures are still on screen.
+      */}
+      {lesson.whenToUse && (
+        <LessonSection title="When to reach for it">
+          <ul className="flex list-disc flex-col gap-1 pl-5 text-sm">
+            {lesson.whenToUse.reachFor.map((reason, i) => (
+              <li key={i}>{reason}</li>
+            ))}
+          </ul>
+
+          {lesson.whenToUse.insteadOf.length > 0 && (
+            <div className="mt-3 flex flex-col gap-2">
+              <p className="text-xs font-semibold text-foreground-muted">
+                Rather than the obvious alternative
+              </p>
+              {lesson.whenToUse.insteadOf.map((swap, i) => (
+                <Node key={i} tone="muted" className="p-3 text-sm">
+                  <p className="font-semibold">{swap.alternative}</p>
+                  <p className="mt-0.5 text-foreground-muted">{swap.why}</p>
+                </Node>
+              ))}
+            </div>
+          )}
+        </LessonSection>
+      )}
+
       {/* (d) */}
       {lesson.patternCues.length > 0 && (
         <LessonSection title="How to spot it">

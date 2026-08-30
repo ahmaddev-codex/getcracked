@@ -1,11 +1,12 @@
 'use client';
 
-import { useRef, useState, type ReactNode } from 'react';
+import { Fragment, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { ConnectorFan, FAN_ORIGIN, FAN_TARGET } from './ConnectorFan';
 import { TopicPanel } from './TopicPanel';
 import { useTopicStatuses } from '@/lib/topic-status';
+import { DIFFICULTY_BADGE, DIFFICULTY_NOTE } from './difficulty';
 import type { Lesson, Problem } from '@/content/schema';
 
 /**
@@ -34,6 +35,79 @@ export interface RoadmapTopic {
   cues?: ReactNode;
 }
 
+const TRACK_LABELS: Record<Lesson['track'], string> = {
+  'data-structures': 'Data Structures',
+  algorithms: 'Algorithms',
+  'system-design': 'System Design',
+};
+
+/**
+ * What the colours mean (I2).
+ *
+ * The reference puts this in a bordered box beside the graph rather than in a
+ * caption, and it earns the space: two node fills and a status dot are three
+ * things a learner would otherwise have to infer from context. A graph whose
+ * colour carries meaning needs a key, or the meaning is decoration.
+ */
+function Legend() {
+  const rows = [
+    { swatch: 'bg-accent-strong', label: 'Lesson', note: 'read the concept' },
+    { swatch: 'bg-accent', label: 'Problem', note: 'practise it' },
+  ];
+
+  return (
+    <aside
+      aria-label="Legend"
+      className="node-surface flex flex-col gap-2 bg-surface p-4 text-sm"
+    >
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-foreground-muted">
+        What the colours mean
+      </h2>
+
+      <ul className="flex flex-col gap-1.5">
+        {rows.map((row) => (
+          <li key={row.label} className="flex items-center gap-2">
+            <span
+              aria-hidden
+              className={`inline-block h-4 w-6 rounded-xs border-2 border-border-strong ${row.swatch}`}
+            />
+            <span className="font-semibold">{row.label}</span>
+            <span className="text-foreground-muted">— {row.note}</span>
+          </li>
+        ))}
+        <li className="flex items-center gap-2">
+          <span
+            aria-hidden
+            className="grid h-5 w-5 place-items-center rounded-full border-2 border-border-strong bg-alt text-alt-foreground"
+          >
+            <Check size={11} strokeWidth={3} />
+          </span>
+          <span className="font-semibold">Done</span>
+          <span className="text-foreground-muted">— you marked it complete</span>
+        </li>
+      </ul>
+
+      <h2 className="mt-2 text-xs font-semibold uppercase tracking-wide text-foreground-muted">
+        Where to start
+      </h2>
+      <ul className="flex flex-col gap-1.5">
+        {(Object.keys(DIFFICULTY_NOTE) as Array<Lesson['difficulty']>).map((level) => (
+          <li key={level} className="flex items-center gap-2">
+            <span className={DIFFICULTY_BADGE[level]}>{level}</span>
+            <span className="text-foreground-muted">{DIFFICULTY_NOTE[level]}</span>
+          </li>
+        ))}
+      </ul>
+
+      <p className="mt-1 text-xs text-foreground-muted">
+        Difficulty is a suggestion, not a gate — every topic is open from the start.
+      </p>
+    </aside>
+  );
+}
+
+
+
 /** Sampled from the reference: the branch node is about 1.3x the spine node. */
 const SPINE_W = 'md:w-56';
 const BRANCH_W = 'md:w-72';
@@ -61,13 +135,14 @@ function DoneBadge() {
 
 function RoadmapRow({
   topic,
-  index,
+  position,
   branchRight,
   onOpen,
   done,
 }: {
   topic: RoadmapTopic;
-  index: number;
+  /** Number shown on the node — its place within its own track. */
+  position: number;
   branchRight: boolean;
   onOpen: () => void;
   done: boolean;
@@ -132,7 +207,11 @@ function RoadmapRow({
             }}
             className={`node-surface node-interactive relative z-10 block w-full max-w-xs bg-accent-strong px-4 py-2 text-center text-sm font-bold text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link ${SPINE_W}`}
           >
-            {index + 1}. {lesson.title}
+            {/* Difficulty is deliberately not on the node. A badge per card
+                turns the graph into a wall of labels and competes with the one
+                thing the node is for — its name. It lives in the panel, which
+                is where a learner is deciding whether to start. */}
+            {position}. {lesson.title}
             {done && <DoneBadge />}
           </Link>
         </div>
@@ -160,6 +239,23 @@ function RoadmapRow({
   );
 }
 
+/**
+ * A track heading, sitting on the spine between groups.
+ *
+ * Plain text on the trunk rather than a node, which is how the reference marks
+ * its sections: a boxed heading would read as another step on the path, and the
+ * whole point is that it is a label for what follows.
+ */
+function TrackLabel({ children }: { children: ReactNode }) {
+  return (
+    <li className="relative flex justify-center py-2">
+      <span className="relative z-10 bg-background px-4 text-lg font-bold tracking-tight">
+        {children}
+      </span>
+    </li>
+  );
+}
+
 export function Roadmap({ topics }: { topics: RoadmapTopic[] }) {
   const [openSlug, setOpenSlug] = useState<string | null>(null);
   const statuses = useTopicStatuses();
@@ -167,22 +263,34 @@ export function Roadmap({ topics }: { topics: RoadmapTopic[] }) {
 
   return (
     <div className="relative flex flex-col gap-6">
+      <div className="mb-2 md:max-w-sm">
+        <Legend />
+      </div>
+
       <Spine />
 
       <ol className="relative flex flex-col gap-8">
         {topics.map((topic, index) => (
-          <RoadmapRow
-            key={topic.lesson.slug}
-            topic={topic}
-            index={index}
+          <Fragment key={topic.lesson.slug}>
+            {/* A label wherever the track changes, including the first group. */}
+            {topic.lesson.track !== topics[index - 1]?.lesson.track && (
+              <TrackLabel>{TRACK_LABELS[topic.lesson.track]}</TrackLabel>
+            )}
+            <RoadmapRow
+              topic={topic}
+              // Numbered within its track, not across the whole page: the
+              // Algorithms track starting at 10 implies the two are one
+              // sequence, when the point of splitting them is that they are not.
+              position={topics.filter((t, i) => i <= index && t.lesson.track === topic.lesson.track).length}
             // Branches alternate sides. The reference balances its graph the
             // same way, and it is not only decoration: a single column leaves
             // half the width empty and pushes the spine off-centre, which makes
             // the trunk read as a margin rule rather than the path.
-            branchRight={index % 2 === 0}
-            done={statuses[topic.lesson.slug] === 'done'}
-            onOpen={() => setOpenSlug(topic.lesson.slug)}
-          />
+              branchRight={index % 2 === 0}
+              done={statuses[topic.lesson.slug] === 'done'}
+              onOpen={() => setOpenSlug(topic.lesson.slug)}
+            />
+          </Fragment>
         ))}
       </ol>
 

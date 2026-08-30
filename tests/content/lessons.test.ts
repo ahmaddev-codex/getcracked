@@ -34,9 +34,31 @@ describe('authored lessons', () => {
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 
-  it('is returned in curriculum order', () => {
-    const orders = getLessons().map((l) => l.order);
-    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+  it('groups tracks, and orders within each one', () => {
+    // `order` restarts per track, so adding a data structure does not renumber
+    // every algorithm. Global ascension is therefore the wrong assertion: what
+    // must hold is that a track's lessons are contiguous and internally sorted.
+    const lessons = getLessons();
+    const tracks = [...new Set(lessons.map((l) => l.track))];
+
+    const firstIndex = tracks.map((t) => lessons.findIndex((l) => l.track === t));
+    expect(firstIndex, 'tracks appear in a stable order').toEqual(
+      [...firstIndex].sort((a, b) => a - b),
+    );
+
+    for (const track of tracks) {
+      const slice = lessons.filter((l) => l.track === track);
+      const start = lessons.findIndex((l) => l.track === track);
+      expect(
+        lessons.slice(start, start + slice.length).every((l) => l.track === track),
+        `${track} lessons are contiguous`,
+      ).toBe(true);
+
+      const orders = slice.map((l) => l.order);
+      expect(orders, `${track} is internally ordered`).toEqual(
+        [...orders].sort((a, b) => a - b),
+      );
+    }
   });
 
   it('declares at least one prerequisite relationship somewhere', () => {
@@ -54,10 +76,18 @@ describe('authored lessons', () => {
   });
 
   it('never recommends a lesson that comes later in the curriculum', () => {
-    const order = new Map(getLessons().map((l) => [l.slug, l.order]));
-    for (const lesson of getLessons()) {
+    // Compared by position in the presented sequence rather than by `order`,
+    // which is only meaningful within a track — an algorithm may legitimately
+    // depend on a data structure carrying a higher number.
+    const lessons = getLessons();
+    const position = new Map(lessons.map((l, i) => [l.slug, i]));
+
+    for (const lesson of lessons) {
       for (const prereq of lesson.recommendedAfter) {
-        expect(order.get(prereq)!).toBeLessThan(lesson.order);
+        expect(
+          position.get(prereq)!,
+          `${lesson.slug} recommends ${prereq}, which is presented later`,
+        ).toBeLessThan(position.get(lesson.slug)!);
       }
     }
   });

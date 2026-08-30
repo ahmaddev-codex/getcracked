@@ -148,6 +148,69 @@ export const lessonSchema = z.object({
   /** Curriculum position. Ordering only — it gates nothing (§6.6). */
   order: z.number().int().nonnegative(),
 
+  /**
+   * Which of the two tracks this lesson belongs to.
+   *
+   * The split is not cosmetic. A data structure is a thing you *hold* state in
+   * and is chosen by its operation costs; an algorithm is a thing you *do* and
+   * is chosen by the shape of the problem. Learners routinely conflate the two
+   * — "should I use a heap or binary search?" is a question that only sounds
+   * sensible until the tracks are separated — so the curriculum separates them
+   * and each track answers its own selection question.
+   */
+  track: z.enum(['data-structures', 'algorithms', 'system-design']),
+
+  /**
+   * How hard the topic is, so a learner knows where to start.
+   *
+   * Ranking, never a gate (§6.6, B14): an advanced lesson is one click away from
+   * anyone at any time. What this buys is an answer to "where do I begin?",
+   * which curriculum order alone does not give — order says what follows what,
+   * difficulty says what is safe to skip to.
+   */
+  difficulty: z.enum(['foundational', 'core', 'advanced']),
+
+  /**
+   * The asymptotic table: what each operation costs.
+   *
+   * Separate from `complexity`, which describes the *pattern* as a whole. This
+   * is the per-operation breakdown a learner actually compares structures on —
+   * "insert is O(1) but lookup is O(n)" is the sentence that decides between a
+   * list and an array, and a single summary figure cannot express it.
+   */
+  operations: z
+    .array(
+      z.object({
+        name: z.string().min(1),
+        time: z.string().min(1),
+        note: z.string().optional(),
+      }),
+    )
+    .default([]),
+
+  /** Named variants worth recognising by name. */
+  variants: z
+    .array(z.object({ name: z.string().min(1), what: z.string().min(1) }))
+    .default([]),
+
+  /**
+   * Where to read more, off-platform.
+   *
+   * Linked rather than ingested: these are references, not content we host, so
+   * they carry no licence question (contrast Module J, where the text itself is
+   * reproduced). Each names its source so a learner can judge it before
+   * clicking.
+   */
+  furtherReading: z
+    .array(
+      z.object({
+        label: z.string().min(1),
+        url: z.string().url(),
+        source: z.string().min(1),
+      }),
+    )
+    .default([]),
+
   /** (a) What the structure or pattern is. Markdown. */
   explainer: z.string().min(1),
 
@@ -195,6 +258,29 @@ export const lessonSchema = z.object({
 
   /** (d) How to recognise a problem this pattern solves. */
   patternCues: z.array(z.string().min(1)).default([]),
+
+  /**
+   * (f) Why this one, and not the obvious alternative.
+   *
+   * Beyond B10's five sections, because knowing how a heap works does not tell
+   * you when to reach for one — and "when to reach for one" is the actual skill
+   * an interview tests. `reachFor` is the positive case; `insteadOf` names the
+   * thing a learner would otherwise have used and says what it costs, which is
+   * the comparison that makes the choice stick.
+   */
+  whenToUse: z
+    .object({
+      reachFor: z.array(z.string().min(1)).min(1),
+      insteadOf: z
+        .array(
+          z.object({
+            alternative: z.string().min(1),
+            why: z.string().min(1),
+          }),
+        )
+        .default([]),
+    })
+    .optional(),
 
   /** (e) The mistakes this topic reliably produces. */
   pitfalls: z

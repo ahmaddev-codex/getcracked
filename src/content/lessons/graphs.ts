@@ -3,9 +3,72 @@ import type { LessonInput } from '../schema';
 export const graphsLesson: LessonInput = {
   tier: 'lesson',
   slug: "graphs",
-  order: 9,
+  order: 7,
+  track: 'data-structures',
   title: "Graphs",
   summary: "Nodes, edges, and not visiting anything twice.",
+
+  difficulty: 'core',
+
+  operations: [
+    {
+      name: 'BFS or DFS',
+      time: 'O(V + E)',
+      note: 'Every vertex and edge once — but only because of the visited set.',
+    },
+    {
+      name: 'adjacency list memory',
+      time: 'O(V + E)',
+      note: 'The right default for sparse graphs.',
+    },
+    {
+      name: 'adjacency matrix memory',
+      time: 'O(V^2)',
+      note: 'Constant-time edge lookup, at a cost that ignores sparsity.',
+    },
+    {
+      name: 'Dijkstra with a binary heap',
+      time: 'O((V + E) log V)',
+      note: 'Non-negative weights only.',
+    },
+    {
+      name: 'topological sort',
+      time: 'O(V + E)',
+      note: 'Directed acyclic graphs only.',
+    },
+  ],
+
+  variants: [
+    {
+      name: 'Directed / undirected',
+      what: 'Whether edges go one way.',
+    },
+    {
+      name: 'Weighted / unweighted',
+      what: 'BFS finds shortest paths only when every edge costs the same.',
+    },
+    {
+      name: 'DAG',
+      what: 'No cycles. Unlocks topological order and DP over the graph.',
+    },
+    {
+      name: 'Adjacency list vs matrix',
+      what: 'The representation choice, decided by density.',
+    },
+  ],
+
+  furtherReading: [
+    {
+      label: 'Graph (abstract data type)',
+      url: 'https://en.wikipedia.org/wiki/Graph_(abstract_data_type)',
+      source: 'Wikipedia',
+    },
+    {
+      label: 'Graph traversal visualiser',
+      url: 'https://visualgo.net/en/dfsbfs',
+      source: 'VisuAlgo',
+    },
+  ],
 
   explainer: "A graph is nodes joined by edges. Trees are the special case with no cycles;\nthe general case is where the visited set becomes mandatory, because without it a\ncycle means traversal never terminates.\n\nRepresentation matters more than it first appears. An **adjacency list** \u2014 each\nnode mapped to its neighbours \u2014 is O(V + E) space and iterating a node's\nneighbours is proportional to how many it has. An **adjacency matrix** is O(V\u00b2)\nregardless of edge count, but answers \"is there an edge?\" in constant time. Sparse\ngraphs, which is most real ones, want the list.\n\nThe two traversals answer different questions:\n\n- **Depth-first** goes as deep as possible before backtracking. Natural\n  recursively. Good for connectivity, cycle detection, topological order.\n- **Breadth-first** explores by distance from the start. Needs a queue. It is the\n  only one of the two that finds the **shortest path** in an unweighted graph,\n  because it reaches every node in order of distance.\n\nReaching for DFS when the question asks for a shortest path is the single most\ncommon graph mistake.",
 
@@ -56,6 +119,29 @@ export const graphsLesson: LessonInput = {
     time: "O(V + E) for either traversal",
     space: "O(V) for the visited set, plus the stack or queue",
     note: "Every node and edge is examined at most once \u2014 but only because of the visited set. Without it, a single cycle makes the traversal infinite.",
+  },
+
+  whenToUse: {
+    reachFor: [
+      'The data is a network: friends, routes, dependencies, links.',
+      'The question is about reachability, connectivity, or a path between two things.',
+      'There are prerequisites or ordering constraints, which is a topological sort.',
+      'It looks like a tree problem but the structure can contain cycles.',
+    ],
+    insteadOf: [
+      {
+        alternative: 'Union-Find',
+        why: 'Near-constant time for "same group?" but it cannot give you a path or a distance. Use it when connectivity is all you need; use a traversal when the route matters.',
+      },
+      {
+        alternative: 'A tree',
+        why: 'Simpler and needs no visited set — but only valid when the structure genuinely has no cycles. One cycle makes a tree traversal run forever.',
+      },
+      {
+        alternative: 'A matrix of distances',
+        why: 'Adjacency matrices cost O(V²) memory regardless of how many edges exist. For a sparse graph an adjacency list is dramatically smaller.',
+      },
+    ],
   },
 
   patternCues: [

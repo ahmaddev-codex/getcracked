@@ -3,9 +3,68 @@ import type { LessonInput } from '../schema';
 export const heapsLesson: LessonInput = {
   tier: 'lesson',
   slug: "heaps",
-  order: 10,
+  order: 6,
+  track: 'data-structures',
   title: "Heaps & Priority Queues",
   summary: "Keep the best element to hand without sorting everything.",
+
+  difficulty: 'core',
+
+  operations: [
+    {
+      name: 'peek best',
+      time: 'O(1)',
+      note: 'The root is the answer.',
+    },
+    {
+      name: 'push',
+      time: 'O(log n)',
+      note: 'Sift up at most the height of the tree.',
+    },
+    {
+      name: 'pop best',
+      time: 'O(log n)',
+      note: 'Sift down.',
+    },
+    {
+      name: 'build from an array',
+      time: 'O(n)',
+      note: 'Not O(n log n) — the standard heapify is linear.',
+    },
+    {
+      name: 'search for an arbitrary value',
+      time: 'O(n)',
+      note: 'A heap orders only parent against child.',
+    },
+  ],
+
+  variants: [
+    {
+      name: 'Min-heap',
+      what: 'Smallest at the root. Use for the k largest — the root is the weakest survivor.',
+    },
+    {
+      name: 'Max-heap',
+      what: 'Largest at the root.',
+    },
+    {
+      name: 'Two heaps',
+      what: 'A max-heap and a min-heap balanced against each other gives a running median.',
+    },
+  ],
+
+  furtherReading: [
+    {
+      label: 'Binary heap',
+      url: 'https://en.wikipedia.org/wiki/Binary_heap',
+      source: 'Wikipedia',
+    },
+    {
+      label: 'Heap visualiser',
+      url: 'https://visualgo.net/en/heap',
+      source: 'VisuAlgo',
+    },
+  ],
 
   explainer: "A heap keeps the smallest \u2014 or largest \u2014 element instantly available while\nleaving everything else only loosely ordered. That partial order is the point:\nfull sorting is O(n log n), and most problems never need it.\n\nThe operations are peek in O(1), and push and pop in O(log k) for a heap of size\nk. It is usually stored as an array, with a node's children at `2i+1` and `2i+2`,\nso there are no pointers and no allocation per node.\n\nThe pattern that shows up constantly is **top-k**: keep a heap of size k while\nstreaming through n elements. For the k largest, use a *min*-heap \u2014 the smallest\nof your current best sits on top, ready to be evicted the moment something better\narrives. That is O(n log k), which beats sorting when k is much smaller than n,\nand needs O(k) memory rather than O(n).\n\nThe same structure is a priority queue, which is what makes Dijkstra's algorithm\nwork: always expand the nearest unvisited node.",
 
@@ -42,6 +101,29 @@ export const heapsLesson: LessonInput = {
     time: "O(log k) push and pop, O(1) peek",
     space: "O(k)",
     note: "Top-k in O(n log k) rather than O(n log n). When k is 10 and n is ten million, that difference is the whole solution.",
+  },
+
+  whenToUse: {
+    reachFor: [
+      'You need the best element repeatedly, and do not care about the order of the rest.',
+      'Top-k, k-th largest, or a running median.',
+      'Data arrives as a stream and cannot all be held at once.',
+      'You are always expanding the cheapest option next — Dijkstra, A*, scheduling.',
+    ],
+    insteadOf: [
+      {
+        alternative: 'Sorting',
+        why: 'Sorting is O(n log n) and gives you every position. For top-k a heap is O(n log k), which for k=10 and n=10 million is the whole solution.',
+      },
+      {
+        alternative: 'A sorted array',
+        why: 'O(1) access to the best, but O(n) insertion. The heap trades slightly slower access for O(log n) insertion, which wins the moment the data changes.',
+      },
+      {
+        alternative: 'A balanced BST',
+        why: 'It can do everything a heap can and more, at a higher constant factor and much more code. Use it only when you also need ordered iteration or arbitrary deletion.',
+      },
+    ],
   },
 
   patternCues: [

@@ -3,9 +3,65 @@ import type { LessonInput } from '../schema';
 export const hashingLesson: LessonInput = {
   tier: 'lesson',
   slug: 'hashing',
-  order: 2,
+  order: 4,
+  track: 'data-structures',
   title: 'Hash Maps',
   summary: 'Trade memory for time by remembering what you have already seen.',
+
+  difficulty: 'foundational',
+
+  operations: [
+    {
+      name: 'insert',
+      time: 'O(1) average, O(n) worst',
+      note: 'Worst case needs every key to collide — rare, and why hash functions matter.',
+    },
+    {
+      name: 'lookup',
+      time: 'O(1) average, O(n) worst',
+    },
+    {
+      name: 'delete',
+      time: 'O(1) average',
+    },
+    {
+      name: 'iterate in sorted order',
+      time: 'not supported',
+      note: 'A hash map has no order. If you need one, you need a tree.',
+    },
+  ],
+
+  variants: [
+    {
+      name: 'Hash set',
+      what: 'Membership only, no values.',
+    },
+    {
+      name: 'Hash map / dictionary',
+      what: 'Key to value.',
+    },
+    {
+      name: 'Separate chaining',
+      what: 'Collisions become a list in the bucket. What most standard libraries do.',
+    },
+    {
+      name: 'Open addressing',
+      what: 'Collisions probe for another slot. Better cache behaviour, harder deletion.',
+    },
+  ],
+
+  furtherReading: [
+    {
+      label: 'Hash table',
+      url: 'https://en.wikipedia.org/wiki/Hash_table',
+      source: 'Wikipedia',
+    },
+    {
+      label: 'Hash table visualiser',
+      url: 'https://visualgo.net/en/hashtable',
+      source: 'VisuAlgo',
+    },
+  ],
 
   explainer: `A hash map answers one question in constant time: **have I seen this
 before, and what was it attached to?**
@@ -54,6 +110,29 @@ complexity" are usually discussed together.`,
     time: 'O(1) average per lookup or insert',
     space: 'O(n) for n stored entries',
     note: 'Average, not worst. A pathological set of keys that all collide degrades lookups to O(n) — rare in practice, and the reason hash functions matter.',
+  },
+
+  whenToUse: {
+    reachFor: [
+      'The question is "have I seen this?" or "how many times?", asked repeatedly.',
+      'You are about to write a nested loop whose inner half only searches for a match.',
+      'You need to look backwards at earlier elements — a map remembers them for you.',
+      'Keys are sparse, or are not integers at all.',
+    ],
+    insteadOf: [
+      {
+        alternative: 'Sorting first',
+        why: 'Sorting costs O(n log n) and buys you order. If you only need counts or membership, hashing does it in O(n) and order was never the point.',
+      },
+      {
+        alternative: 'A nested loop',
+        why: 'The direct trade this structure exists for: O(n²) becomes O(n) by remembering instead of re-searching.',
+      },
+      {
+        alternative: 'A tree map',
+        why: 'Choose the tree when you need keys in sorted order, range queries, or a predecessor. A hash map gives you none of those, and is faster when you do not need them.',
+      },
+    ],
   },
 
   patternCues: [

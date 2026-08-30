@@ -10,13 +10,17 @@ import {
   Gauge,
   Info,
   ListChecks,
+  ExternalLink,
+  Layers,
   Sparkles,
   Star,
+  Target,
   X,
 } from 'lucide-react';
 import { setTopicStatus, useTopicStatuses, type TopicStatus } from '@/lib/topic-status';
 import type { ReactNode } from 'react';
 import type { Lesson, Problem } from '@/content/schema';
+import { DIFFICULTY_BADGE } from './difficulty';
 
 /**
  * The topic detail panel (K4).
@@ -215,9 +219,12 @@ export function TopicPanel({
         </div>
 
         <div className="flex flex-col gap-4 px-5 pb-8 pt-5">
-          <h2 id={titleId} className="font-sans text-3xl font-bold tracking-tight">
-            {lesson.title}
-          </h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 id={titleId} className="font-sans text-3xl font-bold tracking-tight">
+              {lesson.title}
+            </h2>
+            <span className={DIFFICULTY_BADGE[lesson.difficulty]}>{lesson.difficulty}</span>
+          </div>
           <p className="text-base leading-7 text-foreground-muted">{lesson.summary}</p>
 
           <Section
@@ -249,21 +256,91 @@ export function TopicPanel({
             </div>
           </Section>
 
-          {lesson.complexity && (
+          {/*
+            The per-operation table, which is what structures are actually
+            compared on. A single summary figure cannot say "insert is O(1) but
+            lookup is O(n)" — and that sentence is the whole decision between a
+            list and an array.
+          */}
+          {lesson.operations.length > 0 && (
             <Section
               icon={<Gauge size={15} className="text-alt" aria-hidden />}
-              title="What it costs"
+              title="Asymptotics"
+              meta={
+                <span className="font-normal text-foreground-muted">· per operation</span>
+              }
             >
-              <dl className="flex flex-col gap-1 font-mono text-xs">
-                <div className="flex gap-2">
-                  <dt className="text-foreground-muted">time</dt>
-                  <dd>{lesson.complexity.time}</dd>
-                </div>
-                <div className="flex gap-2">
-                  <dt className="text-foreground-muted">space</dt>
-                  <dd>{lesson.complexity.space}</dd>
-                </div>
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="text-foreground-muted">
+                    <th scope="col" className="pb-1 font-normal">operation</th>
+                    <th scope="col" className="pb-1 font-normal">cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lesson.operations.map((op) => (
+                    <tr key={op.name} className="border-t border-border-subtle align-top">
+                      <td className="py-1.5 pr-3">
+                        {op.name}
+                        {op.note && (
+                          <span className="block text-foreground-muted">{op.note}</span>
+                        )}
+                      </td>
+                      <td className="py-1.5 font-mono font-semibold whitespace-nowrap">
+                        {op.time}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {lesson.complexity && (
+                <p className="mt-2 border-t border-border-subtle pt-2 text-xs text-foreground-muted">
+                  Overall — time {lesson.complexity.time}; space {lesson.complexity.space}
+                </p>
+              )}
+            </Section>
+          )}
+
+          {lesson.variants.length > 0 && (
+            <Section
+              icon={<Layers size={15} className="text-alt" aria-hidden />}
+              title="Kinds worth knowing"
+            >
+              <dl className="flex flex-col gap-1.5 text-sm">
+                {lesson.variants.map((variant) => (
+                  <div key={variant.name}>
+                    <dt className="font-semibold">{variant.name}</dt>
+                    <dd className="text-foreground-muted">{variant.what}</dd>
+                  </div>
+                ))}
               </dl>
+            </Section>
+          )}
+
+          {lesson.whenToUse && (
+            <Section
+              icon={<Target size={15} className="text-success" aria-hidden />}
+              title="When to reach for it"
+            >
+              <ul className="flex list-disc flex-col gap-1 pl-4 text-sm text-foreground-muted">
+                {lesson.whenToUse.reachFor.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+              {lesson.whenToUse.insteadOf.length > 0 && (
+                <dl className="mt-2 flex flex-col gap-1.5 border-t border-border-subtle pt-2 text-sm">
+                  <p className="text-xs font-semibold text-foreground-muted">
+                    Rather than
+                  </p>
+                  {lesson.whenToUse.insteadOf.map((swap) => (
+                    <div key={swap.alternative}>
+                      <dt className="font-semibold">{swap.alternative}</dt>
+                      <dd className="text-foreground-muted">{swap.why}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
             </Section>
           )}
 
@@ -273,6 +350,32 @@ export function TopicPanel({
               title="How to spot it"
             >
               {cues}
+            </Section>
+          )}
+
+          {lesson.furtherReading.length > 0 && (
+            <Section
+              icon={<ExternalLink size={15} className="text-link" aria-hidden />}
+              title="Read more"
+            >
+              {/* Linked, not reproduced — these carry no licence question, and
+                  each names its source so a learner can judge it before
+                  clicking. */}
+              <ul className="flex flex-col gap-1.5 text-sm">
+                {lesson.furtherReading.map((link) => (
+                  <li key={link.url} className="flex flex-wrap items-baseline gap-x-2">
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="text-link underline underline-offset-2 hover:no-underline"
+                    >
+                      {link.label}
+                    </a>
+                    <span className="text-xs text-foreground-muted">{link.source}</span>
+                  </li>
+                ))}
+              </ul>
             </Section>
           )}
 

@@ -3,9 +3,53 @@ import type { LessonInput } from '../schema';
 export const slidingWindowLesson: LessonInput = {
   tier: 'lesson',
   slug: "sliding-window",
-  order: 4,
+  order: 2,
+  track: 'algorithms',
   title: "Sliding Window",
   summary: "Reuse the previous window instead of recomputing it.",
+
+  difficulty: 'foundational',
+
+  operations: [
+    {
+      name: 'fixed window',
+      time: 'O(n)',
+      note: 'Add one, remove one, per step.',
+    },
+    {
+      name: 'variable window',
+      time: 'O(n)',
+      note: 'Each edge only moves forward, so each index is touched twice at most.',
+    },
+    {
+      name: 'extra space',
+      time: 'O(1) or O(k)',
+      note: 'O(k) when the window contents must be tracked.',
+    },
+  ],
+
+  variants: [
+    {
+      name: 'Fixed size',
+      what: 'A given k. Sum, average, maximum over every window of that width.',
+    },
+    {
+      name: 'Variable size',
+      what: 'Grow until a condition breaks, then shrink. Longest or shortest run.',
+    },
+    {
+      name: 'With a deque',
+      what: 'Maintains the window maximum in O(1) amortised.',
+    },
+  ],
+
+  furtherReading: [
+    {
+      label: 'Sliding window protocol (concept)',
+      url: 'https://en.wikipedia.org/wiki/Sliding_window_protocol',
+      source: 'Wikipedia',
+    },
+  ],
 
   explainer: "A sliding window is the specialisation of two pointers for problems about\n**contiguous** runs. Both indices move forward; the span between them is the\nwindow.\n\nThe insight is subtraction. Moving a window one step right adds one element and\nremoves one \u2014 everything else is unchanged. Recomputing the whole window each\ntime throws away that overlap and turns O(n) into O(n\u00b7k).\n\nTwo variants:\n\n- **Fixed size.** The window is always k wide. Add the entering element,\n  subtract the leaving one.\n- **Variable size.** The window grows from the right until it violates a\n  condition, then shrinks from the left until it is valid again. Each index\n  enters once and leaves once, so it is still linear despite the nested `while`.\n\nThe variable form is where people misjudge the complexity. The inner loop looks\nquadratic, but the left edge only ever moves forward \u2014 it cannot do more total\nwork than the right edge did.",
 
@@ -35,6 +79,25 @@ export const slidingWindowLesson: LessonInput = {
     time: "O(n)",
     space: "O(1) for a fixed window, O(k) when tracking window contents",
     note: "Both edges only move forward, so each index is handled at most twice however deeply nested the loops look.",
+  },
+
+  whenToUse: {
+    reachFor: [
+      'The problem says contiguous, consecutive, or substring.',
+      'You want the longest, shortest, or best run satisfying some condition.',
+      'A fixed length k appears in the statement.',
+      'Recomputing each candidate range would repeat most of the previous one.',
+    ],
+    insteadOf: [
+      {
+        alternative: 'Prefix sums',
+        why: 'Prefix sums answer arbitrary ranges in any order; a window answers ranges that slide, in O(1) space. Use the window when the range moves, prefix sums when queries land anywhere.',
+      },
+      {
+        alternative: 'A nested loop',
+        why: 'The direct trade. Recomputing the window each step is O(n·k); adding one element and removing one is O(1).',
+      },
+    ],
   },
 
   patternCues: [
