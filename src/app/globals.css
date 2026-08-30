@@ -306,3 +306,59 @@ body {
     animation: none;
   }
 }
+
+/* The topic panel's entrance and exit.
+
+   A drawer that appears instantly reads as a page swap — the point of sliding
+   is to say "this came from the side and is still on top of what you were
+   reading". Transform and opacity only, so both stay on the compositor and the
+   panel's scrollable content is never re-laid-out mid-animation.
+
+   Slightly slower on exit than entry: an entrance should feel immediate, while
+   a too-fast exit looks like the panel vanished rather than left. */
+@keyframes gc-panel-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes gc-panel-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes gc-scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.gc-panel {
+  animation: gc-panel-in 220ms var(--ease-out);
+}
+.gc-panel[data-closing='true'] {
+  animation: gc-panel-out 180ms var(--ease-out) forwards;
+}
+.gc-scrim {
+  animation: gc-scrim-in 220ms var(--ease-out);
+}
+.gc-scrim[data-closing='true'] {
+  animation: gc-scrim-in 180ms var(--ease-out) reverse forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gc-panel,
+  .gc-panel[data-closing='true'],
+  .gc-scrim,
+  .gc-scrim[data-closing='true'] {
+    animation: none;
+  }
+}

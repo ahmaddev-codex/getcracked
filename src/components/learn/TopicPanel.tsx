@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useRef } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowUpRight,
@@ -101,6 +101,32 @@ export function TopicPanel({
   cues?: ReactNode;
   onClose: () => void;
 }) {
+  const [closing, setClosing] = useState(false);
+
+  /**
+   * Plays the exit animation before unmounting.
+   *
+   * The panel has to stay mounted while it slides out, so every dismissal goes
+   * through here rather than calling `onClose` directly. A timeout rather than
+   * `animationend`: the duration is known, and an animation that never runs —
+   * reduced motion, or the element being hidden — would never fire the event,
+   * leaving the panel stuck open.
+   */
+  const requestClose = useCallback(() => {
+    const reduced = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      onClose();
+      return;
+    }
+    setClosing(true);
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!closing) return;
+    const timer = setTimeout(onClose, 180);
+    return () => clearTimeout(timer);
+  }, [closing, onClose]);
+
   const statuses = useTopicStatuses();
   const status = statuses[lesson.slug] ?? 'none';
   const titleId = useId();
@@ -111,7 +137,7 @@ export function TopicPanel({
     panelRef.current?.focus();
 
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') requestClose();
     };
     document.addEventListener('keydown', onKey);
 
@@ -124,7 +150,7 @@ export function TopicPanel({
       document.body.style.overflow = previous;
       opener?.focus?.();
     };
-  }, [onClose]);
+  }, [requestClose]);
 
   const exerciseCount = lesson.exercises.length;
 
@@ -134,8 +160,9 @@ export function TopicPanel({
       <button
         type="button"
         aria-label="Close panel"
-        onClick={onClose}
-        className="absolute inset-0 bg-black/45"
+        onClick={requestClose}
+        data-closing={closing}
+        className="gc-scrim absolute inset-0 bg-black/45"
       />
 
       <div
@@ -144,7 +171,8 @@ export function TopicPanel({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative flex h-full w-full max-w-xl flex-col overflow-y-auto bg-surface shadow-2xl outline-none"
+        data-closing={closing}
+        className="gc-panel relative flex h-full w-full max-w-xl flex-col overflow-y-auto bg-surface shadow-2xl outline-none"
       >
         {/* Toolbar: what you are looking at on the left, what you have decided
             about it on the right — the reference's split. */}
@@ -178,7 +206,7 @@ export function TopicPanel({
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Close"
             className="rounded-md border border-border-subtle p-1.5 text-foreground-muted transition-colors hover:bg-surface-muted hover:text-foreground"
           >
