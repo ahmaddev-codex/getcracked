@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { BookOpen, Hammer, Search, Shapes, SquareCode, Terminal } from 'lucide-react';
 import { track } from '@/lib/analytics/track';
@@ -20,6 +21,20 @@ import type { SearchEntry, SearchKind } from '@/lib/search';
  * in memory would be a straight regression on the metric the whole product is
  * optimised for. A failed fetch says so rather than showing an empty list, which
  * would read as "nothing matches".
+ *
+ * **Rendered into `document.body`, not where it was opened from.** The trigger
+ * lives in the header, and the header sets `text-header-foreground` on itself —
+ * so as a DOM descendant this dialog inherited it. In light mode that token and
+ * `--surface` are both `#ffffff`, which made every element that did not set its
+ * own colour — the result titles, the filter chips, and the search input's own
+ * text — white on white. Dark mode hid it, because there the header and body
+ * foregrounds happen to be the same value.
+ *
+ * A portal removes the whole class rather than the one instance: an overlay's
+ * appearance should not depend on which component opened it, and `position:
+ * fixed` inside an ancestor that later gains a `transform` would break in a
+ * second, less obvious way. The panel still declares its own foreground, as the
+ * account menu does, so it is correct even outside a portal.
  */
 
 const KIND_META: Record<SearchKind, { label: string; icon: typeof BookOpen }> = {
@@ -142,7 +157,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div
       // Clicking the backdrop closes, which is what a dialog over a page should
       // do. The panel below stops the click so a stray click inside does not.
@@ -155,7 +170,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
         aria-label="Search"
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={onKeyDown}
-        className="gc-overlay-panel node-surface flex w-full max-w-reading flex-col overflow-hidden bg-surface"
+        className="gc-overlay-panel node-surface flex w-full max-w-reading flex-col overflow-hidden bg-surface text-foreground"
       >
         <div className="flex items-center gap-2 border-b-2 border-border-strong px-4 py-3">
           <Search size={16} className="shrink-0 text-foreground-muted" aria-hidden />
@@ -278,7 +293,8 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
           ↑↓ to move · ↵ to open · esc to close
         </p>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
