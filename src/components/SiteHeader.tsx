@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AccountSlot } from '@/components/auth/AccountMenu';
+import { SearchTrigger } from '@/components/search/SearchTrigger';
 
 /**
  * The site header (K1).
@@ -71,7 +72,7 @@ export function SiteHeader() {
           below the breakpoint so the account actions stay reachable at the top
           right where they are on desktop.
         */}
-        <ul className="order-last flex w-full min-w-0 flex-nowrap items-center gap-x-5 overflow-x-auto whitespace-nowrap sm:order-none sm:w-auto sm:flex-wrap sm:overflow-x-visible">
+        <ul className="order-last flex w-full min-w-0 flex-nowrap items-center gap-x-5 overflow-x-auto whitespace-nowrap sm:order-none sm:mx-auto sm:w-auto sm:flex-wrap sm:overflow-x-visible">
           {LINKS.map((link) => {
             const active = pathname.startsWith(link.href);
             return (
@@ -90,7 +91,16 @@ export function SiteHeader() {
           })}
         </ul>
 
-        <div className="ml-auto flex shrink-0 items-center gap-3">
+        {/*
+          `ml-auto` only below the breakpoint, where it pushes the account
+          actions to the right of the wordmark on their shared row. Above it the
+          links carry `mx-auto`, and auto margins share free space between
+          *every* auto in the line — so leaving this one on would give the row
+          three claims on the space and the links would sit a third of the way
+          across rather than centred.
+        */}
+        <div className="ml-auto flex shrink-0 items-center gap-3 sm:ml-0">
+          <SearchTrigger />
           <AccountSlot />
         </div>
       </nav>

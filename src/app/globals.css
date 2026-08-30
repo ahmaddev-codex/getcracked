@@ -318,6 +318,20 @@ body {
   }
 }
 
+/* Overlay dialog geometry (components/search/SearchDialog.tsx).
+   Viewport-relative, which the spacing scale deliberately does not cover: the
+   panel is positioned against the *screen*, not against the type scale, and it
+   has to stay usable on a short laptop window as well as a tall monitor.
+   A tenth from the top puts it under the eye line without hiding the page it
+   was opened from; capping the height at 70vh keeps the footer hint on screen
+   so the keyboard shortcuts stay visible while scrolling results. */
+.gc-overlay {
+  padding-top: 10vh;
+}
+.gc-overlay-panel {
+  max-height: 70vh;
+}
+
 /* The executing line in the visualizer's read-only code panel.
    A left bar rather than a full-width fill: the fill competes with syntax
    colours, the bar reads at a glance without touching them. */

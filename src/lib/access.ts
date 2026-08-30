@@ -28,6 +28,14 @@ const PUBLIC_API_PREFIXES = [
   // and it defends itself: closed event-name allowlist, payload cap, and a user
   // id taken from the session rather than the request body.
   '/api/events',
+  /**
+   * The search index (I6). Content, not user data — it is derived entirely from
+   * the repo-authored catalogue and is identical for every visitor, signed in or
+   * not. Listed explicitly rather than moved off `/api` to dodge the default,
+   * because the default exists to catch routes nobody thought about and this one
+   * has been thought about.
+   */
+  '/api/search',
 ] as const;
 
 /** Page subtrees that are account-scoped despite not being APIs. */

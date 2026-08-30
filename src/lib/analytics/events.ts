@@ -32,6 +32,11 @@ export const EVENT_NAMES = [
   'sandbox_opened',
   'sandbox_run',
   'sandbox_shared',
+  // Search (I6). `search_opened` measures reach; the result event carries a
+  // truncated query, which is what says whether the index is answering the
+  // questions people actually arrive with.
+  'search_opened',
+  'search_result_opened',
   // Anonymous -> account (A15/A16)
   'signed_out_notice_shown',
   'signed_out_notice_dismissed',
