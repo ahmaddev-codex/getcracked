@@ -1,6 +1,6 @@
 import { Roadmap } from '@/components/learn/Roadmap';
 import { Markdown } from '@/components/Markdown';
-import { getLessons, getProblemSet } from '@/content/registry';
+import { getTrack, getProblemSet } from '@/content/registry';
 
 /**
  * The DSA Learn surface (B9).
@@ -15,7 +15,10 @@ export const metadata = {
 };
 
 export default function LearnDsaPage() {
-  const lessons = getLessons();
+  // The DSA surface is the two code tracks. System Design is its own roadmap at
+  // /learn/system-design — one page holding all three would be a scroll rather
+  // than a path.
+  const lessons = [...getTrack('data-structures'), ...getTrack('algorithms')];
 
   const topics = lessons.map((lesson) => ({
     lesson,

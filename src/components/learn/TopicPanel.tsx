@@ -20,7 +20,7 @@ import {
 import { setTopicStatus, useTopicStatuses, type TopicStatus } from '@/lib/topic-status';
 import type { ReactNode } from 'react';
 import type { Lesson, Problem } from '@/content/schema';
-import { DIFFICULTY_BADGE } from './difficulty';
+import { DIFFICULTY_BADGE, lessonBase } from './difficulty';
 
 /**
  * The topic detail panel (K4).
@@ -247,7 +247,7 @@ export function TopicPanel({
                 </p>
               </div>
               <Link
-                href={`/learn/dsa/${lesson.slug}`}
+                href={`${lessonBase(lesson.track)}/${lesson.slug}`}
                 className="node-surface inline-flex items-center gap-1 bg-accent-strong px-3 py-1.5 text-sm font-semibold text-accent-foreground node-interactive"
               >
                 Open

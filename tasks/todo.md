@@ -81,12 +81,22 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 
 ---
 
-## Phase 3 — Content pipeline (Module J) · *epic* — **now the critical path**
-*Two things cannot be deferred within this phase: J3 before any crawl, J4 from the first artifact.*
-- [ ] **🚧 H7 legal/ToS sign-off — before any crawler runs**
-- [ ] **J3 license classification gate** — classify before ingest; unlicensed defaults to Restricted, no override
-- [ ] **J4 attribution ledger** — provenance on every artifact, which is what makes J6 takedown one operation
-- [ ] Source registry (J1) · polite crawling: robots.txt, rate limits, backoff (J2)
+## Phase 3 — Content pipeline (Module J) · *epic* — **descoped, foundations built**
+
+**The descope, and why.** The pipeline's justification was catalog volume, and
+the obvious sources for that are the ones we cannot use: the large practice sites
+forbid scraping, so J3 classifies them Restricted and J5 reduces us to "substance
+only, never their text" — authoring with extra steps *plus* legal exposure. With
+20 problems and 31 lessons now authored directly at a quality no crawler would
+reach, the registry holds only sources whose licence already permits reuse. That
+turns **H7 from a legal review into a one-line policy**: we ingest CC-licensed
+and public-domain sources, attribution is mandatory, and no ToS-restricted site
+is crawled.
+
+- [x] **J3 licence classification gate** — classify before ingest; absent or unrecognised is `restricted`, and there is deliberately **no override**, because a per-source "trust me" flag is exactly how unlicensed content reaches production
+- [x] **J4 attribution ledger** — provenance on every artifact, which is what makes J6 takedown one operation (delete by source id) and what makes a share-alike obligation survivable months later
+- [x] **Source registry (J1)** — Wikipedia · CP-Algorithms · Competitive Programmer's Handbook · MIT OCW, each with its licence, the evidence for it, and its own crawl delay. Every entry is reproducible, so no ingest-time judgement call is ever needed
+- [ ] Polite crawling: robots.txt, rate limits, backoff (J2)
 - [ ] Canonicalization for Restricted sources — substance only, never their text (J5) · takedown tooling (J6)
 - [ ] Problem extraction (J7) · test-spec synthesis validated against source reference solutions (J8)
 - [ ] Dedup against existing catalog (J9) · pre-review quality gates (J11)
@@ -102,7 +112,8 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 - [x] **Variants, and further reading** — named kinds worth recognising, plus external links carrying their source. Linked rather than ingested, so they raise no licence question (contrast Module J, which reproduces text)
 - [x] **Difficulty ranking** — foundational · core · advanced, so a learner knows where to start. Guidance only: every topic stays one click away (§6.6, B14). Shown in the panel and explained in the legend, deliberately *not* on the node, where a badge per card competes with the name
 - [x] Order restarts per track, so adding a structure does not renumber every algorithm
-- [ ] **System Design track** — the third track the schema now allows; `/learn/system-design` still holds the concept map (58 of 129 concepts) rather than lessons
+- [x] **System Design track (11)** — scaling · load balancing · caching · SQL and NoSQL · replication and sharding · consistency and CAP · message queues · rate limiting · CDNs · consistent hashing · idempotency. Same lesson model as DSA, with latency budgets where the code tracks have asymptotics; the concept reference stays on the same URL, since its anchors are deep-linked (A14)
+  - These carry no walkthrough and no guided exercises, because there is no code to run. `deriveLessonState` already reports a lesson with no exercises as `not_started` rather than counting it complete (B12), so the absence is handled rather than inflating the roadmap
 
 ## Phase 4 — Animation breadth (Module B) · *epic* — **in progress**
 *Sequence by **lesson** coverage — a topic's lesson is much weaker without its animation.*

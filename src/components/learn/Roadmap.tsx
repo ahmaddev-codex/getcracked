@@ -6,7 +6,7 @@ import { Check } from 'lucide-react';
 import { ConnectorFan, FAN_ORIGIN, FAN_TARGET } from './ConnectorFan';
 import { TopicPanel } from './TopicPanel';
 import { useTopicStatuses } from '@/lib/topic-status';
-import { DIFFICULTY_BADGE, DIFFICULTY_NOTE } from './difficulty';
+import { DIFFICULTY_BADGE, DIFFICULTY_NOTE, lessonBase } from './difficulty';
 import type { Lesson, Problem } from '@/content/schema';
 
 /**
@@ -112,6 +112,14 @@ function Legend() {
 const SPINE_W = 'md:w-56';
 const BRANCH_W = 'md:w-72';
 
+/**
+ * The trunk the lesson nodes hang from.
+ *
+ * Scoped to the node list rather than the whole component. As a sibling of the
+ * legend its `h-full` covered that too, drawing a long stretch of line from the
+ * top of the page down to the first node — a connector joining nothing to
+ * nothing. It now starts at the first track label and ends at the last node.
+ */
 function Spine() {
   return (
     <span
@@ -199,7 +207,7 @@ function RoadmapRow({
           */}
           <Link
             {...{ [FAN_ORIGIN]: '' }}
-            href={`/learn/dsa/${lesson.slug}`}
+            href={`${lessonBase(lesson.track)}/${lesson.slug}`}
             onClick={(event) => {
               if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
               event.preventDefault();
@@ -263,13 +271,21 @@ export function Roadmap({ topics }: { topics: RoadmapTopic[] }) {
 
   return (
     <div className="relative flex flex-col gap-6">
-      <div className="mb-2 md:max-w-sm">
+      {/*
+        The legend sits in the left gutter on wide screens rather than above the
+        graph. Stacked, it pushed the whole path down by its own height and left
+        a band of empty space beside it — the graph is centred, so that gutter
+        was going to be empty anyway. It returns to the flow on narrow screens,
+        where there is no gutter to sit in.
+      */}
+      <div className="md:absolute md:left-0 md:top-0 md:z-20 md:w-64 lg:w-72">
         <Legend />
       </div>
 
-      <Spine />
+      <div className="relative">
+        <Spine />
 
-      <ol className="relative flex flex-col gap-8">
+        <ol className="relative flex flex-col gap-8">
         {topics.map((topic, index) => (
           <Fragment key={topic.lesson.slug}>
             {/* A label wherever the track changes, including the first group. */}
@@ -290,9 +306,10 @@ export function Roadmap({ topics }: { topics: RoadmapTopic[] }) {
               done={statuses[topic.lesson.slug] === 'done'}
               onOpen={() => setOpenSlug(topic.lesson.slug)}
             />
-          </Fragment>
-        ))}
-      </ol>
+            </Fragment>
+          ))}
+        </ol>
+      </div>
 
       {open && (
         <TopicPanel

@@ -38,6 +38,17 @@ import { backtrackingLesson } from './lessons/backtracking';
 import { greedyLesson } from './lessons/greedy';
 import { intervalsLesson } from './lessons/intervals';
 import { bitManipulationLesson } from './lessons/bit-manipulation';
+import { scalingLesson } from './lessons/system-design/scaling';
+import { loadBalancingLesson } from './lessons/system-design/load-balancing';
+import { cachingLesson } from './lessons/system-design/caching';
+import { databasesLesson } from './lessons/system-design/databases';
+import { replicationShardingLesson } from './lessons/system-design/replication-sharding';
+import { consistencyLesson } from './lessons/system-design/consistency';
+import { messageQueuesLesson } from './lessons/system-design/message-queues';
+import { rateLimitingLesson } from './lessons/system-design/rate-limiting';
+import { cdnLesson } from './lessons/system-design/cdn';
+import { consistentHashingLesson } from './lessons/system-design/consistent-hashing';
+import { idempotencyLesson } from './lessons/system-design/idempotency';
 import {
   lessonSchema,
   problemSchema,
@@ -141,6 +152,17 @@ export const RAW_LESSONS: readonly LessonInput[] = [
   greedyLesson,
   intervalsLesson,
   bitManipulationLesson,
+  scalingLesson,
+  loadBalancingLesson,
+  cachingLesson,
+  databasesLesson,
+  replicationShardingLesson,
+  consistencyLesson,
+  messageQueuesLesson,
+  rateLimitingLesson,
+  cdnLesson,
+  consistentHashingLesson,
+  idempotencyLesson,
   arraysLesson, slidingWindowLesson, stacksQueuesLesson, binarySearchLesson, recursionLesson, treesLesson, graphsLesson, heapsLesson, dynamicProgrammingLesson,
 ];
 
@@ -154,7 +176,11 @@ let lessonCache: readonly Lesson[] | undefined;
  * rather than a behaviour someone has to remember not to break.
  */
 /** You hold state in a structure before you do anything to it. */
-const TRACK_ORDER: ReadonlyArray<Lesson['track']> = ['data-structures', 'algorithms'];
+const TRACK_ORDER: ReadonlyArray<Lesson['track']> = [
+  'data-structures',
+  'algorithms',
+  'system-design',
+];
 
 export function getLessons(): readonly Lesson[] {
   lessonCache ??= RAW_LESSONS.map((l) => {
@@ -188,9 +214,16 @@ export function findLesson(slug: string): Lesson | undefined {
   return getLessons().find((l) => l.slug === slug);
 }
 
-/** Neighbours in curriculum order, for lesson-to-lesson navigation. */
+/**
+ * Neighbours in curriculum order, within the lesson's own track.
+ *
+ * Scoped to the track because the tracks are separate paths presented on
+ * separate pages: "Lesson 3 of 31" spanning all three would count topics a
+ * learner on this page cannot see, and next/previous would walk them off the
+ * end of the track into an unrelated one.
+ */
 export function getLessonPosition(lesson: Lesson) {
-  const all = getLessons();
+  const all = getTrack(lesson.track);
   const index = all.findIndex((l) => l.slug === lesson.slug);
   return {
     index,

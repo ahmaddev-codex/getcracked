@@ -4,6 +4,7 @@ import {
   getLessons,
   getLessonPosition,
   getProblemSet,
+  getTrack,
   RAW_LESSONS,
 } from '@/content/registry';
 import { lessonSchema } from '@/content/schema';
@@ -94,13 +95,45 @@ describe('authored lessons', () => {
 });
 
 describe('lesson content shape (B10)', () => {
-  it.each(getLessons().map((l) => [l.slug, l] as const))('%s teaches in the fixed shape', (_slug, lesson) => {
-    expect(lesson.explainer.length).toBeGreaterThan(200);
-    expect(lesson.patternCues.length).toBeGreaterThan(0);
-    expect(lesson.pitfalls.length).toBeGreaterThan(0);
-    expect(lesson.complexity?.time).toBeTruthy();
-    expect(lesson.complexity?.space).toBeTruthy();
-  });
+  it.each(getLessons().map((l) => [l.slug, l] as const))(
+    '%s teaches in the fixed shape',
+    (_slug, lesson) => {
+      expect(lesson.explainer.length).toBeGreaterThan(200);
+      expect(lesson.patternCues.length).toBeGreaterThan(0);
+      expect(lesson.pitfalls.length).toBeGreaterThan(0);
+
+      // Every lesson costs something, and says what per operation.
+      expect(lesson.operations.length, 'no cost table').toBeGreaterThan(0);
+      for (const op of lesson.operations) expect(op.time).toBeTruthy();
+
+      // The selection question, which is the point of having tracks at all.
+      expect(lesson.whenToUse?.reachFor.length, 'no selection guidance').toBeGreaterThan(0);
+    },
+  );
+
+  it.each(getLessons().filter((l) => l.track !== 'system-design').map((l) => [l.slug, l] as const))(
+    '%s states its asymptotic cost',
+    (_slug, lesson) => {
+      // Only the code tracks have a single asymptotic figure to state. A System
+      // Design topic's cost is a latency budget, which lives in `operations` —
+      // asserting `complexity` there would force an invented Big-O onto
+      // "should I shard this table".
+      expect(lesson.complexity?.time).toBeTruthy();
+      expect(lesson.complexity?.space).toBeTruthy();
+    },
+  );
+
+  it.each(getLessons().map((l) => [l.slug, l] as const))(
+    '%s links out with a named source',
+    (_slug, lesson) => {
+      // Attribution is the obligation that makes linking safe; an unlabelled
+      // link asks a learner to trust an unknown destination.
+      for (const link of lesson.furtherReading) {
+        expect(link.source, `${link.url} names no source`).toBeTruthy();
+        expect(() => new URL(link.url)).not.toThrow();
+      }
+    },
+  );
 });
 
 describe('read-ahead is unrestricted (B14)', () => {
@@ -132,17 +165,31 @@ describe('read-ahead is unrestricted (B14)', () => {
 });
 
 describe('lesson navigation', () => {
-  it('reports position and neighbours', () => {
-    const first = getLessons()[0];
-    const { index, total, previous, next } = getLessonPosition(first);
+  it('reports position and neighbours within the track', () => {
+    // Scoped to the track because the tracks are separate paths on separate
+    // pages: "Lesson 3 of 31" would count topics this page does not show.
+    const track = getTrack('data-structures');
+    const { index, total, previous, next } = getLessonPosition(track[0]);
 
     expect(index).toBe(0);
-    expect(total).toBe(getLessons().length);
+    expect(total).toBe(track.length);
     expect(previous).toBeUndefined();
-    expect(next?.slug).toBe(getLessons()[1].slug);
+    expect(next?.slug).toBe(track[1].slug);
   });
 
-  it('has no next on the final lesson', () => {
-    expect(getLessonPosition(getLessons().at(-1)!).next).toBeUndefined();
+  it('never walks off the end of a track into another one', () => {
+    // The failure this guards: `next` on the last data structure handing the
+    // learner an algorithm, on a page that does not list algorithms.
+    for (const track of ['data-structures', 'algorithms', 'system-design'] as const) {
+      const lessons = getTrack(track);
+      const last = getLessonPosition(lessons.at(-1)!);
+      expect(last.next, `${track} runs past its end`).toBeUndefined();
+
+      for (const lesson of lessons) {
+        const { previous, next } = getLessonPosition(lesson);
+        expect(previous?.track ?? track).toBe(track);
+        expect(next?.track ?? track).toBe(track);
+      }
+    }
   });
 });

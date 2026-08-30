@@ -18,6 +18,21 @@ export const DIFFICULTY_BADGE: Record<Lesson['difficulty'], string> = {
   advanced: 'rounded px-1.5 py-0.5 text-[11px] font-semibold bg-danger-soft text-danger',
 };
 
+/**
+ * Where a track's lessons live.
+ *
+ * System Design has its own index rather than sharing the DSA one: three tracks
+ * on a single page is a scroll, not a path, and the two code tracks share a
+ * vocabulary that System Design does not.
+ *
+ * Here rather than on either component for the same reason as the badge above —
+ * the roadmap renders the panel, so exporting it from the roadmap would make the
+ * two import each other.
+ */
+export function lessonBase(track: Lesson['track']): string {
+  return track === 'system-design' ? '/learn/system-design' : '/learn/dsa';
+}
+
 export const DIFFICULTY_NOTE: Record<Lesson['difficulty'], string> = {
   foundational: 'Start here — assumes nothing',
   core: 'The interview bread and butter',

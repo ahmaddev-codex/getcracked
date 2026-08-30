@@ -22,10 +22,9 @@ interface LessonRouteProps {
 }
 
 export function generateStaticParams() {
-  // The two code tracks. A System Design slug 404s here rather than being
-  // served from a second URL, which would split its search ranking.
+  // System Design only, for the same reason the DSA route excludes it.
   return getLessons()
-    .filter((l) => l.track !== 'system-design')
+    .filter((l) => l.track === 'system-design')
     .map((l) => ({ topic: l.slug }));
 }
 
@@ -39,7 +38,7 @@ export async function generateMetadata(props: LessonRouteProps) {
 export default async function LessonPage(props: LessonRouteProps) {
   const { topic } = await props.params;
   const lesson = findLesson(topic);
-  if (!lesson || !(lesson.track !== 'system-design')) notFound();
+  if (!lesson || !(lesson.track === 'system-design')) notFound();
 
   const { index, total, previous, next } = getLessonPosition(lesson);
   const problems = getProblemSet(lesson.slug);
