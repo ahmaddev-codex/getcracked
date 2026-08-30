@@ -265,7 +265,17 @@ export const lessonSchema = z.object({
        * truthful picture even when a more specific one would teach more.
        */
       visual: z
-        .enum(['array', 'stack', 'queue', 'linked-list', 'tree', 'heap', 'graph', 'map'])
+        .enum([
+          'array',
+          'stack',
+          'queue',
+          'linked-list',
+          'tree',
+          'heap',
+          'graph',
+          'map',
+          'grid',
+        ])
         .default('array'),
       /** The call the animation steps through. */
       args: z.array(z.unknown()),

@@ -198,11 +198,17 @@ async function main() {
           fail(id, `${where} threw: ${run.cases[0].error}`);
         } else if (!run.trace || run.trace.events.length === 0) {
           fail(id, `${where} produced no trace events — nothing to animate.`);
-        } else if (!run.trace.collections.some((c) => c.kind === 'array')) {
+        } else if (
+          // Any collection a renderer can draw. Checking only for `array` was
+          // right when that was the only kind; a grid or a map is just as
+          // drawable, and rejecting one would block the very lessons those
+          // renderers exist for.
+          !run.trace.collections.some((c) => ['array', 'grid', 'map'].includes(c.kind))
+        ) {
           fail(
             id,
-            `${where} traced no array, so the renderer has nothing to draw. ` +
-              'Pass an array argument the code actually reads.',
+            `${where} traced no drawable collection, so the renderer has nothing to show. ` +
+              'Pass an array or build a table or map the code actually touches.',
           );
         } else {
           // A handful of steps is not a walkthrough. This is a floor, not a

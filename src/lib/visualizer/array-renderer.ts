@@ -281,6 +281,7 @@ export function describeStep(state: RenderState, arrayName: string): string {
   const write = state.lastWrite?.array === arrayName ? state.lastWrite : null;
   const read = state.lastRead?.array === arrayName ? state.lastRead : null;
   const put = state.lastPut;
+  const cell = state.lastCell;
 
   /**
    * A map change outranks an array access.
@@ -290,7 +291,19 @@ export function describeStep(state: RenderState, arrayName: string): string {
    * failure this function exists to prevent. A put is also the more informative
    * event: the array read that fed it is visible on the highlighted line.
    */
-  if (put) {
+  /**
+   * A table cell change outranks everything else, for the same reason a map put
+   * does: when the picture is a DP table, describing the array that fed it
+   * leaves the words and the drawing talking about different things.
+   */
+  if (cell) {
+    const where = `${cell.grid}[${cell.row}][${cell.col}]`;
+    parts.push(
+      cell.previous === undefined || Object.is(cell.previous, cell.value)
+        ? `${where} set to ${format(cell.value)}`
+        : `${where} changed from ${format(cell.previous)} to ${format(cell.value)}`,
+    );
+  } else if (put) {
     parts.push(
       put.previous === undefined
         ? `${put.map}[${put.key}] added, set to ${format(put.value)}`

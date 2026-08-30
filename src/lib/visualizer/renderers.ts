@@ -3,6 +3,7 @@ import { createStackRenderer, createQueueRenderer } from './stack-renderer';
 import { createTreeRenderer } from './tree-renderer';
 import { createListRenderer, createGraphRenderer } from './list-renderer';
 import { createMapRenderer } from './map-renderer';
+import { createGridRenderer } from './grid-renderer';
 import { registerRenderer } from './registry';
 
 /**
@@ -25,3 +26,4 @@ registerRenderer('tree', createTreeRenderer);
 registerRenderer('heap', createTreeRenderer);
 registerRenderer('graph', createGraphRenderer);
 registerRenderer('map', createMapRenderer);
+registerRenderer('grid', createGridRenderer);

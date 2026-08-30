@@ -72,22 +72,34 @@ export const dynamicProgrammingLesson: LessonInput = {
   explainer: "Dynamic programming applies when a problem has two properties: an **optimal\nsubstructure** (the best answer is built from best answers to smaller versions)\nand **overlapping subproblems** (those smaller versions recur). Without the\nsecond, plain recursion is already fine.\n\nThere are two ways to write the same thing:\n\n- **Top-down** \u2014 write the recursion, add a cache. Closest to how you reasoned\n  about the problem, and it only computes the subproblems actually reached.\n- **Bottom-up** \u2014 fill a table from the smallest case upward. No recursion stack,\n  and it often reveals that you only need the last row or two, which drops the\n  space from O(n) to O(1).\n\nThe hard part is never the code. It is naming the state: *what exactly does\n`best[i]` mean?* Get that sentence precise and the recurrence is usually one line.\nLeave it vague and you will write a table you cannot debug.\n\nGreedy is the tempting shortcut, and it fails on coin systems like [1, 3, 4]\nwhere making 6 greedily takes 4+1+1 instead of 3+3. DP considers the alternatives\ngreedy discards.",
 
   walkthrough: {
-    entry: "climbWays",
-    entryByLanguage: { python: 'climb_ways' },
+    entry: "uniquePaths",
+    entryByLanguage: { python: 'unique_paths' },
     source: {
-      javascript: "function climbWays(table) {\n  table[0] = 1;\n  table[1] = 1;\n  for (let i = 2; i < table.length; i++) {\n    const oneBack = table[i - 1];\n    const twoBack = table[i - 2];\n    table[i] = oneBack + twoBack;\n  }\n  return table[table.length - 1];\n}",
-      python: `def climb_ways(table):
-    table[0] = 1
-    table[1] = 1
-    for i in range(2, len(table)):
-        one_back = table[i - 1]
-        two_back = table[i - 2]
-        table[i] = one_back + two_back
-    return table[len(table) - 1]`,
+      javascript: `function uniquePaths(grid) {
+  for (let r = 0; r < grid.length; r++) {
+    for (let c = 0; c < grid[0].length; c++) {
+      if (r === 0 || c === 0) {
+        grid[r][c] = 1;
+        continue;
+      }
+      grid[r][c] = grid[r - 1][c] + grid[r][c - 1];
+    }
+  }
+  return grid[grid.length - 1][grid[0].length - 1];
+}`,
+      python: `def unique_paths(grid):
+    for r in range(len(grid)):
+        for c in range(len(grid[0])):
+            if r == 0 or c == 0:
+                grid[r][c] = 1
+                continue
+            grid[r][c] = grid[r - 1][c] + grid[r][c - 1]
+    return grid[len(grid) - 1][len(grid[0]) - 1]`,
     },
-    visual: 'array',
-    args: [[0, 0, 0, 0, 0, 0, 0, 0]],
-    caption: "The DP table filling left to right. Each cell reads the two before it \u2014 the recurrence made visible.",
+    visual: 'grid',
+    args: [[[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]],
+    caption:
+      "The table filling row by row. Each cell is the one above plus the one to its left \u2014 the recurrence, made visible. Watch the edges fill with 1s first, because there is exactly one way to walk a straight line.",
   },
 
   complexity: {

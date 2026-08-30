@@ -50,7 +50,8 @@ export type VisualKind =
   | 'tree'
   | 'heap'
   | 'graph'
-  | 'map';
+  | 'map'
+  | 'grid';
 
 const REGISTRY = new Map<string, RendererFactory>();
 
@@ -74,15 +75,18 @@ export function createRenderer(kind: string): Renderer | null {
  * visualizer understands a structure it does not.
  */
 /** The collection kind each shape needs in order to draw anything. */
-function requires(kind: VisualKind): 'array' | 'map' {
-  return kind === 'map' ? 'map' : 'array';
+function requires(kind: VisualKind): 'array' | 'map' | 'grid' {
+  if (kind === 'map') return 'map';
+  if (kind === 'grid') return 'grid';
+  return 'array';
 }
 
 export function selectRenderer(
   trace: Trace,
   preferred: VisualKind = 'array',
 ): { kind: string; renderer: Renderer } | null {
-  const has = (want: 'array' | 'map') => trace.collections.some((c) => c.kind === want);
+  const has = (want: 'array' | 'map' | 'grid') =>
+    trace.collections.some((c) => c.kind === want);
 
   // A shape the trace cannot feed falls back to one it can, rather than
   // mounting a renderer that will find nothing and draw an empty box. A lesson

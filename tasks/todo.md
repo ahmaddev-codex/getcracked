@@ -126,7 +126,9 @@ is crawled.
   - [x] graphs — nodes joined to their neighbours (the adjacency the lesson's algorithm actually uses; not a general force-directed layout the trace cannot justify)
   - [x] hash maps — key-to-value entries appearing as they are inserted, telling a first sighting apart from an increment. **Not drawn as buckets**: the trace knows nothing about placement, so numbered slots would invent a hash the code never chose. Rows are pre-allocated from the trace's own future and hidden until inserted, which keeps H5's no-allocation-per-frame rule without leaking where the run is going
     - The blocker turned out to be imaginary: both adapters already snapshot every live variable on every line, so the map's contents were in the raw trace all along and `toProtocol` was discarding them. Diffing consecutive snapshots recovers `map_put`/`map_delete` with **no runtime change in either language**
-  - [ ] **DP tables (2-D grid)** — the clearest gap against tracecode.app, which renders a DP state table as a grid with row and column indices. Needs the trace to carry nested arrays, which `toProtocol` currently flattens to a single collection
+  - [x] **DP tables (2-D grid)** — the tracecode.app gap, closed. A rectangular array is recognised as a table and drawn with row and column headers, which is what makes a recurrence legible: `dp[r][c] = dp[r-1][c] + dp[r][c-1]` means nothing against an unlabelled block of numbers and everything when you can watch a cell take the value above plus the one to its left. A ragged array stays a plain collection, since drawing it as a grid would imply a rectangle the data does not have
+    - Same blind spot as maps, one dimension up: only the *outer* array of an argument is proxied, so `grid[r][c] = v` writes into an inner array nothing is watching and produces no event. Recovered by diffing the line snapshots both runtimes already emit — again no runtime change, and identical in both languages
+    - The DP lesson's walkthrough is now genuinely 2-D (unique paths on a 3×4 grid) rather than a 1-D table standing in for one
   - [ ] segment trees · probabilistic · spatial — no lesson uses them yet; building them now would be speculative
 - [x] **B4 complexity overlay and operation counters** — measured steps/reads/writes/time/memory, stated as measurements of one run, never as a complexity proof
 - [x] **B5 "explain this state"** — narration generated from the same state the renderer draws, so the two cannot describe different things. Reports the change (`nums[1] changed from 1 to 4`), not just the position
@@ -143,9 +145,10 @@ is crawled.
 - [x] **Concept reference merged into the path** — System Design lessons declare the terms they cover, so the vocabulary hangs off the lesson that teaches it, exactly as practice problems hang off a DSA lesson. Authored deliberately rather than inferred from category names, because the mapping is genuinely uneven — `networking` splits across load balancing and CDNs, and some terms belong to no lesson. Gated: a lesson claiming a concept that does not exist fails the content check
 - [x] **Concept reference as a mind map** — was an accordion of 14 collapsed categories, so finding a term meant guessing which one held it. Now the same spine-and-fan language as the path above it, every term visible without opening anything, with a search that reaches definitions as well as names (you can find Quorum by "majority of replicas"). Slugs stay as anchors, and a deep link opens that term's definition
 - [x] **I2 colour-coded legend** — a bordered key beside the graph, as the reference does: what each node fill means, what the done marker means, and what each difficulty rank means. A graph whose colour carries meaning needs a key, or the meaning is decoration
-- [ ] **I4 tri-state per-node progress** (lesson · problem set · challenge) — only the self-reported mark exists; derived progress is not yet shown on the node
-- [ ] **I5** System Design and Design Patterns roadmaps — DSA only so far
-- [ ] Search-within-roadmap (I6) · share/embed (I7) · PDF/PNG export (I8)
+- [x] **I5 three roadmaps** — DSA (two tracks), System Design, and Design Patterns, each on its own surface with the same spine-and-fan language
+- [x] **I6 search** — over the concept and pattern maps, reaching definitions as well as names
+- [ ] **I4 tri-state per-node progress** (lesson · problem set · challenge) — only the self-reported mark exists; *derived* progress is not shown on a node yet, even though the listings now carry it
+- [ ] Search across the DSA roadmap itself (I6, partial) · share/embed (I7) · PDF/PNG export (I8)
 - [ ] *Deferred:* community/custom roadmaps (I9)
 
 ## Phase 6 — System Design labs (Module C) · *epic*

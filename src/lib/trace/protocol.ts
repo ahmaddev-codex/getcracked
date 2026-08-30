@@ -35,7 +35,7 @@ export type Scalar = string | number | boolean | null;
  */
 export interface CollectionSnapshot {
   name: string;
-  kind: 'array' | 'map' | 'set' | 'object';
+  kind: 'array' | 'grid' | 'map' | 'set' | 'object';
   initial: unknown[];
   /** True when the value was too large to send in full. */
   truncated: boolean;
@@ -52,6 +52,8 @@ export interface CollectionSnapshot {
    * than to labelling everything.
    */
   indexedBy?: string[];
+  /** Starting contents of a two-dimensional table, row by row. */
+  rows?: Scalar[][];
   /**
    * Starting contents of a map-like collection, as ordered pairs.
    *
@@ -80,6 +82,17 @@ export type ProtocolEvent =
    */
   | { kind: 'map_put'; map: string; key: string; value: Scalar }
   | { kind: 'map_delete'; map: string; key: string }
+  /**
+   * A cell changed in a two-dimensional table.
+   *
+   * Recovered by the same snapshot diffing as `map_put`, and for the same
+   * reason: only the *outer* array of an argument is proxied, so `grid[r][c] = v`
+   * writes into an inner array nothing is watching and produces no write event.
+   * The contents are in the line snapshots regardless, so the mutation is
+   * derived rather than instrumented — which again costs neither runtime
+   * anything and keeps the two languages identical for free.
+   */
+  | { kind: 'grid_set'; grid: string; row: number; col: number; value: Scalar }
   | { kind: 'return'; value: unknown }
   | { kind: 'truncated'; dropped: number };
 
@@ -108,6 +121,30 @@ function mapEntries(value: unknown): Array<[string, Scalar]> {
     k,
     isScalar(v) ? v : null,
   ]);
+}
+
+/**
+ * Whether an array is a table rather than a list.
+ *
+ * Requires every element to be an array of the same length. A ragged array is
+ * left as a plain collection: drawing it as a grid would imply a rectangle the
+ * data does not have, and the missing cells would read as empty rather than as
+ * absent.
+ */
+function isRectangular(value: unknown[]): boolean {
+  if (value.length === 0 || !Array.isArray(value[0])) return false;
+  const width = (value[0] as unknown[]).length;
+  return width > 0 && value.every((row) => Array.isArray(row) && row.length === width);
+}
+
+function gridRows(value: unknown[]): Scalar[][] {
+  return value
+    .slice(0, MAX_COLLECTION_ELEMENTS)
+    .map((row) =>
+      (row as unknown[])
+        .slice(0, MAX_COLLECTION_ELEMENTS)
+        .map((cell) => (isScalar(cell) ? cell : null)),
+    );
 }
 
 function isScalar(value: unknown): value is Scalar {
@@ -142,6 +179,7 @@ export function toProtocol(
   const previous = new Map<string, Scalar>();
   // Last known contents per map, for the same reason.
   const previousMaps = new Map<string, Map<string, Scalar>>();
+  const previousGrids = new Map<string, Scalar[][]>();
 
   for (const event of raw) {
     switch (event.kind) {
@@ -160,23 +198,28 @@ export function toProtocol(
           }
 
           const isArray = Array.isArray(value);
+          const isGrid = isArray && isRectangular(value as unknown[]);
+          const kind = isGrid ? 'grid' : isArray ? 'array' : 'map';
 
           // A collection: hoist it once and never repeat it.
           if (!seenCollections.has(name)) {
             seenCollections.add(name);
             const asArray = isArray ? (value as unknown[]) : [];
-            const asEntries = isArray ? [] : mapEntries(value);
+            const asEntries = kind === 'map' ? mapEntries(value) : [];
+            const asRows = isGrid ? gridRows(value as unknown[]) : [];
             collections.push({
               name,
-              kind: isArray ? 'array' : 'map',
-              initial: asArray.slice(0, MAX_COLLECTION_ELEMENTS),
+              kind,
+              initial: isGrid ? [] : asArray.slice(0, MAX_COLLECTION_ELEMENTS),
               truncated:
                 asArray.length > MAX_COLLECTION_ELEMENTS ||
                 asEntries.length > MAX_COLLECTION_ELEMENTS,
               indexedBy: options.indexedBy?.[name],
-              entries: isArray ? undefined : asEntries.slice(0, MAX_COLLECTION_ELEMENTS),
+              entries: kind === 'map' ? asEntries.slice(0, MAX_COLLECTION_ELEMENTS) : undefined,
+              rows: isGrid ? asRows : undefined,
             });
-            if (!isArray) previousMaps.set(name, new Map(asEntries));
+            if (kind === 'map') previousMaps.set(name, new Map(asEntries));
+            if (isGrid) previousGrids.set(name, asRows);
           }
 
           /**
@@ -185,7 +228,26 @@ export function toProtocol(
            * such events — nothing in either runtime hooks `counts[k] = v` — so
            * its mutations are recovered by diffing consecutive snapshots.
            */
-          if (!isArray && seenCollections.has(name)) {
+          /**
+           * A grid's cells are written through an inner array the Proxy never
+           * wrapped, so there are no write events for them either — same
+           * recovery as a map, one dimension up.
+           */
+          if (isGrid) {
+            const before = previousGrids.get(name) ?? [];
+            const after = gridRows(value as unknown[]);
+
+            after.forEach((row, r) => {
+              row.forEach((cell, c) => {
+                if (!Object.is(before[r]?.[c], cell)) {
+                  events.push({ kind: 'grid_set', grid: name, row: r, col: c, value: cell });
+                }
+              });
+            });
+            previousGrids.set(name, after);
+          }
+
+          if (kind === 'map' && seenCollections.has(name)) {
             const before = previousMaps.get(name) ?? new Map<string, Scalar>();
             const after = new Map(mapEntries(value));
 
@@ -251,10 +313,16 @@ export interface TraceState {
   arrays: Map<string, unknown[]>;
   /** Map-like collections, replayed from their put and delete events. */
   maps: Map<string, Map<string, Scalar>>;
+  /** Two-dimensional tables, replayed from their cell events. */
+  grids: Map<string, Scalar[][]>;
   lastRead: { array: string; index: number; value: Scalar } | null;
   lastWrite: { array: string; index: number; value: Scalar; previous: Scalar } | null;
   /** The map entry that changed on this step, with what it replaced. */
   lastPut: { map: string; key: string; value: Scalar; previous: Scalar | undefined } | null;
+  /** The grid cell that changed on this step, with what it replaced. */
+  lastCell:
+    | { grid: string; row: number; col: number; value: Scalar; previous: Scalar | undefined }
+    | null;
   /** Variables whose value changed on this step, for highlighting. */
   changed: Set<string>;
   /** Value of each changed variable immediately before this step. */
@@ -282,16 +350,22 @@ export function stateAtStep(trace: Trace, step: number): TraceState {
   const variables = new Map<string, Scalar>();
   const arrays = new Map<string, unknown[]>();
   const maps = new Map<string, Map<string, Scalar>>();
+  const grids = new Map<string, Scalar[][]>();
 
   for (const collection of trace.collections) {
     if (collection.kind === 'map') maps.set(collection.name, new Map(collection.entries ?? []));
-    else arrays.set(collection.name, [...collection.initial]);
+    else if (collection.kind === 'grid') {
+      // Copied row by row: sharing rows with the snapshot would let a replay
+      // mutate the trace it is replaying.
+      grids.set(collection.name, (collection.rows ?? []).map((row) => [...row]));
+    } else arrays.set(collection.name, [...collection.initial]);
   }
 
   let line: number | null = null;
   let lastRead: TraceState['lastRead'] = null;
   let lastWrite: TraceState['lastWrite'] = null;
   let lastPut: TraceState['lastPut'] = null;
+  let lastCell: TraceState['lastCell'] = null;
   let changed = new Set<string>();
   let previousValues = new Map<string, Scalar>();
   let returned: unknown;
@@ -349,6 +423,22 @@ export function stateAtStep(trace: Trace, step: number): TraceState {
         maps.get(event.map)?.delete(event.key);
         break;
 
+      case 'grid_set': {
+        const grid = grids.get(event.grid);
+        const row = grid?.[event.row];
+        // Read before overwriting — the only moment the outgoing value exists.
+        const before = row?.[event.col];
+        if (row) row[event.col] = event.value;
+        lastCell = {
+          grid: event.grid,
+          row: event.row,
+          col: event.col,
+          value: event.value,
+          previous: before,
+        };
+        break;
+      }
+
       case 'return':
         returned = event.value;
         finished = true;
@@ -364,9 +454,11 @@ export function stateAtStep(trace: Trace, step: number): TraceState {
     variables,
     arrays,
     maps,
+    grids,
     lastRead,
     lastWrite,
     lastPut,
+    lastCell,
     changed,
     previousValues,
     returned,

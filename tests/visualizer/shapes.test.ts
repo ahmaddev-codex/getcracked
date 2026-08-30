@@ -371,3 +371,89 @@ describe('map renderer', () => {
     expect(selectRenderer(arrayOnly, 'map')?.kind).toBe('array');
   });
 });
+
+/**
+ * The two-dimensional table (B2).
+ *
+ * A DP grid's cells are written through an inner array the Proxy never wrapped,
+ * so `grid[r][c] = v` produces no write event at all — the same blind spot maps
+ * had, one dimension up. The contents are in the line snapshots regardless, so
+ * the mutations are recovered by diffing rather than by instrumenting anything.
+ */
+describe('grid renderer', () => {
+  const trace = toProtocol([
+    { kind: 'line', line: 1, vars: { dp: [[0, 0], [0, 0]], r: 0 } },
+    { kind: 'line', line: 2, vars: { dp: [[1, 0], [0, 0]], r: 0 } },
+    { kind: 'line', line: 3, vars: { dp: [[1, 1], [0, 0]], r: 0 } },
+    { kind: 'line', line: 4, vars: { dp: [[1, 1], [1, 2]], r: 1 } },
+  ]);
+
+  it('recognises a rectangular array as a table', () => {
+    expect(trace.collections.find((c) => c.name === 'dp')?.kind).toBe('grid');
+  });
+
+  it('leaves a ragged array as a plain collection', () => {
+    // Drawing it as a grid would imply a rectangle the data does not have, and
+    // the missing cells would read as empty rather than as absent.
+    const ragged = toProtocol([
+      { kind: 'line', line: 1, vars: { rows: [[1, 2], [3]], i: 0 } },
+    ]);
+    expect(ragged.collections.find((c) => c.name === 'rows')?.kind).toBe('array');
+  });
+
+  it('recovers cell writes the runtime never reported', () => {
+    const sets = trace.events.filter((e) => e.kind === 'grid_set');
+    expect(sets.length).toBeGreaterThan(0);
+    expect(sets[0]).toMatchObject({ grid: 'dp', row: 0, col: 0, value: 1 });
+  });
+
+  it('replays the table to the right state', () => {
+    const final = stateAtStep(trace, trace.events.length - 1);
+    expect(final.grids.get('dp')).toEqual([
+      [1, 1],
+      [1, 2],
+    ]);
+  });
+
+  it('reports the value a cell replaced', () => {
+    const last = trace.events.map((e, i) => (e.kind === 'grid_set' ? i : -1)).filter((i) => i >= 0);
+    const state = stateAtStep(trace, last.at(-1)!);
+    expect(state.lastCell).toMatchObject({ grid: 'dp', previous: 0 });
+  });
+
+  it('draws a cell per entry, with row and column headers', () => {
+    const host = document.createElement('div');
+    const renderer = createRenderer('grid')!;
+    renderer.mount(host, trace);
+
+    expect(host.querySelectorAll('rect.gc-cell')).toHaveLength(4);
+    // Headers are what make a recurrence legible — dp[r-1][c] means nothing
+    // against an unlabelled block of numbers.
+    const labels = [...host.querySelectorAll('text')].map((t) => t.textContent);
+    expect(labels).toContain('0');
+    expect(labels).toContain('1');
+    renderer.destroy();
+  });
+
+  it('allocates no DOM per frame', () => {
+    const host = document.createElement('div');
+    const renderer = createRenderer('grid')!;
+    renderer.mount(host, trace);
+    const before = host.querySelectorAll('*').length;
+    for (let step = 0; step < trace.events.length; step++) {
+      renderer.update(stateAtStep(trace, step));
+    }
+    expect(host.querySelectorAll('*').length).toBe(before);
+    renderer.destroy();
+  });
+
+  it('is selected for a lesson declaring it, and falls back when absent', () => {
+    expect(selectRenderer(trace, 'grid')?.kind).toBe('grid');
+
+    const flat = toProtocol([
+      { kind: 'line', line: 1, vars: { xs: [1, 2], i: 0 } },
+      { kind: 'array_read', array: 'xs', index: 0, value: 1 },
+    ]);
+    expect(selectRenderer(flat, 'grid')?.kind).toBe('array');
+  });
+});
