@@ -42,7 +42,7 @@ function Spine() {
   return (
     <span
       aria-hidden
-      className="absolute left-1/2 top-0 hidden h-full w-0.5 -translate-x-1/2 bg-link/50 md:block"
+      className="absolute left-1/2 top-0 hidden h-full w-[3.5px] -translate-x-1/2 bg-connector md:block"
     />
   );
 }

@@ -127,12 +127,14 @@ export function ConnectorFan({
         <path
           key={key}
           d={d}
-          stroke="var(--link)"
-          strokeOpacity="0.75"
-          strokeWidth="2"
+          // Measured from the reference's own graph edges: rgb(43,120,228) at
+          // 3.5px with a 0.8/8 dash and round caps, which renders as round dots
+          // rather than dashes. Full opacity — the reference does not fade them,
+          // and fading was what made these read as faint hairlines.
+          stroke="var(--connector)"
+          strokeWidth="3.5"
           strokeLinecap="round"
-          // Round dots rather than dashes, which is what the reference draws.
-          strokeDasharray="0.1 6"
+          strokeDasharray="0.8 8"
         />
       ))}
     </svg>

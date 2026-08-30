@@ -20,14 +20,15 @@ const THEMES: Theme[] = ['light', 'dark'];
 describe.each(THEMES)('%s theme', (theme) => {
   const palette = tokens[theme];
 
-  it.each(CONTRAST_PAIRS)('$name meets WCAG AA', ({ fg, bg, large }) => {
+  it.each(CONTRAST_PAIRS)('$name meets WCAG AA', ({ fg, bg, large, graphic }) => {
     const f = palette[fg];
     const b = palette[bg];
     expect(f, `token --${fg} missing in ${theme}`).toBeDefined();
     expect(b, `token --${bg} missing in ${theme}`).toBeDefined();
 
     const ratio = contrast(f, b);
-    const required = large ? 3 : 4.5;
+    // Large text and non-text graphics share the 3:1 bar for different reasons.
+    const required = large || graphic ? 3 : 4.5;
 
     expect(
       ratio,

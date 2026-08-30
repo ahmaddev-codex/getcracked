@@ -41,8 +41,16 @@
   --accent-foreground: #030713; /* black on yellow, as the reference does */
 
   /* ── Supporting hues ──────────────────────────────────────────────────── */
-  --link: #1d4ed8;              /* derived from the sampled #2A79E4 connector
-                                   blue, darkened to clear AA on --background */
+  --link: #1d4ed8;              /* the connector blue, darkened to clear AA as
+                                   text on --background */
+  /* The connector blue exactly as the reference draws it, measured from its
+     rendered graph edges: rgb(43,120,228) at 3.5px. Deliberately a separate
+     token from --link, which is text and has to clear AA — darkening a line
+     for a contrast rule that does not apply to it is how the graph ended up a
+     different blue from the reference in the first place. At 3.5px on either
+     theme's ground it clears the 3:1 that non-text graphics actually need, so
+     the identity holds across themes the way the accent does. */
+  --connector: #2b78e4;
   --alt: #4136d6;               /* sampled — alternate/indigo nodes */
   --alt-foreground: #ffffff;
   --danger: #b91c1c;            /* derived — form and run errors */
@@ -157,6 +165,7 @@
   --color-accent-foreground: var(--accent-foreground);
 
   --color-link: var(--link);
+  --color-connector: var(--connector);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-success: var(--success);

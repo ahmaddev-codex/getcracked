@@ -108,6 +108,15 @@ export const CONTRAST_PAIRS: ReadonlyArray<{
   bg: string;
   /** Large text (>=18.66px bold or >=24px) may use the 3:1 bar. */
   large?: boolean;
+  /**
+   * A non-text graphic — a border, a rule, a connector.
+   *
+   * Also the 3:1 bar, but for a different reason than `large`, and worth
+   * distinguishing: reading `large: true` on a 2px border says the border is
+   * big text, which is how the connector ended up darkened to clear a text
+   * threshold that never applied to it.
+   */
+  graphic?: boolean;
 }> = [
   { name: 'body text on page', fg: 'foreground', bg: 'background' },
   { name: 'body text on surface', fg: 'foreground', bg: 'surface' },
@@ -130,6 +139,11 @@ export const CONTRAST_PAIRS: ReadonlyArray<{
   { name: 'notice text on notice bar', fg: 'notice-foreground', bg: 'notice-background' },
   // The node outline is a 2px border carrying meaning, so it is held to the
   // 3:1 non-text bar rather than being exempt.
-  { name: 'node outline on page', fg: 'border-strong', bg: 'background', large: true },
-  { name: 'node outline on surface', fg: 'border-strong', bg: 'surface', large: true },
+  { name: 'node outline on page', fg: 'border-strong', bg: 'background', graphic: true },
+  { name: 'node outline on surface', fg: 'border-strong', bg: 'surface', graphic: true },
+  // The roadmap's spine and its dotted fans, at 3.5px. Held to the graphic bar
+  // rather than the text one, which is the whole reason it can be the
+  // reference's actual blue instead of a darkened approximation of it.
+  { name: 'connector on page', fg: 'connector', bg: 'background', graphic: true },
+  { name: 'connector on surface', fg: 'connector', bg: 'surface', graphic: true },
 ];
