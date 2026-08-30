@@ -41,7 +41,10 @@ export async function getAccountSummary(userId: string): Promise<AccountSummary>
   // Problems and lesson exercises are counted separately. Merging them into one
   // "solved" figure would let reading lessons inflate a practice number, which
   // is the metric a learner is actually judging themselves on.
-  const problemIds = new Set(getProblems().map((p) => exerciseId(p, p.slug)));
+  // No step argument: a problem's slug is its identity, and passing it as a
+  // step yields `problems/two-sum/two-sum`, which matches nothing the runner
+  // ever writes — so every count silently read zero.
+  const problemIds = new Set(getProblems().map((p) => exerciseId(p)));
   const exerciseIds = new Set(
     getLessons().flatMap((l) => l.exercises.map((e) => exerciseId(l, e.slug))),
   );

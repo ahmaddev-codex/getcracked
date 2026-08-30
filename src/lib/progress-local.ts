@@ -12,7 +12,13 @@ import { deriveLessonState, type ProgressState } from '@/lib/progress';
  * Drizzle into the client bundle.
  */
 
-const KEY = 'gc.progress';
+/**
+ * Exported so a reader can cache against the same raw string this writes.
+ * A second copy of the key is a bug that only shows as "progress silently
+ * missing", which is exactly what happened while writing `useSolved`.
+ */
+export const LOCAL_PROGRESS_KEY = 'gc.progress';
+const KEY = LOCAL_PROGRESS_KEY;
 
 export interface LocalProgressEntry {
   exerciseId: string;

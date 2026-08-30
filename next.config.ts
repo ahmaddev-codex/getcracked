@@ -1,6 +1,20 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  images: {
+    /**
+     * Avatar hosts, allowlisted to the two OAuth providers we support.
+     *
+     * `next/image` fetches and re-serves whatever URL it is handed, so a
+     * permissive pattern here turns the image optimiser into an open proxy for
+     * any URL that reaches a user row — and that column is populated from an
+     * external profile, not by us.
+     */
+    remotePatterns: [
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
+    ],
+  },
   async redirects() {
     return [
       {

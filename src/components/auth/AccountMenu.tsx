@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, LayoutDashboard, LogOut, User } from 'lucide-react';
 import { signOut, useSession } from '@/lib/auth-client';
+import { Avatar } from '@/components/account/Avatar';
 
 /**
  * The signed-in account menu (A2).
@@ -18,7 +19,15 @@ import { signOut, useSession } from '@/lib/auth-client';
  * say *who* is signed in. Two accounts on one machine is common enough that
  * showing the email is what makes the state legible.
  */
-export function AccountMenu({ email, name }: { email: string; name?: string | null }) {
+export function AccountMenu({
+  email,
+  name,
+  image,
+}: {
+  email: string;
+  name?: string | null;
+  image?: string | null;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -55,12 +64,7 @@ export function AccountMenu({ email, name }: { email: string; name?: string | nu
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-1.5 rounded-node px-2 py-1 text-sm transition-colors hover:text-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
       >
-        <span
-          aria-hidden
-          className="grid h-6 w-6 place-items-center rounded-full bg-accent-strong text-xs font-bold text-accent-foreground"
-        >
-          {label.charAt(0).toUpperCase()}
-        </span>
+        <Avatar src={image} name={name} email={email} size={24} className="h-6 w-6 text-xs" />
         <span className="max-w-32 truncate">{label}</span>
         <ChevronDown size={14} aria-hidden />
       </button>
@@ -125,7 +129,13 @@ export function AccountSlot() {
   if (isPending) return null;
 
   if (session) {
-    return <AccountMenu email={session.user.email} name={session.user.name} />;
+    return (
+      <AccountMenu
+        email={session.user.email}
+        name={session.user.name}
+        image={session.user.image}
+      />
+    );
   }
 
   return (

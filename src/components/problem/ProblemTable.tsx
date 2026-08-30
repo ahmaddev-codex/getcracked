@@ -1,6 +1,10 @@
+'use client';
+
 import Link from 'next/link';
+import { Check } from 'lucide-react';
 import { Node } from '@/components/ui/Node';
-import type { Problem } from '@/content/schema';
+import { useSolved } from '@/lib/use-solved';
+import { exerciseId, type Problem } from '@/content/schema';
 
 /**
  * A scannable list of problems.
@@ -23,19 +27,45 @@ const DIFFICULTY_TONE: Record<string, string> = {
 };
 
 export function ProblemTable({ problems }: { problems: readonly Problem[] }) {
+  const solved = useSolved();
+  const done = problems.filter((p) => solved.has(exerciseId(p))).length;
+
   return (
+    <div className="flex flex-col gap-2">
+      {/* The count LeetCode puts above its list: a tick per row answers "have I
+          done this one", and the total answers "how far through am I", which is
+          the question that actually keeps someone going. */}
+      <p className="text-xs text-foreground-muted" aria-live="polite">
+        {done} / {problems.length} solved
+      </p>
+
     <Node tone="surface" className="overflow-x-auto p-0">
       <table className="w-full min-w-md text-left text-sm">
         <thead className="border-b-2 border-border-strong">
           <tr className="text-xs uppercase tracking-wide text-foreground-muted">
+            <th scope="col" className="w-10 px-4 py-2.5 font-semibold">
+              <span className="sr-only">Solved</span>
+            </th>
             <th scope="col" className="px-4 py-2.5 font-semibold">Problem</th>
             <th scope="col" className="px-4 py-2.5 font-semibold">Topic</th>
             <th scope="col" className="px-4 py-2.5 font-semibold">Difficulty</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border-subtle">
-          {problems.map((problem) => (
+          {problems.map((problem) => {
+            const isDone = solved.has(exerciseId(problem));
+            return (
             <tr key={`${problem.topic}/${problem.slug}`} className="hover:bg-surface-muted">
+              <td className="px-4 py-2.5">
+                {isDone ? (
+                  <Check size={16} className="text-success" aria-label="Solved" />
+                ) : (
+                  <span
+                    aria-hidden
+                    className="block h-3.5 w-3.5 rounded-full border-2 border-border-subtle"
+                  />
+                )}
+              </td>
               <td className="px-4 py-2.5">
                 <Link
                   href={`/problems/${problem.topic}/${problem.slug}`}
@@ -55,9 +85,11 @@ export function ProblemTable({ problems }: { problems: readonly Problem[] }) {
                 </span>
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </Node>
+    </div>
   );
 }

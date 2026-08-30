@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Card } from '@/components/ui/Card';
+import { Node } from '@/components/ui/Node';
+import { ProblemTable } from '@/components/problem/ProblemTable';
 import { RecommendationBanner } from '@/components/problem/RecommendationBanner';
 import { findLesson, getProblemSet, getTopics } from '@/content/registry';
 import { exerciseId } from '@/content/schema';
@@ -42,16 +43,21 @@ export default async function ProblemSetPage(props: TopicRouteProps) {
   );
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-8">
-      <header className="flex flex-col gap-2">
+    <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-8 sm:px-6">
+      {/* The same masthead every other surface uses — this was the last page
+          still wearing the pre-design-system heading. */}
+      <header className="node-surface flex flex-col gap-2 bg-surface p-6">
         <p className="text-xs text-foreground-muted">
           <Link href="/problems" className="text-link underline underline-offset-2">
-            Problems
+            ← Problems
           </Link>
         </p>
-        <h1 className="font-sans text-2xl font-semibold tracking-tight">{topic}</h1>
+        <h1 className="font-sans text-4xl font-bold capitalize tracking-tight sm:text-5xl">
+          {topic.replace(/-/g, ' ')}
+        </h1>
         <p className="text-sm text-foreground-muted">
-          {set.length} {set.length === 1 ? 'problem' : 'problems'}, warm-up first.
+          {set.length} {set.length === 1 ? 'problem' : 'problems'}, warm-up first. Every one is
+          open — nothing here is locked behind the others.
         </p>
       </header>
 
@@ -62,17 +68,18 @@ export default async function ProblemSetPage(props: TopicRouteProps) {
         />
       )}
 
-      <ul className="flex flex-col gap-3">
-        {set.map((problem) => (
-          <li key={problem.slug}>
-            <Link href={`/problems/${problem.topic}/${problem.slug}`} className="block">
-              <Card title={problem.title}>
-                <p className="text-foreground-muted">{problem.difficulty}</p>
-              </Card>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <ProblemTable problems={set} />
+
+      <Node tone="muted" className="p-4 text-sm text-foreground-muted">
+        Stuck on the pattern rather than the problem? The{' '}
+        <Link
+          href={`/learn/dsa/${topic}`}
+          className="text-link underline underline-offset-2"
+        >
+          {topic.replace(/-/g, ' ')} lesson
+        </Link>{' '}
+        walks through it with an animation you can step through.
+      </Node>
     </main>
   );
 }

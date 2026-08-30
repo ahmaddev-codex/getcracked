@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { KeyRound, Mail, ShieldCheck } from 'lucide-react';
 import { Node } from '@/components/ui/Node';
+import { Avatar } from '@/components/account/Avatar';
 import { StatCard } from '@/components/account/StatCard';
 import { getAccountSummary, methodLabel } from '@/lib/account';
 import { getSession } from '@/lib/session';
@@ -36,12 +37,13 @@ export default async function AccountPage() {
     <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-8 sm:px-6">
       <header className="node-surface flex flex-col gap-3 bg-surface p-6">
         <div className="flex flex-wrap items-center gap-4">
-          <span
-            aria-hidden
-            className="grid h-14 w-14 shrink-0 place-items-center rounded-full border-2 border-border-strong bg-accent-strong text-xl font-bold text-accent-foreground"
-          >
-            {(session.user.name || session.user.email).charAt(0).toUpperCase()}
-          </span>
+          <Avatar
+            src={session.user.image}
+            name={session.user.name}
+            email={session.user.email}
+            size={56}
+            className="h-14 w-14 text-xl"
+          />
           <div className="flex flex-col gap-0.5">
             <h1 className="font-sans text-3xl font-bold tracking-tight sm:text-4xl">
               {session.user.name || 'Your account'}
