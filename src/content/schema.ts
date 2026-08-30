@@ -204,6 +204,131 @@ export const decisionTreeSchema = z.object({
 export type DecisionTree = z.infer<typeof decisionTreeSchema>;
 
 /**
+ * The six things a System Design interview is actually assessing (C5).
+ *
+ * Taken from the PRD's rubric rather than invented, and worth stating plainly:
+ * **not one of them is "can you draw a diagram"**. A neat architecture diagram
+ * with no reasoning behind it fails an interview; a scrappy one with sharp
+ * reasoning passes. So a lab is scored on judgement, and judgement is what its
+ * steps ask for.
+ */
+export const labDimensionSchema = z.enum([
+  'requirements',
+  'estimation',
+  'api',
+  'data-model',
+  'scaling',
+  'bottleneck',
+]);
+export type LabDimension = z.infer<typeof labDimensionSchema>;
+
+/** Reading order, and the order an interview asks them in. */
+export const LAB_DIMENSIONS = labDimensionSchema.options;
+
+export const LAB_DIMENSION_LABELS: Record<LabDimension, string> = {
+  requirements: 'Requirements gathering',
+  estimation: 'Capacity estimation',
+  api: 'API design',
+  'data-model': 'Data model',
+  scaling: 'Scaling strategy',
+  bottleneck: 'Bottleneck identification',
+};
+
+export const labOptionSchema = z.object({
+  label: z.string().min(1),
+  /** True when a good answer includes this. */
+  correct: z.boolean().default(false),
+  /**
+   * Why it belongs, or why it does not.
+   *
+   * Required on *every* option, including the wrong ones, and shown for all of
+   * them once answered — the same rule the decision trees follow. A lab that
+   * only explains the option you picked teaches you to recognise one answer;
+   * the interview question that decides the outcome is "why not the other one?".
+   */
+  reason: z.string().min(40, 'An option that cannot be argued for or against teaches nothing'),
+});
+export type LabOption = z.infer<typeof labOptionSchema>;
+
+const labStepBase = {
+  slug: z.string().regex(/^[a-z0-9-]+$/),
+  dimension: labDimensionSchema,
+  /** The question, in the words an interviewer would use. */
+  prompt: z.string().min(1),
+  /** Markdown context — the brief so far, the figures you were given. */
+  detail: z.string().optional(),
+};
+
+export const labStepSchema = z.discriminatedUnion('kind', [
+  z.object({
+    ...labStepBase,
+    kind: z.literal('select'),
+    /**
+     * Whether more than one option belongs.
+     *
+     * Derived from the content would be neater, but stating it is what lets the
+     * gate catch the mismatch: a single-answer step with two correct options is
+     * unanswerable, and it renders perfectly.
+     */
+    multiple: z.boolean().default(false),
+    options: z.array(labOptionSchema).min(3, 'Fewer than three options is a coin toss'),
+  }),
+  z.object({
+    ...labStepBase,
+    kind: z.literal('estimate'),
+    /** What is being counted — "requests per second", "GB per year". */
+    unit: z.string().min(1),
+    answer: z.number().positive(),
+    /**
+     * Accepted spread, as a factor either way.
+     *
+     * An interview asks you to be *roughly* right out loud, so an exact-match
+     * check would fail the skill it is testing. Three is the default because it
+     * is what "right order of magnitude" means in practice: 100M when the answer
+     * is 200M is a good estimate, 5M is not.
+     */
+    tolerance: z.number().min(1).default(3),
+    /** The arithmetic, shown once answered. Never just the number. */
+    working: z.string().min(40),
+  }),
+]);
+export type LabStep = z.infer<typeof labStepSchema>;
+
+/**
+ * A guided System Design scenario (C2), scored against the rubric (C5).
+ *
+ * **Why this is not a whiteboard.** C1 specifies a free-form diagramming canvas,
+ * and it is deliberately not what a lab is built on. A diagram can only be
+ * auto-graded on its topology — "is there a cache between the app and the
+ * database?" — which is a shallow proxy for the six things above, and the one
+ * dimension it touches at all is scaling. Grading structured judgement grades
+ * the thing the rubric actually names. A canvas can still arrive later as a
+ * place to sketch *alongside* a lab; it should not be the surface the score
+ * comes from.
+ */
+export const scenarioLabSchema = z.object({
+  slug: z.string().regex(/^[a-z0-9-]+$/),
+  title: z.string().min(1),
+  summary: z.string().min(1),
+  /** Markdown. The scenario as an interviewer would open it. */
+  brief: z.string().min(1),
+  difficulty: difficultySchema,
+  /** Lessons this exercises, for the roadmap join and the "read this first" nudge. */
+  topics: z.array(z.string().regex(/^[a-z0-9-]+$/)).default([]),
+  steps: z.array(labStepSchema).min(1),
+  /**
+   * What a strong answer sounds like, read after the scorecard.
+   *
+   * Prose rather than a checklist on purpose: the steps already checked the
+   * parts, and what a learner cannot get from a list of parts is how they join
+   * into something you could say out loud for five minutes.
+   */
+  takeaway: z.string().min(1),
+});
+export type ScenarioLab = z.infer<typeof scenarioLabSchema>;
+export type ScenarioLabInput = z.input<typeof scenarioLabSchema>;
+
+/**
  * Tier-1 lesson (B9, B10).
  *
  * The five sections are separate fields rather than one markdown blob, because

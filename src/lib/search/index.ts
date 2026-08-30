@@ -1,4 +1,4 @@
-import { getChallenges, getLessons, getProblems } from '@/content/registry';
+import { getChallenges, getLabs, getLessons, getProblems } from '@/content/registry';
 import { getConceptCategories } from '@/content/concepts';
 import { lessonBase } from '@/components/learn/difficulty';
 import { stepIds } from '@/content/challenge';
@@ -27,7 +27,7 @@ import { stepIds } from '@/content/challenge';
  * question about their titles.
  */
 
-export type SearchKind = 'lesson' | 'concept' | 'pattern' | 'problem' | 'challenge';
+export type SearchKind = 'lesson' | 'concept' | 'pattern' | 'problem' | 'challenge' | 'lab';
 
 export interface SearchEntry {
   /** Stable across builds, so a result can be keyed and measured. */
@@ -198,6 +198,27 @@ export function buildSearchIndex(): SearchEntry[] {
         detail: `Step ${i + 1} of ${challenge.steps.length} · ${challenge.title}`,
         haystack: normalise(step.title, challenge.title, plain(step.brief)),
       });
+    });
+  }
+
+  for (const lab of getLabs()) {
+    entries.push({
+      id: `lab:${lab.slug}`,
+      kind: 'lab',
+      title: lab.title,
+      href: `/learn/system-design/labs/${lab.slug}`,
+      detail: lab.summary,
+      haystack: normalise(
+        lab.title,
+        lab.summary,
+        lab.difficulty,
+        ...lab.topics,
+        plain(lab.brief),
+        // The prompts, because they are the questions someone would search
+        // with: "how many writes per second" is a real query and appears
+        // nowhere in the title.
+        ...lab.steps.map((s) => s.prompt),
+      ),
     });
   }
 

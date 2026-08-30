@@ -49,15 +49,19 @@ import { rateLimitingLesson } from './lessons/system-design/rate-limiting';
 import { cdnLesson } from './lessons/system-design/cdn';
 import { consistentHashingLesson } from './lessons/system-design/consistent-hashing';
 import { idempotencyLesson } from './lessons/system-design/idempotency';
+import { urlShortenerLab } from './labs/url-shortener';
 import { lruCacheChallenge } from './challenges/dsa/lru-cache';
 import { tokenBucketChallenge } from './challenges/real-world/token-bucket';
 import { undoRedoChallenge } from './challenges/design-patterns/undo-redo';
 import {
   challengeSchema,
+  scenarioLabSchema,
   lessonSchema,
   problemSchema,
   type Challenge,
   type ChallengeInput,
+  type ScenarioLab,
+  type ScenarioLabInput,
   type Content,
   type Lesson,
   type LessonInput,
@@ -315,4 +319,46 @@ export function getChallengesInCategory(
  */
 export function getChallengesForTopic(topic: string): readonly Challenge[] {
   return getChallenges().filter((c) => c.topics.includes(topic));
+}
+
+/** Authored System Design labs, unvalidated — the check script reports on these. */
+export const RAW_LABS: readonly ScenarioLabInput[] = [urlShortenerLab];
+
+let labCache: readonly ScenarioLab[] | undefined;
+
+/**
+ * Guided scenario labs (C2), in catalog order.
+ *
+ * Easiest first, because a lab is the one surface here where starting on the
+ * wrong one is genuinely discouraging: a learner who opens a hard scenario cold
+ * scores badly on six dimensions at once and learns only that they are bad at
+ * this. Order is presentation; nothing is locked (§6.6).
+ */
+const LAB_DIFFICULTY_ORDER = ['easy', 'medium', 'hard'] as const;
+
+export function getLabs(): readonly ScenarioLab[] {
+  labCache ??= RAW_LABS.map((l) => {
+    const parsed = scenarioLabSchema.safeParse(l);
+    if (!parsed.success) {
+      const detail = parsed.error.issues
+        .map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`)
+        .join('; ');
+      throw new Error(`Invalid lab "${l.slug}" — ${detail}. Run \`pnpm content:check\`.`);
+    }
+    return parsed.data;
+  }).sort(
+    (a, b) =>
+      LAB_DIFFICULTY_ORDER.indexOf(a.difficulty) - LAB_DIFFICULTY_ORDER.indexOf(b.difficulty) ||
+      a.slug.localeCompare(b.slug),
+  );
+  return labCache;
+}
+
+export function findLab(slug: string): ScenarioLab | undefined {
+  return getLabs().find((l) => l.slug === slug);
+}
+
+/** Labs that exercise a given lesson, for the roadmap join and the lesson page. */
+export function getLabsForTopic(topic: string): readonly ScenarioLab[] {
+  return getLabs().filter((l) => l.topics.includes(topic));
 }

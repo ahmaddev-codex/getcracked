@@ -3,7 +3,7 @@ import { ConceptMindMap } from '@/components/learn/ConceptMindMap';
 import { Markdown } from '@/components/Markdown';
 import { Roadmap } from '@/components/learn/Roadmap';
 import { findConcept, getSystemDesignCategories } from '@/content/concepts';
-import { getChallengesForTopic, getTrack } from '@/content/registry';
+import { getChallengesForTopic, getLabs, getTrack } from '@/content/registry';
 import { Page } from '@/components/ui/Page';
 
 /**
@@ -29,6 +29,7 @@ export const metadata = {
 export default function SystemDesignPage() {
   const categories = getSystemDesignCategories();
   const lessons = getTrack('system-design');
+  const labs = getLabs();
 
   const topics = lessons.map((lesson) => ({
     lesson,
@@ -82,6 +83,20 @@ export default function SystemDesignPage() {
               <span className="text-sm font-bold">Capacity calculator</span>
               <span className="text-xs opacity-80">
                 Size a system out loud — QPS, storage and bandwidth, with the arithmetic shown
+              </span>
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/learn/system-design/labs"
+              className="node-surface node-interactive flex h-full flex-col gap-1 bg-accent-strong px-4 py-3 text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+            >
+              <span className="text-sm font-bold">
+                Design scenarios · {labs.length}
+              </span>
+              <span className="text-xs opacity-80">
+                Work a scenario the way an interview goes, and get a scorecard across the
+                six things it is actually weighing
               </span>
             </Link>
           </li>

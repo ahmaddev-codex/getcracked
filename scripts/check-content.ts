@@ -1,4 +1,9 @@
-import { RAW_CHALLENGES, RAW_LESSONS, RAW_PROBLEMS } from '../src/content/registry';
+import {
+  RAW_CHALLENGES,
+  RAW_LABS,
+  RAW_LESSONS,
+  RAW_PROBLEMS,
+} from '../src/content/registry';
 import {
   contentSchema,
   exerciseId,
@@ -8,6 +13,8 @@ import {
   type DecisionTree,
   type Language,
   type RunnableExercise,
+  scenarioLabSchema,
+  type ScenarioLab,
 } from '../src/content/schema';
 import {
   challengeLanguages,
@@ -279,6 +286,79 @@ function checkDecisionTree(id: string, tree: DecisionTree) {
   }
 }
 
+/**
+ * A guided scenario lab (C2) and the rubric it is scored against (C5).
+ *
+ * Everything here is a failure that renders perfectly and teaches nothing,
+ * which is the only kind worth a gate. A step is *content*, so nothing executes
+ * — what is checkable is whether the question is answerable and whether the
+ * reasoning is actually reasoning.
+ */
+function checkLab(id: string, lab: ScenarioLab) {
+  const slugs = new Set<string>();
+
+  for (const step of lab.steps) {
+    const where = `${id}/${step.slug}`;
+
+    if (slugs.has(step.slug)) {
+      fail(id, `Duplicate step slug "${step.slug}" — answers are keyed by it, so two steps would share one.`);
+    }
+    slugs.add(step.slug);
+
+    if (step.kind === 'estimate') {
+      // A tolerance of 1 is an exact-match check, which fails the skill the
+      // step is testing: estimating out loud is meant to be roughly right.
+      if (step.tolerance <= 1) {
+        fail(where, 'tolerance must be greater than 1, or the estimate is an exact-match quiz.');
+      }
+      continue;
+    }
+
+    const correct = step.options.filter((o) => o.correct).length;
+
+    if (correct === 0) {
+      fail(where, 'No option is marked correct — the step is unanswerable.');
+    }
+    if (!step.multiple && correct > 1) {
+      fail(
+        where,
+        `Single-answer step has ${correct} correct options. Set multiple: true, or mark one.`,
+      );
+    }
+    if (step.multiple && correct === step.options.length) {
+      // "Everything is correct" is the exact failure a requirements step exists
+      // to catch, so a step that rewards ticking everything teaches the mistake.
+      fail(where, 'Every option is correct, so ticking everything scores full marks.');
+    }
+    if (correct === step.options.length - 1) {
+      fail(
+        where,
+        'Only one option is wrong, so the step is answerable by elimination without reading.',
+      );
+    }
+
+    const labels = step.options.map((o) => o.label.trim().toLowerCase());
+    if (new Set(labels).size !== labels.length) {
+      fail(where, 'Two options read the same, so one of them cannot be argued against.');
+    }
+  }
+
+  /**
+   * A lab must exercise more than one dimension.
+   *
+   * Six questions on scaling is a quiz about scaling; the rubric's whole claim
+   * is that an interview weighs six different things, and a scorecard with one
+   * row does not make that point.
+   */
+  const dimensions = new Set(lab.steps.map((s) => s.dimension));
+  if (dimensions.size < 3) {
+    fail(
+      id,
+      `Covers only ${dimensions.size} rubric dimension(s). A scorecard needs at least three to say anything about where a learner is weak.`,
+    );
+  }
+}
+
 async function main() {
   const seen = new Set<string>();
 
@@ -474,6 +554,30 @@ async function main() {
     await checkChallenge(id, challenge);
   }
 
+  for (const raw of RAW_LABS) {
+    const parsed = scenarioLabSchema.safeParse(raw);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        fail(`lab "${raw.slug}"`, `${issue.path.join('.') || '(root)'}: ${issue.message}`);
+      }
+      continue;
+    }
+
+    const lab = parsed.data;
+    const id = `labs/${lab.slug}`;
+    if (seen.has(id)) fail(id, 'Duplicate lab slug.');
+    seen.add(id);
+
+    const lessonSlugs = new Set(RAW_LESSONS.map((l) => l.slug));
+    for (const topic of lab.topics) {
+      if (!lessonSlugs.has(topic)) {
+        fail(id, `topics names "${topic}", which is not an authored lesson.`);
+      }
+    }
+
+    checkLab(id, lab);
+  }
+
   if (problems.length > 0) {
     process.stderr.write(`\n✗ Content check failed (${problems.length} problem(s)):\n\n`);
     for (const p of problems) {
@@ -484,7 +588,8 @@ async function main() {
 
   process.stdout.write(
     `✓ Content check passed (${RAW_PROBLEMS.length} problem(s), ${RAW_LESSONS.length} lesson(s), ` +
-      `${RAW_CHALLENGES.length} challenge(s) / ${RAW_CHALLENGES.reduce((n, c) => n + c.steps.length, 0)} steps)\n`,
+      `${RAW_CHALLENGES.length} challenge(s) / ${RAW_CHALLENGES.reduce((n, c) => n + c.steps.length, 0)} steps, ` +
+      `${RAW_LABS.length} lab(s))\n`,
   );
   process.exit(0);
 }
