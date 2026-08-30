@@ -159,54 +159,70 @@ describe('cross-language trace equivalence', () => {
   );
 
   /**
-   * The cap bounds work, not just payload — and in both languages.
+   * The cap keeps exactly the cap, whatever the input.
    *
-   * Without this, a capped trace stays *correct* while costing time quadratic in
-   * the input, which is invisible until a slow machine turns it into a timeout.
-   * Asserting a ratio rather than an absolute time keeps it meaningful on any
-   * machine: ten times the input must not cost ten times the time, because
-   * beyond the cap there is nothing left to record.
+   * Deterministic, and the half of "bounded" that can be asserted without
+   * measuring the machine: ten times the input must still yield one capped
+   * trace, in both languages.
    */
   it.each(['javascript', 'python'] as const)(
-    'stops paying for events it will not keep (%s)',
+    'keeps the same capped trace at any input size (%s)',
     async (language) => {
-      const run = (size: number) => {
-        const source =
-          language === 'javascript'
-            ? `function fill(xs) { for (let i = 0; i < ${size}; i++) { xs[i] = i; } return xs.length; }`
-            : `def fill(xs):\n    for i in range(${size}):\n        xs[i] = i\n    return len(xs)\n`;
-        const adapter = language === 'javascript' ? runJavaScript : runPython;
-        return adapter({
-          source,
+      const run = (size: number) =>
+        (language === 'javascript' ? runJavaScript : runPython)({
+          source:
+            language === 'javascript'
+              ? `function fill(xs) { for (let i = 0; i < ${size}; i++) { xs[i] = i; } return xs.length; }`
+              : `def fill(xs):\n    for i in range(${size}):\n        xs[i] = i\n    return len(xs)\n`,
           entry: 'fill',
           args: [new Array(size).fill(0)],
           trace: true,
           maxEvents: 50,
           timeoutMs: 50_000,
         });
-      };
 
-      // Warm the runtime first, so the small run is not paying WASM startup and
-      // flattering the ratio.
-      await run(50);
-
-      const smallStart = Date.now();
       const small = await run(200);
-      const smallMs = Date.now() - smallStart;
-
-      const largeStart = Date.now();
       const large = await run(2000);
-      const largeMs = Date.now() - largeStart;
 
       expect(small.truncated).toBe(true);
       expect(large.truncated).toBe(true);
-      // Both keep exactly the cap, whatever the input size.
       expect(small.events.length).toBe(large.events.length);
+      expect(large.value).toBe(2000);
+    },
+    TIMEOUT,
+  );
 
-      // A generous bound: the point is that it is not ~10x, not that it is 1x.
-      // A few ms of fixed overhead makes a tight ratio meaningless on a fast
-      // machine, so the small side gets a floor.
-      expect(largeMs).toBeLessThan(Math.max(smallMs, 20) * 5);
+  /**
+   * The other half: past the cap, more iterations must cost ~nothing.
+   *
+   * Asserted through the deadline a learner actually gets rather than through a
+   * stopwatch, because a wall-clock ratio on a shared CI runner measures the
+   * runner. This is the exact failure that was being debugged — the cost was
+   * quadratic in the loop length, and a 1000-iteration run took 1491ms locally
+   * and blew the 5s deadline in CI.
+   *
+   * 3000 iterations is ~139ms once the cap bounds the work and would be tens of
+   * seconds without it, so the margin is large in the direction that matters and
+   * there is nothing to tune. JavaScript only: this is where the quadratic
+   * snapshot lived, and Python's interpreter baseline is high enough that any
+   * size with a comparable margin would no longer be testing the cap.
+   */
+  it(
+    'stays inside a learner’s own deadline once the cap is reached',
+    async () => {
+      const SIZE = 3000;
+      const js = await runJavaScript({
+        source: `function fill(xs) { for (let i = 0; i < ${SIZE}; i++) { xs[i] = i; } return xs.length; }`,
+        entry: 'fill',
+        args: [new Array(SIZE).fill(0)],
+        trace: true,
+        maxEvents: 50,
+        // Deliberately not raised: the default is the point.
+      });
+
+      expect(js.timedOut, 'tracing past the cap is costing more than it should').toBe(false);
+      expect(js.truncated).toBe(true);
+      expect(js.value).toBe(SIZE);
     },
     TIMEOUT,
   );
