@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { getProblemSet, getTopics } from '@/content/registry';
+import { Node } from '@/components/ui/Node';
+import { ProblemTable } from '@/components/problem/ProblemTable';
+import { getProblemSet, getProblems, getTopics } from '@/content/registry';
 
 /**
  * The Problems surface (B15).
@@ -17,36 +18,66 @@ export const metadata = {
 
 export default function ProblemsPage() {
   const topics = getTopics();
+  const all = getProblems();
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 p-8">
-      <header className="flex flex-col gap-2">
-        <h1 className="font-sans text-2xl font-semibold tracking-tight">Problems</h1>
-        <p className="text-sm text-foreground-muted">
-          One set per topic, ordered warm-up first. Every set is open — if you already
-          know a topic, start there.
+    <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-8 sm:px-6">
+      {/* Same masthead as every other surface — a page that looks like a
+          different product is a page a learner has to re-learn. */}
+      <header className="node-surface flex flex-col gap-2 bg-surface p-6">
+        <h1 className="font-sans text-4xl font-bold tracking-tight sm:text-5xl">Problems</h1>
+        <p className="max-w-2xl text-sm text-foreground-muted">
+          {all.length} problems across {topics.length} topics, ordered warm-up first. Every set
+          is open — if you already know a topic, start there.
         </p>
       </header>
 
       {topics.length === 0 ? (
         <EmptyState title="No problems yet">The catalog is still being written.</EmptyState>
       ) : (
-        <ul className="flex flex-col gap-3">
-          {topics.map((topic) => {
-            const set = getProblemSet(topic);
-            return (
-              <li key={topic}>
-                <Link href={`/problems/${topic}`} className="block">
-                  <Card title={topic}>
-                    <p className="text-foreground-muted">
-                      {set.length} {set.length === 1 ? 'problem' : 'problems'}
-                    </p>
-                  </Card>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <>
+          {/*
+            Topic sets first, because the catalogue is small enough that
+            "which topic" is the real question. The full table below answers
+            the other one — "find me something at this difficulty".
+          */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-sm font-semibold">By topic</h2>
+            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {topics.map((topic) => {
+                const set = getProblemSet(topic);
+                return (
+                  <li key={topic}>
+                    <Link
+                      href={`/problems/${topic}`}
+                      className="node-surface node-interactive flex h-full flex-col gap-1 bg-accent-strong px-4 py-3 text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+                    >
+                      <span className="text-sm font-bold capitalize">
+                        {topic.replace(/-/g, ' ')}
+                      </span>
+                      <span className="text-xs opacity-80">
+                        {set.length} {set.length === 1 ? 'problem' : 'problems'}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+
+          <section className="flex flex-col gap-3">
+            <h2 className="text-sm font-semibold">Every problem</h2>
+            <ProblemTable problems={all} />
+          </section>
+
+          <Node tone="muted" className="p-4 text-sm text-foreground-muted">
+            Each problem set has a lesson behind it. If one is unfamiliar, the{' '}
+            <Link href="/learn/dsa" className="text-link underline underline-offset-2">
+              DSA path
+            </Link>{' '}
+            covers it first — a recommendation, never a lock.
+          </Node>
+        </>
       )}
     </main>
   );

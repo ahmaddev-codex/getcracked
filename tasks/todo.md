@@ -126,7 +126,8 @@ is crawled.
   - [x] graphs — nodes joined to their neighbours (the adjacency the lesson's algorithm actually uses; not a general force-directed layout the trace cannot justify)
   - [x] hash maps — key-to-value entries appearing as they are inserted, telling a first sighting apart from an increment. **Not drawn as buckets**: the trace knows nothing about placement, so numbered slots would invent a hash the code never chose. Rows are pre-allocated from the trace's own future and hidden until inserted, which keeps H5's no-allocation-per-frame rule without leaking where the run is going
     - The blocker turned out to be imaginary: both adapters already snapshot every live variable on every line, so the map's contents were in the raw trace all along and `toProtocol` was discarding them. Diffing consecutive snapshots recovers `map_put`/`map_delete` with **no runtime change in either language**
-  - [ ] DP tables · segment trees · probabilistic · spatial — no lesson uses them yet; building them now would be speculative
+  - [ ] **DP tables (2-D grid)** — the clearest gap against tracecode.app, which renders a DP state table as a grid with row and column indices. Needs the trace to carry nested arrays, which `toProtocol` currently flattens to a single collection
+  - [ ] segment trees · probabilistic · spatial — no lesson uses them yet; building them now would be speculative
 - [x] **B4 complexity overlay and operation counters** — measured steps/reads/writes/time/memory, stated as measurements of one run, never as a complexity proof
 - [x] **B5 "explain this state"** — narration generated from the same state the renderer draws, so the two cannot describe different things. Reports the change (`nums[1] changed from 1 to 4`), not just the position
 - [x] **Pointer marks earn their claim** — a variable is drawn on the structure only where the source subscripts that collection with it, read statically because no trace can tell an index from a number that happens to be in range
@@ -177,6 +178,11 @@ is crawled.
 ---
 
 ## Navigation and surfaces
+
+- [x] **Sign-out existed nowhere** — a learner could create an account and had no way out short of clearing cookies, which on a shared machine is a real problem. The header now carries an account menu with the signed-in email, Dashboard, Account, and Sign out
+- [x] **Account page made robust (A2, A10)** — was a heading and an email address, which told a signed-in learner nothing they did not know. Now: what the account is holding (problems solved and lesson exercises counted *separately*, so reading lessons cannot inflate a practice number), how they sign in and when each method was added, and a plain statement about data and deletion — including that self-service deletion is not built, which beats a button that does not work
+- [x] **Dashboard rebuilt** — it was the one page a signed-in learner lands on and the one that looked least like the product. Same masthead and node treatment as every other surface, all four tracks as destinations, and an honest note that build challenges are unwritten rather than a card going nowhere
+- [x] **Problems surface rebuilt** — same masthead and node language, topic sets first, then a scannable table shared with the dashboard's filtered view. Deliberately a table rather than the roadmap graph: the roadmap answers "what order?", which is right for a curriculum and wrong for a practice catalogue, where the question is "find me an easy graph problem I have not done"
 
 - [x] **`/learn` hub removed** — the site header lists every track directly, so a page whose only content was links to them was a click of pure overhead. Redirected rather than 404'd: it was linked from inside the product and is exactly the kind of path that ends up in a bookmark
 - [x] Four surfaces in the nav: Learn DSA · System Design · Patterns · Problems

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSession } from '@/lib/auth-client';
+import { AccountSlot } from '@/components/auth/AccountMenu';
 
 /**
  * The site header (K1).
@@ -16,10 +16,11 @@ import { useSession } from '@/lib/auth-client';
  * not a node, which is what lets the yellow-on-white node language own
  * everything below it without competing for attention.
  *
- * The auth actions are the only part that varies. Signed out shows the pair the
- * reference does — a quiet link plus one filled call to action — because a
- * learner can use the whole product signed out (§2.6) and the header should
- * invite an account rather than demand one.
+ * The auth actions are the only part that varies, and they live in
+ * `AccountSlot` — signed out it shows the pair the reference does, a quiet link
+ * plus one filled call to action, because a learner can use the whole product
+ * signed out (§2.6) and the header should invite an account rather than demand
+ * one. Signed in it becomes the account menu, which is where sign-out lives.
  */
 
 const LINKS = [
@@ -31,7 +32,6 @@ const LINKS = [
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const { data: session, isPending } = useSession();
 
   return (
     <header className="bg-header text-header-foreground">
@@ -74,39 +74,7 @@ export function SiteHeader() {
         </ul>
 
         <div className="ml-auto flex items-center gap-3">
-          {/* Nothing is rendered until the session is known: flashing "Sign in"
-              at someone who is signed in reads as having been logged out. */}
-          {isPending ? null : session ? (
-            <>
-              <Link
-                href="/dashboard"
-                className="text-sm hover:text-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/account"
-                className="text-sm hover:text-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
-              >
-                Account
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/sign-in"
-                className="text-sm hover:text-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
-              >
-                Sign in
-              </Link>
-              <Link
-                href="/sign-up"
-                className="rounded-node border-2 border-accent-strong bg-accent-strong px-3 py-1 text-sm font-semibold text-accent-foreground node-interactive focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
-              >
-                Sign up
-              </Link>
-            </>
-          )}
+          <AccountSlot />
         </div>
       </nav>
     </header>

@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { Card } from '@/components/ui/Card';
+import { ArrowRight } from 'lucide-react';
 import { Node } from '@/components/ui/Node';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Filters } from '@/components/dashboard/Filters';
+import { ProblemTable } from '@/components/problem/ProblemTable';
 import { DIFFICULTIES, catalogCounts, filterProblems } from '@/lib/catalog';
-import { getTopics } from '@/content/registry';
+import { getTopics, getTrack } from '@/content/registry';
+import { conceptCount } from '@/content/concepts';
 
 /**
  * The dashboard (A3, A4) — navigation across the three tiers (§2.1a).
@@ -29,35 +31,67 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
   const counts = catalogCounts();
   const topics = getTopics();
 
+  const tracks = [
+    {
+      href: '/learn/dsa',
+      title: 'Data Structures & Algorithms',
+      detail: `${getTrack('data-structures').length + getTrack('algorithms').length} lessons, each with a walkthrough you can run`,
+    },
+    {
+      href: '/learn/system-design',
+      title: 'System Design',
+      detail: `${getTrack('system-design').length} topics and ${conceptCount()} reference terms`,
+    },
+    {
+      href: '/learn/design-patterns',
+      title: 'Design Patterns',
+      detail: 'Named solutions to problems that keep recurring',
+    },
+    {
+      href: '/problems',
+      title: 'Practice',
+      detail: `${counts.problems} problems, grouped by topic`,
+    },
+  ];
+
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 p-8">
-      <header className="flex flex-col gap-2">
-        <h1 className="font-sans text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-foreground-muted">
-          Three tiers: read a topic, practise it, then build the thing itself.
+    <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-8 sm:px-6">
+      {/* The same masthead every other surface uses. This page previously had
+          its own smaller heading and card grid, which made the one page a
+          signed-in learner lands on the one that looked least like the
+          product. */}
+      <header className="node-surface flex flex-col gap-2 bg-surface p-6">
+        <h1 className="font-sans text-4xl font-bold tracking-tight sm:text-5xl">Dashboard</h1>
+        <p className="max-w-2xl text-sm text-foreground-muted">
+          Everything in one place. Read a topic, practise it, then build the thing itself —
+          in any order, having completed nothing.
         </p>
       </header>
 
-      <section className="grid gap-3 sm:grid-cols-3">
-        <Link href="/learn/dsa">
-          <Card title="Learn">
-            <p className="text-foreground-muted">
-              {counts.lessons} {counts.lessons === 1 ? 'lesson' : 'lessons'}
-            </p>
-          </Card>
-        </Link>
-        <Link href="/problems">
-          <Card title="Practise">
-            <p className="text-foreground-muted">
-              {counts.problems} {counts.problems === 1 ? 'problem' : 'problems'}
-            </p>
-          </Card>
-        </Link>
-        <Node tone="muted" className="p-4">
-          <h3 className="mb-1 text-sm font-semibold">Build</h3>
-          <p className="text-sm text-foreground-muted">Multi-step challenges, coming later.</p>
-        </Node>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-semibold">Where to go</h2>
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {tracks.map((track) => (
+            <li key={track.href}>
+              <Link
+                href={track.href}
+                className="node-surface node-interactive flex h-full items-center justify-between gap-3 bg-accent-strong px-4 py-3 text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+              >
+                <span className="flex flex-col gap-0.5">
+                  <span className="text-sm font-bold">{track.title}</span>
+                  <span className="text-xs opacity-80">{track.detail}</span>
+                </span>
+                <ArrowRight size={16} aria-hidden className="shrink-0" />
+              </Link>
+            </li>
+          ))}
+        </ul>
       </section>
+
+      <Node tone="muted" className="p-4 text-sm text-foreground-muted">
+        Multi-step build challenges are not written yet. When they are, they appear here —
+        saying so beats a card that goes nowhere.
+      </Node>
 
       <section className="flex flex-col gap-4">
         <h2 className="text-sm font-semibold">All problems</h2>
@@ -71,19 +105,9 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
             Try widening the difficulty range, or clearing the topic filter.
           </EmptyState>
         ) : (
-          <ul className="flex flex-col gap-2">
-            {problems.map((problem) => (
-              <li key={`${problem.topic}/${problem.slug}`}>
-                <Link href={`/problems/${problem.topic}/${problem.slug}`} className="block">
-                  <Card title={problem.title}>
-                    <p className="text-foreground-muted">
-                      {problem.topic} · {problem.difficulty}
-                    </p>
-                  </Card>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          // The same table the Problems surface uses, so a filtered view and the
+          // full catalogue do not read as two different features.
+          <ProblemTable problems={problems} />
         )}
       </section>
     </main>
