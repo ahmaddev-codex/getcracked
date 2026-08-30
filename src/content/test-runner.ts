@@ -95,10 +95,31 @@ export interface RunSpecOptions {
   timeoutMs?: number;
   /** Off by default: measurement costs an extra sandboxed run. */
   measure?: boolean;
+  /**
+   * Sibling files, for a tier-3 build challenge (AD-7).
+   *
+   * The spec runner does not know or care that a challenge step is a workspace
+   * rather than a function — it still calls one entry with arguments and
+   * compares the result. Composing the files is the adapters' job, which is
+   * what keeps tier 3 from needing a runner of its own.
+   */
+  modules?: ReadonlyArray<{ name: string; source: string }>;
+  entryModule?: string;
 }
 
 export async function runTestSpec(opts: RunSpecOptions): Promise<SpecResult> {
-  const { spec, source, language, trace = false, timeoutMs, measure = false } = opts;
+  const {
+    spec,
+    source,
+    language,
+    trace = false,
+    timeoutMs,
+    measure = false,
+    modules,
+    entryModule,
+  } = opts;
+
+  const multiFile = (modules?.length ?? 0) > 0;
 
   const run = RUNTIMES[language];
   if (!run) {
@@ -115,6 +136,8 @@ export async function runTestSpec(opts: RunSpecOptions): Promise<SpecResult> {
   for (const [i, testCase] of spec.cases.entries()) {
     const result = await run({
       source,
+      modules,
+      entryModule,
       entry,
       args: testCase.args,
       // Only the first case is traced: a trace is for watching one execution,
@@ -166,7 +189,11 @@ export async function runTestSpec(opts: RunSpecOptions): Promise<SpecResult> {
   // Measurement instruments JavaScript source specifically (measure.ts), so it
   // is skipped for other languages rather than reporting figures it cannot
   // actually produce.
-  if (measure && passed && !timedOut && language === 'javascript') {
+  //
+  // Skipped for a build challenge: `measureRun` instruments one source string
+  // with acorn, and counting steps in only the entry file would report a figure
+  // that looks like the whole build's cost and is not.
+  if (measure && passed && !timedOut && language === 'javascript' && !multiFile) {
     const largest = [...spec.cases].sort(
       (a, b) => JSON.stringify(b.args).length - JSON.stringify(a.args).length,
     )[0];

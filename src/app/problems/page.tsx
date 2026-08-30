@@ -3,6 +3,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Node } from '@/components/ui/Node';
 import { ProblemTable } from '@/components/problem/ProblemTable';
 import { getProblemSet, getProblems, getTopics } from '@/content/registry';
+import { Page } from '@/components/ui/Page';
 
 /**
  * The Problems surface (B15).
@@ -21,7 +22,7 @@ export default function ProblemsPage() {
   const all = getProblems();
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-8 sm:px-6">
+    <Page width="catalog">
       {/* Same masthead as every other surface — a page that looks like a
           different product is a page a learner has to re-learn. */}
       <header className="node-surface flex flex-col gap-2 bg-surface p-6">
@@ -79,6 +80,6 @@ export default function ProblemsPage() {
           </Node>
         </>
       )}
-    </main>
+    </Page>
   );
 }

@@ -13,7 +13,8 @@ import type { RunRequest, RunResponse } from './protocol';
  * thread.
  */
 self.onmessage = async (event: MessageEvent<RunRequest>) => {
-  const { id, spec, source, language, trace, timeoutMs, measure } = event.data;
+  const { id, spec, source, language, trace, timeoutMs, measure, modules, entryModule } =
+    event.data;
 
   try {
     // Pyodide will not load in a classic worker, which is what Turbopack emits
@@ -30,7 +31,16 @@ self.onmessage = async (event: MessageEvent<RunRequest>) => {
       return;
     }
 
-    const result = await runTestSpec({ spec, source, language, trace, timeoutMs, measure });
+    const result = await runTestSpec({
+      spec,
+      source,
+      language,
+      trace,
+      timeoutMs,
+      measure,
+      modules,
+      entryModule,
+    });
     const response: RunResponse = { id, ok: true, result };
     self.postMessage(response);
   } catch (e) {

@@ -3,7 +3,8 @@ import { ConceptMindMap } from '@/components/learn/ConceptMindMap';
 import { Markdown } from '@/components/Markdown';
 import { Roadmap } from '@/components/learn/Roadmap';
 import { findConcept, getSystemDesignCategories } from '@/content/concepts';
-import { getTrack } from '@/content/registry';
+import { getChallengesForTopic, getTrack } from '@/content/registry';
+import { Page } from '@/components/ui/Page';
 
 /**
  * The System Design track (I5), structured exactly like the DSA one: a path of
@@ -34,6 +35,7 @@ export default function SystemDesignPage() {
     // System Design has no runnable problem sets yet, so nothing branches off
     // the spine. The renderer draws a bare path, which is the honest picture.
     problems: [],
+    challenges: getChallengesForTopic(lesson.slug),
     concepts: lesson.concepts
       .map((slug) => findConcept(slug))
       .filter((c): c is NonNullable<typeof c> => Boolean(c)),
@@ -50,7 +52,7 @@ export default function SystemDesignPage() {
   }));
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6">
+    <Page width="canvas">
       <header className="node-surface flex flex-col gap-2 bg-surface p-6">
         <p className="text-xs text-foreground-muted">
           Related:{' '}
@@ -100,6 +102,6 @@ export default function SystemDesignPage() {
         </div>
         <ConceptMindMap categories={categories} />
       </section>
-    </main>
+    </Page>
   );
 }

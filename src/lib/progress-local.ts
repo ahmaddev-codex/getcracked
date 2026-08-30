@@ -75,6 +75,15 @@ export function readLocalLessonState(exerciseIds: readonly string[]): ProgressSt
   );
 }
 
+/**
+ * Challenge state for a signed-out learner, from the same derivation the server
+ * uses. Named for the tier so a caller cannot pass a challenge's steps to
+ * something that means "lesson" and get an answer that reads plausibly.
+ */
+export function readLocalChallengeState(stepIds: readonly string[]): ProgressState {
+  return readLocalLessonState(stepIds);
+}
+
 export function clearLocalProgress(): void {
   try {
     localStorage.removeItem(KEY);

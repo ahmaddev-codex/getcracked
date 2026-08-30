@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ConceptMindMap } from '@/components/learn/ConceptMindMap';
 import { getPatternCategories } from '@/content/concepts';
+import { Page } from '@/components/ui/Page';
 
 /**
  * The Design Patterns catalogue (I5), split out of System Design.
@@ -26,7 +27,7 @@ export default function DesignPatternsPage() {
   const total = categories.reduce((sum, c) => sum + c.concepts.length, 0);
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6">
+    <Page width="canvas">
       <header className="node-surface flex flex-col gap-2 bg-surface p-6">
         <p className="text-xs text-foreground-muted">
           Related:{' '}
@@ -45,6 +46,6 @@ export default function DesignPatternsPage() {
       </header>
 
       <ConceptMindMap categories={categories} />
-    </main>
+    </Page>
   );
 }

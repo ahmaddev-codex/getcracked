@@ -28,6 +28,7 @@ const LINKS = [
   { href: '/learn/system-design', label: 'System Design' },
   { href: '/learn/design-patterns', label: 'Patterns' },
   { href: '/problems', label: 'Problems' },
+  { href: '/challenges', label: 'Build' },
 ];
 
 export function SiteHeader() {
@@ -37,7 +38,12 @@ export function SiteHeader() {
     <header className="bg-header text-header-foreground">
       <nav
         aria-label="Main"
-        className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5 sm:px-6"
+        /*
+          The same rail a `canvas` page uses, and the same horizontal padding, so
+          the wordmark lines up with the content of every page wide enough to
+          reach it.
+        */
+        className="mx-auto flex w-full max-w-canvas flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5 sm:px-6"
       >
         <Link
           href="/"

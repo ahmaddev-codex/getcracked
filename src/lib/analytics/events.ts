@@ -22,6 +22,10 @@ export const EVENT_NAMES = [
   // Learn surface
   'lesson_started',
   'lesson_completed',
+  // Build challenges (tier 3). Steps report through the exercise lifecycle
+  // above, exactly as a problem does; this is the milestone that has no
+  // equivalent there — the whole thing built.
+  'challenge_completed',
   // Anonymous -> account (A15/A16)
   'signed_out_notice_shown',
   'signed_out_notice_dismissed',

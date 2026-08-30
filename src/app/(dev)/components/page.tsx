@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { CodeBlock } from '@/components/ui/CodeBlock';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Node, type NodeTone } from '@/components/ui/Node';
+import { Page } from '@/components/ui/Page';
 
 /**
  * Component gallery (K8).
@@ -30,7 +31,7 @@ function Section({ title, note, children }: { title: string; note?: string; chil
 
 export default function ComponentGallery() {
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col gap-10 p-8">
+    <Page width="catalog" className="gap-10">
       <header className="flex flex-col gap-1">
         <h1 className="font-sans text-2xl font-semibold tracking-tight">Design system</h1>
         <p className="text-sm text-foreground-muted">
@@ -87,6 +88,6 @@ export default function ComponentGallery() {
           </EmptyState>
         </div>
       </Section>
-    </main>
+    </Page>
   );
 }

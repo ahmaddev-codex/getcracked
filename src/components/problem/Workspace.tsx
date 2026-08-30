@@ -12,7 +12,7 @@ import { RuntimeClient } from '@/lib/runtime/client';
 import { humanizeError, TIMEOUT_MESSAGE } from '@/lib/runtime/errors';
 import { clearDraft, readDraft, subscribeToDrafts, writeDraft } from '@/lib/drafts';
 import { track } from '@/lib/analytics/track';
-import { recordLocalAttempt } from '@/lib/progress-local';
+import { persistAttempt } from '@/lib/attempts';
 import { supportedLanguages } from '@/content/test-runner';
 import type { Language, TestSpec, Tier } from '@/content/schema';
 import type { SpecResult } from '@/content/test-runner';
@@ -366,40 +366,6 @@ export function Workspace({
       )}
     </section>
   );
-}
-
-/**
- * Saves an attempt locally, and to the account when there is one.
- *
- * Local always, server best-effort: a signed-in learner whose network drops
- * should still find their work when they come back, and a failed sync must
- * never surface as an error on top of their test results.
- */
-async function persistAttempt(attempt: {
-  exerciseId: string;
-  tier: Tier;
-  language: Language;
-  code: string;
-  passed: boolean;
-}): Promise<void> {
-  recordLocalAttempt({
-    exerciseId: attempt.exerciseId,
-    tier: attempt.tier,
-    language: attempt.language,
-    state: attempt.passed ? 'complete' : 'in_progress',
-  });
-
-  try {
-    // 401 for a signed-out learner is the expected case, not an error.
-    await fetch('/api/progress', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(attempt),
-      keepalive: true,
-    });
-  } catch {
-    // Offline or blocked; local progress already holds the attempt.
-  }
 }
 
 /** Elements in the largest test input, so measured counts can be read against it. */

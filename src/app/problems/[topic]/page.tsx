@@ -3,8 +3,14 @@ import { notFound } from 'next/navigation';
 import { Node } from '@/components/ui/Node';
 import { ProblemTable } from '@/components/problem/ProblemTable';
 import { RecommendationBanner } from '@/components/problem/RecommendationBanner';
-import { findLesson, getProblemSet, getTopics } from '@/content/registry';
+import {
+  findLesson,
+  getChallengesForTopic,
+  getProblemSet,
+  getTopics,
+} from '@/content/registry';
 import { exerciseId } from '@/content/schema';
+import { Page } from '@/components/ui/Page';
 
 /**
  * One problem set (B15, B17).
@@ -32,6 +38,11 @@ export default async function ProblemSetPage(props: TopicRouteProps) {
   const set = getProblemSet(topic);
   if (set.length === 0) notFound();
 
+  // B20, the half that was unbuildable until tier 3 existed. Read off the
+  // challenge's own `topics`, so a build appears here because its author said
+  // it applies this pattern — never because two slugs happened to match.
+  const builds = getChallengesForTopic(topic);
+
   // Prerequisites are the union across the set, so the banner reflects the
   // topic rather than whichever problem happens to be first.
   const recommendedAfter = [...new Set(set.flatMap((p) => p.recommendedAfter))];
@@ -43,7 +54,7 @@ export default async function ProblemSetPage(props: TopicRouteProps) {
   );
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-8 sm:px-6">
+    <Page width="catalog">
       {/* The same masthead every other surface uses — this was the last page
           still wearing the pre-design-system heading. */}
       <header className="node-surface flex flex-col gap-2 bg-surface p-6">
@@ -70,6 +81,31 @@ export default async function ProblemSetPage(props: TopicRouteProps) {
 
       <ProblemTable problems={set} />
 
+      {builds.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-semibold">Then build one</h2>
+          <p className="text-sm text-foreground-muted">
+            These problems are one function each. A build challenge is the same ideas
+            assembled into a working thing across several files.
+          </p>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {builds.map((challenge) => (
+              <li key={challenge.slug}>
+                <Link
+                  href={`/challenges/${challenge.slug}`}
+                  className="node-surface node-interactive flex h-full flex-col gap-1 bg-accent-strong px-4 py-3 text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+                >
+                  <span className="text-sm font-bold">{challenge.title}</span>
+                  <span className="text-xs opacity-80">
+                    {challenge.summary} · {challenge.steps.length} steps
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <Node tone="muted" className="p-4 text-sm text-foreground-muted">
         Stuck on the pattern rather than the problem? The{' '}
         <Link
@@ -80,6 +116,6 @@ export default async function ProblemSetPage(props: TopicRouteProps) {
         </Link>{' '}
         walks through it with an animation you can step through.
       </Node>
-    </main>
+    </Page>
   );
 }

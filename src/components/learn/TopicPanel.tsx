@@ -11,6 +11,7 @@ import {
   Info,
   ListChecks,
   ExternalLink,
+  Hammer,
   Layers,
   Sparkles,
   Star,
@@ -19,7 +20,7 @@ import {
 } from 'lucide-react';
 import { setTopicStatus, useTopicStatuses, type TopicStatus } from '@/lib/topic-status';
 import type { ReactNode } from 'react';
-import type { Lesson, Problem } from '@/content/schema';
+import type { Challenge, Lesson, Problem } from '@/content/schema';
 import type { Concept } from '@/content/concepts';
 import { DIFFICULTY_BADGE, lessonBase } from './difficulty';
 
@@ -89,12 +90,15 @@ function Section({
 export function TopicPanel({
   lesson,
   problems,
+  challenges = [],
   concepts = [],
   cues,
   onClose,
 }: {
   lesson: Lesson;
   problems: readonly Problem[];
+  /** Build challenges applying this topic — the panel's third tier. */
+  challenges?: readonly Challenge[];
   /** Reference terms this lesson covers, resolved from `lesson.concepts`. */
   concepts?: readonly Concept[];
   /**
@@ -465,6 +469,34 @@ export function TopicPanel({
                       className="text-sm text-link underline underline-offset-2 hover:no-underline"
                     >
                       {problem.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          )}
+
+          {challenges.length > 0 && (
+            <Section
+              icon={<Hammer size={15} className="text-alt-foreground" aria-hidden />}
+              title="Build it"
+              meta={
+                <span className="font-normal text-foreground-muted">
+                  · {challenges.length === 1 ? 'one build' : `${challenges.length} builds`}
+                </span>
+              }
+            >
+              <ul className="flex flex-col gap-1.5">
+                {challenges.map((challenge) => (
+                  <li key={challenge.slug} className="flex items-center gap-2">
+                    <span className="rounded bg-surface-muted px-1.5 py-0.5 text-xs font-semibold">
+                      {challenge.steps.length} steps
+                    </span>
+                    <Link
+                      href={`/challenges/${challenge.slug}`}
+                      className="text-sm text-link underline underline-offset-2 hover:no-underline"
+                    >
+                      {challenge.title}
                     </Link>
                   </li>
                 ))}

@@ -1,4 +1,4 @@
-import { getLessons, getProblems } from '@/content/registry';
+import { getChallenges, getLessons, getProblems } from '@/content/registry';
 import type { Problem } from '@/content/schema';
 
 /**
@@ -27,11 +27,19 @@ export function filterProblems(filter: CatalogFilter): readonly Problem[] {
 
 /** Counts for the three tiers, so the dashboard never hardcodes a number. */
 export function catalogCounts() {
+  const challenges = getChallenges();
   return {
     lessons: getLessons().length,
     problems: getProblems().length,
-    // Tier 3 lands in a later phase; reported as 0 rather than omitted so the
-    // dashboard shows the shape of the product honestly.
-    challenges: 0,
+    challenges: challenges.length,
+    /**
+     * Steps, not just builds.
+     *
+     * A challenge is the unit a learner picks; a step is the unit they finish
+     * and the unit progress is recorded against. Reporting only the first would
+     * make three challenges look like less work than twelve problems, which is
+     * the opposite of true.
+     */
+    challengeSteps: challenges.reduce((n, c) => n + c.steps.length, 0),
   };
 }

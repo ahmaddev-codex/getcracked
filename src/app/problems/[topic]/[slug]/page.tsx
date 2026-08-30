@@ -8,6 +8,7 @@ import { RecommendationBanner } from '@/components/problem/RecommendationBanner'
 import { Workspace } from '@/components/problem/Workspace';
 import { findLesson, findProblem, getProblems, getSetPosition } from '@/content/registry';
 import { exerciseId } from '@/content/schema';
+import { Page } from '@/components/ui/Page';
 
 /**
  * A practice problem (B15).
@@ -57,7 +58,7 @@ export default async function ProblemPage(props: ProblemRouteProps) {
   const id = exerciseId(problem);
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 p-8">
+    <Page width="reading">
       <header className="flex flex-col gap-3">
         <p className="text-xs text-foreground-muted">
           <Link href={`/problems/${problem.topic}`} className="text-link underline underline-offset-2">
@@ -124,6 +125,6 @@ export default async function ProblemPage(props: ProblemRouteProps) {
           </Link>
         )}
       </nav>
-    </main>
+    </Page>
   );
 }

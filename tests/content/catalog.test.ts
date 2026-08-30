@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DIFFICULTIES, catalogCounts, filterProblems } from '@/lib/catalog';
-import { getProblems, getTopics } from '@/content/registry';
+import { getProblems, getTopics, getChallenges } from '@/content/registry';
 
 /** Catalog filtering (A4). Pure over content — no session, no progress. */
 
@@ -49,9 +49,14 @@ describe('counts', () => {
     expect(counts.problems).toBe(getProblems().length);
   });
 
-  it('reports unbuilt tiers as zero rather than omitting them', () => {
-    // Showing the shape of the product honestly beats hiding what is missing.
-    expect(catalogCounts().challenges).toBe(0);
+  it('counts every tier from content, including build challenges', () => {
+    const counts = catalogCounts();
+    expect(counts.challenges).toBe(getChallenges().length);
+    // Steps as well as builds: three challenges are twelve sittings, and
+    // reporting only the first would make tier 3 look smaller than tier 2.
+    expect(counts.challengeSteps).toBe(
+      getChallenges().reduce((n, c) => n + c.steps.length, 0),
+    );
   });
 });
 

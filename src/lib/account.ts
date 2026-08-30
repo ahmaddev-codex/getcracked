@@ -2,7 +2,7 @@ import { and, eq, gte, sql } from 'drizzle-orm';
 import { accounts, submissions } from '@/db/schema';
 import { getDb } from '@/db/client';
 import { getAllProgress } from '@/lib/progress';
-import { getLessons, getProblems } from '@/content/registry';
+import { getChallenges, getLessons, getProblems } from '@/content/registry';
 import { exerciseId, type Difficulty } from '@/content/schema';
 import { DIFFICULTIES } from '@/lib/catalog';
 
@@ -40,6 +40,15 @@ export interface AccountSummary {
   longestStreak: number;
   completedExercises: number;
   totalExercises: number;
+  /**
+   * Build-challenge steps, counted as their own thing.
+   *
+   * A third separate tally for the same reason the first two are separate:
+   * folding twelve build steps into a "solved" number would let a long build
+   * inflate a figure a learner reads as practice problems.
+   */
+  completedSteps: number;
+  totalSteps: number;
   inProgress: number;
   languages: string[];
   /** Sign-in methods linked to this account. */
@@ -69,6 +78,9 @@ export async function getAccountSummary(userId: string): Promise<AccountSummary>
   const exerciseIds = new Set(
     getLessons().flatMap((l) => l.exercises.map((e) => exerciseId(l, e.slug))),
   );
+  const stepIdSet = new Set(
+    getChallenges().flatMap((c) => c.steps.map((s) => exerciseId(c, s.slug))),
+  );
 
   // Per difficulty, because "13 solved" says nothing about whether they were
   // the easy ones — which is the first thing anyone wants to know.
@@ -92,6 +104,8 @@ export async function getAccountSummary(userId: string): Promise<AccountSummary>
     totalProblems: problemIds.size,
     completedExercises: [...complete].filter((id) => exerciseIds.has(id)).length,
     totalExercises: exerciseIds.size,
+    completedSteps: [...complete].filter((id) => stepIdSet.has(id)).length,
+    totalSteps: stepIdSet.size,
     inProgress: progress.filter((p) => p.state === 'in_progress').length,
     languages: [...new Set(progress.map((p) => p.language))].sort(),
     methods: linked.map((row) => ({ providerId: row.providerId, createdAt: row.createdAt }))

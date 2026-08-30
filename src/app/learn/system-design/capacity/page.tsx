@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { CapacityCalculator } from '@/components/system-design/CapacityCalculator';
+import { Page } from '@/components/ui/Page';
 
 /**
  * The capacity calculator (C3), the first System Design lab.
@@ -16,7 +17,7 @@ export const metadata = {
 
 export default function CapacityPage() {
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8 sm:px-6">
+    <Page width="catalog">
       <header className="node-surface flex flex-col gap-2 bg-surface p-6">
         <p className="text-xs text-foreground-muted">
           <Link href="/learn/system-design" className="text-link underline underline-offset-2">
@@ -60,6 +61,6 @@ export default function CapacityPage() {
           </li>
         </ul>
       </section>
-    </main>
+    </Page>
   );
 }

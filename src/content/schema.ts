@@ -335,13 +335,116 @@ export const lessonSchema = z.object({
 export type Lesson = z.infer<typeof lessonSchema>;
 export type LessonInput = z.input<typeof lessonSchema>;
 
-/** Tier-3 build-it challenge: an ordered sequence of the same runnable unit. */
+/**
+ * One file in a build challenge's workspace.
+ *
+ * Named without an extension, because the same module is `store.js` in
+ * JavaScript and `store.py` in Python and the challenge is authored once for
+ * both (AD-3). The extension is applied at render time — see
+ * `fileNameFor` in content/challenge.ts.
+ *
+ * Content is resolved *across* steps rather than restated on each one: a step
+ * that lists a file without giving it new code inherits the previous step's
+ * work. That is what makes tier 3 a single build rather than four unrelated
+ * exercises sharing a title.
+ */
+export const challengeFileSchema = z.object({
+  /** Module identifier, valid as an import name in every launch language. */
+  name: z.string().regex(/^[a-z][a-z0-9_]*$/, 'File name must be a lowercase identifier'),
+  /** Tab label. Defaults to the filename. */
+  label: z.string().min(1).optional(),
+  /**
+   * What the learner is handed at this step.
+   *
+   * Omitted means "carry forward" — the learner's own work from an earlier
+   * step, falling back to the author's build of it. See resolveStepFiles.
+   */
+  starterCode: z.partialRecord(languageSchema, z.string().min(1)).optional(),
+  /**
+   * The author's implementation of this file *as of this step*.
+   *
+   * Per step rather than per file, because a build challenge revisits the same
+   * file: `lru_cache` after step 2 evicts, and after step 3 it also reorders on
+   * read. One solution per file could only ever describe the finished article,
+   * which would make every intermediate step unverifiable.
+   */
+  solution: z.partialRecord(languageSchema, z.string().min(1)).optional(),
+  /**
+   * False for scaffolding the learner reads but does not write.
+   *
+   * Load-bearing rather than cosmetic: a test spec calls one function with JSON
+   * arguments, and what a build challenge produces is usually a *class*. A
+   * read-only harness module that constructs the learner's class and replays a
+   * command sequence is what bridges the two — and it must not be editable, or
+   * the spec could be satisfied by rewriting the harness.
+   *
+   * Optional rather than defaulted, because it **carries forward** like the
+   * file's content does: editability is a property of the file across the whole
+   * build, not of one step's mention of it. Defaulting it to `true` per step
+   * would mean an author who wrote `{ name: 'harness' }` on step 2 silently made
+   * the harness writable — and a learner could then pass by editing the tests'
+   * own scaffolding. Absent everywhere means editable.
+   */
+  editable: z.boolean().optional(),
+});
+export type ChallengeFile = z.infer<typeof challengeFileSchema>;
+
+/**
+ * One step of a build challenge.
+ *
+ * Deliberately the runnable unit with its source fields swapped out (AD-7): a
+ * step has a brief, hints, a test spec and a complexity target exactly as a
+ * problem does, and differs only in that its source is a *set* of files rather
+ * than one string. `stepAsExercise` in content/challenge.ts projects it back to
+ * a plain `RunnableExercise` for a given language, so the content gate, the
+ * editor and the runner all keep treating it as one unit.
+ */
+export const challengeStepSchema = runnableExerciseSchema
+  .omit({ starterCode: true, referenceSolution: true })
+  .extend({
+    files: z.array(challengeFileSchema).min(1),
+    /**
+     * The file holding `testSpec.entry`. Defaults to the first file listed.
+     *
+     * Explicit because the entry is usually the read-only harness, not the file
+     * the learner is editing — guessing would pick the wrong one exactly when
+     * the challenge is most interesting.
+     */
+    entryFile: z.string().optional(),
+    /** The file the editor opens on. Defaults to the first editable file. */
+    focus: z.string().optional(),
+  });
+export type ChallengeStep = z.infer<typeof challengeStepSchema>;
+
+/** Tier-3 build-it challenge: an ordered sequence of steps over a shared workspace. */
 export const challengeSchema = z.object({
   tier: z.literal('challenge'),
   slug: z.string().regex(/^[a-z0-9-]+$/),
   title: z.string().min(1),
   category: z.enum(['dsa', 'real-world', 'design-patterns']),
-  steps: z.array(runnableExerciseSchema).min(1),
+  /** One line for the catalog. */
+  summary: z.string().min(1),
+  /** Markdown. What the finished thing is, and why it is worth building. */
+  brief: z.string().min(1),
+  /**
+   * Practice difficulty, on the same scale a problem uses.
+   *
+   * A build is longer than a problem but not automatically harder, and ranking
+   * every challenge `hard` by virtue of its tier would tell a learner nothing.
+   */
+  difficulty: difficultySchema,
+  /**
+   * Lesson slugs this build applies.
+   *
+   * The join that makes B20 possible in both directions: a topic's roadmap node
+   * can count its challenges, and a problem set can offer the deeper build.
+   * Authored, never inferred from the title — `rate-limiter` applies queues and
+   * hashing, and no string match would find that.
+   */
+  topics: z.array(z.string().regex(/^[a-z0-9-]+$/)).default([]),
+  steps: z.array(challengeStepSchema).min(1),
+  /** Guidance only, exactly as elsewhere: nothing is locked (§6.6, B16). */
+  recommendedAfter: z.array(z.string()).default([]),
 });
 export type Challenge = z.infer<typeof challengeSchema>;
 export type ChallengeInput = z.input<typeof challengeSchema>;

@@ -8,6 +8,7 @@ import { DifficultyBreakdown } from '@/components/account/DifficultyBreakdown';
 import { StatCard } from '@/components/account/StatCard';
 import { getAccountSummary, methodLabel } from '@/lib/account';
 import { getSession } from '@/lib/session';
+import { Page } from '@/components/ui/Page';
 
 /**
  * The account page (A2, A10).
@@ -36,7 +37,7 @@ export default async function AccountPage() {
   });
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-8 sm:px-6">
+    <Page width="catalog">
       <header className="node-surface flex flex-col gap-3 bg-surface p-6">
         <div className="flex flex-wrap items-center gap-4">
           <Avatar
@@ -63,11 +64,16 @@ export default async function AccountPage() {
         <h2 className="text-sm font-semibold">Practice</h2>
         <DifficultyBreakdown tallies={summary.byDifficulty} />
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Lesson exercises"
             value={summary.completedExercises}
             of={summary.totalExercises}
+          />
+          <StatCard
+            label="Build steps"
+            value={summary.completedSteps}
+            of={summary.totalSteps}
           />
           <StatCard
             label="In progress"
@@ -160,6 +166,6 @@ export default async function AccountPage() {
         </Link>
         .
       </p>
-    </main>
+    </Page>
   );
 }

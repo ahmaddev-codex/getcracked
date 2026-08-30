@@ -9,7 +9,8 @@ import { useTopicStatuses } from '@/lib/topic-status';
 import { useSolved } from '@/lib/use-solved';
 import { exerciseId } from '@/content/schema';
 import { DIFFICULTY_BADGE, DIFFICULTY_NOTE, lessonBase } from './difficulty';
-import type { Lesson, Problem } from '@/content/schema';
+import { stepIds } from '@/content/challenge';
+import type { Challenge, Lesson, Problem } from '@/content/schema';
 import type { Concept } from '@/content/concepts';
 
 /**
@@ -34,6 +35,11 @@ import type { Concept } from '@/content/concepts';
 export interface RoadmapTopic {
   lesson: Lesson;
   problems: readonly Problem[];
+  /**
+   * Build challenges applying this topic — the third tier, and the one a
+   * roadmap node had nothing to say about until tier 3 existed (I4).
+   */
+  challenges?: readonly Challenge[];
   /** Pattern cues rendered on the server — see the note in TopicPanel. */
   cues?: ReactNode;
   /** Reference terms this lesson covers. */
@@ -165,20 +171,32 @@ function NodeProgress({
   exercisesTotal,
   problemsDone,
   problemsTotal,
+  stepsDone,
+  stepsTotal,
 }: {
   exercisesDone: number;
   exercisesTotal: number;
   problemsDone: number;
   problemsTotal: number;
+  /**
+   * Build-challenge steps, counted rather than challenges.
+   *
+   * A challenge is four or five sittings, so `0/1 challenges` would sit at zero
+   * through most of an evening's work. Steps are the unit that actually gets
+   * finished, and the unit progress is recorded against.
+   */
+  stepsDone: number;
+  stepsTotal: number;
 }) {
   const parts: string[] = [];
   if (exercisesTotal > 0) parts.push(`${exercisesDone}/${exercisesTotal} exercises`);
   if (problemsTotal > 0) parts.push(`${problemsDone}/${problemsTotal} problems`);
+  if (stepsTotal > 0) parts.push(`${stepsDone}/${stepsTotal} build steps`);
   if (parts.length === 0) return null;
 
   // Only once something has been done. A row of zeroes on every node is noise
   // that makes the graph harder to read and tells a new learner nothing.
-  if (exercisesDone === 0 && problemsDone === 0) return null;
+  if (exercisesDone === 0 && problemsDone === 0 && stepsDone === 0) return null;
 
   return (
     <span className="mt-0.5 block text-xs font-normal opacity-70">{parts.join(' · ')}</span>
@@ -203,13 +221,15 @@ function RoadmapRow({
   solved: ReadonlySet<string>;
 }) {
   const rowRef = useRef<HTMLLIElement>(null);
-  const { lesson, problems } = topic;
+  const { lesson, problems, challenges = [] } = topic;
 
   // Derived from real results, unlike the self-reported mark beside it.
   const exercisesDone = lesson.exercises.filter((e) =>
     solved.has(exerciseId(lesson, e.slug)),
   ).length;
   const problemsDone = problems.filter((p) => solved.has(exerciseId(p))).length;
+  const steps = challenges.flatMap((c) => stepIds(c));
+  const stepsDone = steps.filter((id) => solved.has(id)).length;
 
   const branches = (
     <ul className={`flex w-full flex-col gap-2 ${BRANCH_W}`}>
@@ -282,6 +302,8 @@ function RoadmapRow({
               exercisesTotal={lesson.exercises.length}
               problemsDone={problemsDone}
               problemsTotal={problems.length}
+              stepsDone={stepsDone}
+              stepsTotal={steps.length}
             />
             {done && <DoneBadge title="You marked this done" />}
           </Link>
@@ -380,6 +402,7 @@ export function Roadmap({ topics }: { topics: RoadmapTopic[] }) {
         <TopicPanel
           lesson={open.lesson}
           problems={open.problems}
+          challenges={open.challenges}
           concepts={open.concepts}
           cues={open.cues}
           onClose={() => setOpenSlug(null)}

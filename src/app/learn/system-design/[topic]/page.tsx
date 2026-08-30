@@ -9,6 +9,7 @@ import { findConcept } from '@/content/concepts';
 import { exerciseId } from '@/content/schema';
 import { GuidedExercises } from '@/components/learn/GuidedExercises';
 import { Walkthrough } from '@/components/learn/Walkthrough';
+import { Page } from '@/components/ui/Page';
 
 /**
  * One lesson (B10), rendering the five sections in a fixed order so a learner
@@ -50,7 +51,7 @@ export default async function LessonPage(props: LessonRouteProps) {
   const base = trackLink.href;
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-8 sm:px-6">
+    <Page width="reading">
       {/*
         The title sits in a card rather than floating on the page ground, which
         is what gives a lesson a masthead the eye can land on — the reference
@@ -229,6 +230,6 @@ export default async function LessonPage(props: LessonRouteProps) {
           </Link>
         )}
       </nav>
-    </main>
+    </Page>
   );
 }

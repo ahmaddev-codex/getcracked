@@ -167,7 +167,47 @@ class _Timeout(Exception):
     pass
 
 
-def _run(source, entry, args_json, tracing, max_events, deadline):
+# Root for a build challenge's workspace on Pyodide's in-memory filesystem.
+_WORKSPACE = "/gc_learner"
+
+
+def _install(modules, entry_module, entry_source):
+    # Tier 3's several files, made importable.
+    #
+    # Written to the virtual filesystem and imported for real, rather than
+    # concatenated: an import statement has to mean what it means everywhere
+    # else, or a learner's build challenge would be Python-shaped code that is
+    # not Python. The JavaScript side reaches the same place by a different
+    # route - QuickJS has no loader, so it gets a CommonJS registry - and both
+    # end up executing files that import each other by name.
+    import os, sys, shutil, importlib
+
+    # Wiped per run. Pyodide is cached across runs for the life of the tab, so
+    # a file renamed between steps would otherwise stay importable and a
+    # learner would pass on code that no longer exists.
+    if os.path.isdir(_WORKSPACE):
+        shutil.rmtree(_WORKSPACE)
+    os.makedirs(_WORKSPACE, exist_ok=True)
+
+    files = list(modules) + [[entry_module, entry_source]]
+    for name, src in files:
+        with open(os.path.join(_WORKSPACE, name + ".py"), "w") as f:
+            f.write(src)
+
+    if _WORKSPACE not in sys.path:
+        sys.path.insert(0, _WORKSPACE)
+
+    # Same reason as the wipe: a cached module object would serve the previous
+    # run's code back to this one.
+    for name, _ in files:
+        sys.modules.pop(name, None)
+    importlib.invalidate_caches()
+
+    module = importlib.import_module(entry_module)
+    return module
+
+
+def _run(source, entry, args_json, tracing, max_events, deadline, modules_json="", entry_module=""):
     events = []
     dropped = [0]
 
@@ -179,12 +219,26 @@ def _run(source, entry, args_json, tracing, max_events, deadline):
             return
         events.append(e)
 
-    # Compiled explicitly so the frames carry a filename we can recognise: the
-    # tracer below uses it to tell the learner's code from this runner's.
-    scope = {}
-    code = compile(source, _SOURCE_FILE, "exec")
-    exec(code, scope)
-    fn = scope[entry]
+    if entry_module:
+        # A build challenge. Line events are skipped for it by construction:
+        # the frames carry real file paths, not _SOURCE_FILE, so the tracer
+        # below never matches them. That is deliberate - a trace event holds one
+        # line number, which says nothing across a workspace of several files -
+        # and it is reported as a degraded trace rather than a wrong one.
+        module = _install(json.loads(modules_json or "[]"), entry_module, source)
+        if not hasattr(module, entry):
+            raise AttributeError(
+                '%s.py does not define %s. Check the spelling.' % (entry_module, entry)
+            )
+        fn = getattr(module, entry)
+    else:
+        # Compiled explicitly so the frames carry a filename we can recognise:
+        # the tracer below uses it to tell the learner's code from this
+        # runner's.
+        scope = {}
+        code = compile(source, _SOURCE_FILE, "exec")
+        exec(code, scope)
+        fn = scope[entry]
 
     args = json.loads(args_json)
     import inspect
@@ -240,16 +294,27 @@ export async function runPython(opts: RunOptions): Promise<RunResult> {
     trace = false,
     timeoutMs = DEFAULT_TIMEOUT_MS,
     maxEvents = DEFAULT_MAX_EVENTS,
+    modules,
+    entryModule,
   } = opts;
 
-  // Python never degrades: sys.settrace reports lines straight from the
-  // interpreter, so there is no source rewriting that could fail.
+  const multiFile = (modules?.length ?? 0) > 0;
+
+  /**
+   * Python never degrades on a single file: sys.settrace reports lines straight
+   * from the interpreter, so there is no source rewriting that could fail.
+   *
+   * A build challenge does degrade, for the same reason JavaScript's does — one
+   * line number cannot address a workspace of several files. Both adapters draw
+   * the line in the same place, so a challenge animates identically (which is to
+   * say, structurally) in either language.
+   */
   const empty: RunResult = {
     ok: false,
     timedOut: false,
     events: [],
     truncated: false,
-    traceDegraded: false,
+    traceDegraded: trace && multiFile,
   };
 
   let py: PyodideInterface;
@@ -266,7 +331,19 @@ export async function runPython(opts: RunOptions): Promise<RunResult> {
     ) => string;
 
     const deadline = Date.now() / 1000 + timeoutMs / 1000;
-    const raw = run(source, entry, JSON.stringify(args), trace, maxEvents, deadline);
+    const raw = run(
+      source,
+      entry,
+      JSON.stringify(args),
+      trace,
+      maxEvents,
+      deadline,
+      // Serialised rather than passed as a Python list: Pyodide's proxying of a
+      // nested JS array is one more thing to get wrong for no gain, and the
+      // runner already parses JSON for the arguments.
+      multiFile ? JSON.stringify(modules!.map((m) => [m.name, m.source])) : '',
+      multiFile ? (entryModule ?? '__entry') : '',
+    );
     const payload = JSON.parse(raw) as {
       value: unknown;
       events: TraceEvent[];
@@ -285,7 +362,7 @@ export async function runPython(opts: RunOptions): Promise<RunResult> {
       timedOut: false,
       events,
       truncated: payload.dropped > 0,
-      traceDegraded: false,
+      traceDegraded: trace && multiFile,
       indexedBy: payload.indexedBy ?? {},
     };
   } catch (e) {

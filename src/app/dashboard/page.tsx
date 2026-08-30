@@ -8,6 +8,7 @@ import { ProblemTable } from '@/components/problem/ProblemTable';
 import { DIFFICULTIES, catalogCounts, filterProblems } from '@/lib/catalog';
 import { getTopics, getTrack } from '@/content/registry';
 import { conceptCount } from '@/content/concepts';
+import { Page } from '@/components/ui/Page';
 
 /**
  * The dashboard (A3, A4) — navigation across the three tiers (§2.1a).
@@ -52,10 +53,15 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
       title: 'Practice',
       detail: `${counts.problems} problems, grouped by topic`,
     },
+    {
+      href: '/challenges',
+      title: 'Build it',
+      detail: `${counts.challenges} multi-step builds, ${counts.challengeSteps} steps in all`,
+    },
   ];
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-8 sm:px-6">
+    <Page width="catalog">
       {/* The same masthead every other surface uses. This page previously had
           its own smaller heading and card grid, which made the one page a
           signed-in learner lands on the one that looked least like the
@@ -89,8 +95,9 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
       </section>
 
       <Node tone="muted" className="p-4 text-sm text-foreground-muted">
-        Multi-step build challenges are not written yet. When they are, they appear here —
-        saying so beats a card that goes nowhere.
+        Three tiers, one direction: read a topic, practise it on single functions, then
+        build the thing itself across several files. In any order — nothing is locked
+        behind anything.
       </Node>
 
       <section className="flex flex-col gap-4">
@@ -110,6 +117,6 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
           <ProblemTable problems={problems} />
         )}
       </section>
-    </main>
+    </Page>
   );
 }

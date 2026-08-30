@@ -16,6 +16,9 @@ export interface RunRequest {
   trace?: boolean;
   timeoutMs?: number;
   measure?: boolean;
+  /** Sibling files for a tier-3 build challenge; absent for the other tiers. */
+  modules?: ReadonlyArray<{ name: string; source: string }>;
+  entryModule?: string;
 }
 
 export type RunResponse =

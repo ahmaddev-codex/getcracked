@@ -1,11 +1,21 @@
-import { RAW_LESSONS, RAW_PROBLEMS } from '../src/content/registry';
+import { RAW_CHALLENGES, RAW_LESSONS, RAW_PROBLEMS } from '../src/content/registry';
 import {
   contentSchema,
   exerciseId,
   LANGUAGES,
+  type Challenge,
   type Language,
   type RunnableExercise,
 } from '../src/content/schema';
+import {
+  challengeLanguages,
+  entryFileFor,
+  fileEditable,
+  focusFileFor,
+  referenceProgram,
+  resolveStepFiles,
+  starterProgram,
+} from '../src/content/challenge';
 import { runTestSpec } from '../src/content/test-runner';
 import { walkthroughSpec } from '../src/content/walkthrough';
 import { findConcept } from '../src/content/concepts';
@@ -89,6 +99,121 @@ async function checkExercise(id: string, exercise: RunnableExercise) {
         `[${language}] starter code passes the spec — the exercise tests nothing. ` +
           'Add a case the stub cannot satisfy.',
       );
+    }
+  }
+}
+
+/**
+ * A build challenge, step by step (tier 3).
+ *
+ * The same two questions a problem is asked — does the author's own solution
+ * pass, and does the starting point fail — but asked of a *resolved workspace*
+ * rather than one string. That is what makes carry-forward safe to rely on: a
+ * step whose starter is the previous step's build is verified to fail this
+ * step's spec, which is the machine-checkable statement of "this step adds
+ * something".
+ *
+ * It also verifies each step is solvable **on its own**. A learner who opens
+ * step 3 first is handed the author's build of steps 1 and 2, and running the
+ * reference from that exact starting point is what proves that works.
+ */
+async function checkChallenge(id: string, challenge: Challenge) {
+  const languages = challengeLanguages(challenge);
+
+  if (!languages.includes('javascript')) {
+    // Report why, not just that: a missing language here is almost always one
+    // unresolvable file, and naming it saves reading four steps.
+    let detail = '';
+    for (const [i] of challenge.steps.entries()) {
+      try {
+        resolveStepFiles(challenge, i, 'javascript');
+      } catch (e) {
+        detail = ` (${e instanceof Error ? e.message : String(e)})`;
+        break;
+      }
+    }
+    fail(id, `No JavaScript build. JavaScript is the baseline language.${detail}`);
+    return;
+  }
+
+  const stepSlugs = new Set<string>();
+  for (const step of challenge.steps) {
+    if (stepSlugs.has(step.slug)) {
+      fail(id, `Duplicate step slug "${step.slug}" — step ids would collide in progress.`);
+    }
+    stepSlugs.add(step.slug);
+  }
+
+  for (const [index, step] of challenge.steps.entries()) {
+    const where = `${id}/${step.slug}`;
+    const names = new Set(step.files.map((f) => f.name));
+
+    // A step naming a file it does not list produces an empty editor or a
+    // "cannot find module" that reads as the learner's mistake.
+    if (!names.has(entryFileFor(step))) {
+      fail(where, `entryFile "${entryFileFor(step)}" is not among this step's files.`);
+      continue;
+    }
+    if (step.focus && !names.has(step.focus)) {
+      fail(where, `focus "${step.focus}" is not among this step's files.`);
+      continue;
+    }
+    if (!step.files.some((f) => fileEditable(challenge, index, f.name))) {
+      fail(where, 'Every file is read-only, so there is nothing for the learner to write.');
+      continue;
+    }
+    const focus = focusFileFor(challenge, index);
+    if (!fileEditable(challenge, index, focus)) {
+      fail(where, `focus "${focus}" is read-only — the editor would open on a file nobody can change.`);
+    }
+
+    for (const language of languages) {
+      const label = `${where} [${language}]`;
+
+      let reference, starter;
+      try {
+        reference = referenceProgram(challenge, index, language);
+        starter = starterProgram(challenge, index, language);
+      } catch (e) {
+        fail(label, e instanceof Error ? e.message : String(e));
+        continue;
+      }
+
+      const ref = await runTestSpec({
+        spec: step.testSpec,
+        source: reference.source,
+        modules: reference.modules,
+        entryModule: reference.entryModule,
+        language,
+      });
+
+      if (!ref.passed) {
+        const failed = ref.cases.filter((c) => !c.passed);
+        fail(
+          label,
+          `reference build fails its own spec (${failed.length}/${ref.cases.length} cases). ` +
+            `First failure — ${failed[0]?.name}: expected ${JSON.stringify(failed[0]?.expected)}, ` +
+            `got ${JSON.stringify(failed[0]?.actual)}${failed[0]?.error ? ` (${failed[0].error})` : ''}`,
+        );
+      }
+
+      const stub = await runTestSpec({
+        spec: step.testSpec,
+        source: starter.source,
+        modules: starter.modules,
+        entryModule: starter.entryModule,
+        language,
+      });
+
+      if (stub.passed) {
+        fail(
+          label,
+          'the starting workspace already passes this step — the step asks for nothing. ' +
+            (index === 0
+              ? 'Add a case the stub cannot satisfy.'
+              : `Its starter is the build carried from "${challenge.steps[index - 1].slug}", so this step's spec must test something that step did not.`),
+        );
+      }
     }
   }
 }
@@ -253,6 +378,39 @@ async function main() {
     }
   }
 
+  for (const raw of RAW_CHALLENGES) {
+    const parsed = contentSchema.safeParse(raw);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        fail(describe(raw), `${issue.path.join('.') || '(root)'}: ${issue.message}`);
+      }
+      continue;
+    }
+
+    const challenge = parsed.data;
+    if (challenge.tier !== 'challenge') continue;
+
+    const id = exerciseId(challenge);
+    if (seen.has(id)) fail(id, 'Duplicate content id — two entries share a tier and slug.');
+    seen.add(id);
+
+    // Both relations render links. A slug naming nothing is a dead end on the
+    // roadmap node that counts it and on the problem set that offers it (B20).
+    const lessonSlugs = new Set(RAW_LESSONS.map((l) => l.slug));
+    for (const topic of challenge.topics) {
+      if (!lessonSlugs.has(topic)) {
+        fail(id, `topics names "${topic}", which is not an authored lesson.`);
+      }
+    }
+    for (const prereq of challenge.recommendedAfter) {
+      if (!lessonSlugs.has(prereq)) {
+        fail(id, `recommendedAfter names "${prereq}", which is not an authored lesson.`);
+      }
+    }
+
+    await checkChallenge(id, challenge);
+  }
+
   if (problems.length > 0) {
     process.stderr.write(`\n✗ Content check failed (${problems.length} problem(s)):\n\n`);
     for (const p of problems) {
@@ -262,7 +420,8 @@ async function main() {
   }
 
   process.stdout.write(
-    `✓ Content check passed (${RAW_PROBLEMS.length} problem(s), ${RAW_LESSONS.length} lesson(s))\n`,
+    `✓ Content check passed (${RAW_PROBLEMS.length} problem(s), ${RAW_LESSONS.length} lesson(s), ` +
+      `${RAW_CHALLENGES.length} challenge(s) / ${RAW_CHALLENGES.reduce((n, c) => n + c.steps.length, 0)} steps)\n`,
   );
   process.exit(0);
 }

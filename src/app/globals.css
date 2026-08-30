@@ -203,6 +203,29 @@
 
   --radius-node: var(--radius-node);
 
+  /*
+   * Page rails (Module K).
+   *
+   * Three measures, and which one a page gets is decided by its *type*, never
+   * per page — that is the whole reason they are named. Before this, five
+   * different widths were in use across fourteen routes, two pages that link
+   * straight to each other disagreed, and one page had different horizontal
+   * padding from every other.
+   *
+   * - `canvas` matches the header rail, so a page using it lines its content up
+   *   with the wordmark. For pages that draw a graph or hold a second column.
+   * - `catalog` for lists, indexes and tools.
+   * - `reading` for a single document. ~75 characters at the body size, which
+   *   is the measure prose is actually comfortable at; `catalog` would run to
+   *   ~110 and `canvas` further still.
+   *
+   * Enforced by tests/design/page-width.test.ts, because a convention that
+   * lives only in a comment is how five widths happened the first time.
+   */
+  --container-canvas: 72rem;
+  --container-catalog: 56rem;
+  --container-reading: 48rem;
+
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";

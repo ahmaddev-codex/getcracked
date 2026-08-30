@@ -49,9 +49,15 @@ import { rateLimitingLesson } from './lessons/system-design/rate-limiting';
 import { cdnLesson } from './lessons/system-design/cdn';
 import { consistentHashingLesson } from './lessons/system-design/consistent-hashing';
 import { idempotencyLesson } from './lessons/system-design/idempotency';
+import { lruCacheChallenge } from './challenges/dsa/lru-cache';
+import { tokenBucketChallenge } from './challenges/real-world/token-bucket';
+import { undoRedoChallenge } from './challenges/design-patterns/undo-redo';
 import {
+  challengeSchema,
   lessonSchema,
   problemSchema,
+  type Challenge,
+  type ChallengeInput,
   type Content,
   type Lesson,
   type LessonInput,
@@ -102,7 +108,7 @@ export function getProblems(): readonly Problem[] {
 }
 
 export function getAllContent(): readonly Content[] {
-  return [...getProblems(), ...getLessons()];
+  return [...getProblems(), ...getLessons(), ...getChallenges()];
 }
 
 export function findProblem(topic: string, slug: string): Problem | undefined {
@@ -235,4 +241,78 @@ export function getLessonPosition(lesson: Lesson) {
 
 export function getTopics(): readonly string[] {
   return [...new Set(getProblems().map((p) => p.topic))].sort();
+}
+
+/** Authored build challenges, unvalidated — the check script reports on these. */
+export const RAW_CHALLENGES: readonly ChallengeInput[] = [
+  lruCacheChallenge,
+  tokenBucketChallenge,
+  undoRedoChallenge,
+];
+
+let challengeCache: readonly Challenge[] | undefined;
+
+/**
+ * Build challenges in catalog order (tier 3).
+ *
+ * Ordered by category and then by difficulty, so the DSA builds — the ones a
+ * learner arrives at from a lesson — lead, and the gentlest of each category
+ * comes first. Order is presentation only; nothing here reads progress and
+ * nothing is locked (§6.6).
+ */
+const CATEGORY_ORDER: ReadonlyArray<Challenge['category']> = [
+  'dsa',
+  'real-world',
+  'design-patterns',
+];
+
+const CHALLENGE_DIFFICULTY_ORDER = ['easy', 'medium', 'hard'] as const;
+
+export function getChallenges(): readonly Challenge[] {
+  challengeCache ??= RAW_CHALLENGES.map((c) => {
+    const parsed = challengeSchema.safeParse(c);
+    if (!parsed.success) {
+      const detail = parsed.error.issues
+        .map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`)
+        .join('; ');
+      throw new Error(`Invalid challenge "${c.slug}" — ${detail}. Run \`pnpm content:check\`.`);
+    }
+    return parsed.data;
+  }).sort(
+    (a, b) =>
+      CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category) ||
+      CHALLENGE_DIFFICULTY_ORDER.indexOf(a.difficulty) -
+        CHALLENGE_DIFFICULTY_ORDER.indexOf(b.difficulty) ||
+      a.slug.localeCompare(b.slug),
+  );
+  return challengeCache;
+}
+
+export function findChallenge(slug: string): Challenge | undefined {
+  return getChallenges().find((c) => c.slug === slug);
+}
+
+export function getChallengeCategories(): ReadonlyArray<Challenge['category']> {
+  return CATEGORY_ORDER.filter((category) =>
+    getChallenges().some((c) => c.category === category),
+  );
+}
+
+export function getChallengesInCategory(
+  category: Challenge['category'],
+): readonly Challenge[] {
+  return getChallenges().filter((c) => c.category === category);
+}
+
+/**
+ * Challenges that apply a given lesson topic (B20).
+ *
+ * The join a roadmap node counts its third tier with, and the one a problem set
+ * offers the deeper build from. Read off the challenge's authored `topics`
+ * rather than matched on the title, because the relationship is genuinely not
+ * in the words: `token-bucket` applies hashing and queues and says so neither
+ * time.
+ */
+export function getChallengesForTopic(topic: string): readonly Challenge[] {
+  return getChallenges().filter((c) => c.topics.includes(topic));
 }

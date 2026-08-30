@@ -18,6 +18,24 @@ export interface RunOptions {
   trace?: boolean;
   timeoutMs?: number;
   maxEvents?: number;
+  /**
+   * Sibling modules `source` may import, for a tier-3 build challenge.
+   *
+   * Absent for problems and lesson exercises, which are one function in one
+   * file. Adding it as an option rather than replacing `source` with a file
+   * list keeps the single-file path — the overwhelming majority of runs —
+   * exactly what it was, instead of making every caller describe a workspace of
+   * one.
+   */
+  modules?: ReadonlyArray<{ name: string; source: string }>;
+  /**
+   * Module name of `source` itself, so siblings can import it back.
+   *
+   * Required whenever `modules` is given: a module registry with a nameless
+   * entry cannot express `harness` importing `lru_cache`, which is the exact
+   * shape every build challenge has.
+   */
+  entryModule?: string;
 }
 
 export interface RunResult {
@@ -56,6 +74,15 @@ const DEFAULT_TIMEOUT_MS = 5_000;
  */
 function harness(
   entry: string,
+  /**
+   * How to reach the entry function from inside the sandbox.
+   *
+   * A bare global for a single file; a lookup on a module's exports for a build
+   * challenge. Parameterised rather than branched, so both tiers share one
+   * harness — a second copy is where the two would quietly drift on what a
+   * traced run records.
+   */
+  entryExpr: string,
   argNames: string[],
   maxEvents: number,
   tracing: boolean,
@@ -120,11 +147,63 @@ globalThis.__invoke = function (argsJson) {
   var args = JSON.parse(argsJson);
   var names = ${JSON.stringify(argNames)};
   var wrapped = args.map(function (a, i) { return __wrapArr(names[i] || ('arg' + i), a); });
-  var value = ${entry}.apply(null, wrapped);
+  var __fn = ${entryExpr};
+  if (typeof __fn !== 'function') {
+    throw new Error(${JSON.stringify(
+      `No function named "${entry}" was found. Check the spelling, and that the file exports it.`,
+    )});
+  }
+  var value = __fn.apply(null, wrapped);
   var snappedValue = __quiet(function () { return __snap(value); });
   __push({ kind: 'return', value: snappedValue });
   return JSON.stringify({ value: snappedValue, events: __events, dropped: __dropped });
 };
+`;
+}
+
+/**
+ * A CommonJS module registry, evaluated inside the sandbox.
+ *
+ * QuickJS's `evalCode` takes one script and has no module loader, so a build
+ * challenge's files are wrapped in factory functions and joined by a `require`
+ * of our own. That is why the launch languages' build challenges are authored
+ * against `module.exports` / `require` rather than ESM: it is what can actually
+ * be implemented here without a resolver, and it is close enough to Python's
+ * `import` that one challenge reads the same in both.
+ *
+ * Extensions and a leading `./` are stripped, so `require('./store')`,
+ * `require('store')` and `require('./store.js')` all resolve — a learner should
+ * not lose a test run to an import spelling.
+ */
+function moduleRegistry(modules: ReadonlyArray<{ name: string; source: string }>): string {
+  const defs = modules
+    .map(
+      (m) =>
+        `__modules[${JSON.stringify(m.name)}] = function (module, exports, require) {\n${m.source}\n};`,
+    )
+    .join('\n');
+
+  return `
+var __modules = {};
+var __moduleCache = {};
+function __require(name) {
+  var key = String(name).replace(/^\\.\\//, '').replace(/\\.(js|mjs|cjs)$/, '');
+  if (Object.prototype.hasOwnProperty.call(__moduleCache, key)) {
+    return __moduleCache[key].exports;
+  }
+  var factory = __modules[key];
+  if (!factory) {
+    throw new Error("Cannot find module '" + name + "'. Files in this workspace: " + Object.keys(__modules).join(', '));
+  }
+  var module = { exports: {} };
+  // Cached before the factory runs, so a cycle resolves to a partial export
+  // rather than recursing until the stack gives out.
+  __moduleCache[key] = module;
+  factory(module, module.exports, __require);
+  return module.exports;
+}
+var require = __require;
+${defs}
 `;
 }
 
@@ -154,7 +233,11 @@ async function executeOnce(
     args,
     timeoutMs = DEFAULT_TIMEOUT_MS,
     maxEvents = DEFAULT_MAX_EVENTS,
+    modules,
+    entryModule,
   } = opts;
+
+  const multiFile = (modules?.length ?? 0) > 0;
 
   const trace = useTrace;
   const QuickJS = await getQuickJS();
@@ -174,14 +257,40 @@ async function executeOnce(
   };
 
   try {
-    // Instrumentation can fail to locate the entry (a function expression, say).
-    // That is not fatal: structure events come from a Proxy on the arguments and
-    // need no rewriting, so the run proceeds with reduced fidelity.
-    const rewritten = trace ? instrument(source, entry) : { code: source, instrumented: false };
-    const degraded = trace && !rewritten.instrumented;
+    /**
+     * Instrumentation can fail to locate the entry (a function expression, say).
+     * That is not fatal: structure events come from a Proxy on the arguments and
+     * need no rewriting, so the run proceeds with reduced fidelity.
+     *
+     * **Line tracing is single-file only, deliberately.** A trace event carries
+     * one line number, and across a workspace of several files a line number is
+     * ambiguous — line 12 of which file? Rewriting the composed program instead
+     * would number lines against a script the learner cannot see, so the
+     * highlight would land on the wrong row of the wrong tab. A build challenge
+     * therefore records structure events only and reports itself degraded, which
+     * is a true statement about what it captured rather than a wrong picture.
+     */
+    const rewritten =
+      trace && !multiFile ? instrument(source, entry) : { code: source, instrumented: false };
+    const degraded = trace && (multiFile || !rewritten.instrumented);
 
     const argNames = entryParamNames(source, entry);
-    const program = `${rewritten.code}\n${harness(entry, argNames, maxEvents, trace)}`;
+
+    /**
+     * The entry module is registered alongside its siblings rather than left at
+     * the top level, so `harness` importing `lru_cache` and `lru_cache`
+     * importing back both work. That means its functions are not globals, so
+     * the entry is reached through its exports.
+     */
+    const entryName = entryModule ?? '__entry';
+    const registry = multiFile
+      ? moduleRegistry([...modules!, { name: entryName, source: rewritten.code }])
+      : rewritten.code;
+    const entryExpr = multiFile
+      ? `__require(${JSON.stringify(entryName)})[${JSON.stringify(entry)}]`
+      : entry;
+
+    const program = `${registry}\n${harness(entry, entryExpr, argNames, maxEvents, trace)}`;
 
     const setup = vm.evalCode(program);
     if (setup.error) {
@@ -274,7 +383,13 @@ export async function runJavaScript(opts: RunOptions): Promise<RunResult> {
   const wantsTrace = opts.trace ?? false;
   const traced = await executeOnce(opts, wantsTrace);
 
-  if (!wantsTrace || traced.timedOut) return traced;
+  /**
+   * A multi-file run rewrites nothing (see executeOnce), so there is no
+   * behaviour to verify and the second execution would be pure cost — on the
+   * tier whose runs are the longest.
+   */
+  const rewrote = wantsTrace && (opts.modules?.length ?? 0) === 0;
+  if (!rewrote || traced.timedOut) return traced;
 
   const plain = await executeOnce({ ...opts, trace: false }, false);
 

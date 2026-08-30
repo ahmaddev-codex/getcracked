@@ -29,6 +29,14 @@ export interface RunOptions {
   timeoutMs?: number;
   /** Costs an extra sandboxed run; on only when the UI will show the result. */
   measure?: boolean;
+  /**
+   * Sibling files for a tier-3 build challenge (see content/challenge.ts).
+   *
+   * Structured-cloneable plain data, so a workspace crosses the worker boundary
+   * as-is rather than being flattened into a string and reparsed on the far side.
+   */
+  modules?: ReadonlyArray<{ name: string; source: string }>;
+  entryModule?: string;
 }
 
 const DEFAULT_TIMEOUT_MS = 5_000;
@@ -120,6 +128,8 @@ export class RuntimeClient {
       trace: opts.trace,
       timeoutMs: opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
       measure: opts.measure,
+      modules: opts.modules,
+      entryModule: opts.entryModule,
     });
   }
 
@@ -165,6 +175,8 @@ export class RuntimeClient {
       trace: opts.trace,
       timeoutMs,
       measure: opts.measure,
+      modules: opts.modules,
+      entryModule: opts.entryModule,
     };
 
     return new Promise<SpecResult>((resolve, reject) => {

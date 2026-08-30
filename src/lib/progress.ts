@@ -148,29 +148,65 @@ export async function getLatestSubmission(
 }
 
 /**
+ * State of a group of runnable units, from the units themselves.
+ *
+ * One rule, because a lesson and a build challenge ask the same question of
+ * their parts: all done means done, any progress means in progress. Both wrap
+ * this rather than sharing a name, because "lesson complete" and "challenge
+ * complete" are different claims about a learner and appear in different places
+ * — but they must never disagree about what "all of them" means.
+ *
+ * An empty group can never be "complete" — there is nothing to complete. It
+ * reports `not_started` rather than silently counting as done, which would
+ * inflate every roadmap that contains it.
+ */
+function deriveGroupState(
+  ids: readonly string[],
+  progress: readonly ExerciseProgressRecord[],
+): ProgressState {
+  if (ids.length === 0) return 'not_started';
+
+  const byId = new Map(progress.map((p) => [p.exerciseId, p]));
+  const states = ids.map((id) => byId.get(id)?.state ?? 'not_started');
+
+  if (states.every((s) => s === 'complete')) return 'complete';
+  if (states.some((s) => s !== 'not_started')) return 'in_progress';
+  return 'not_started';
+}
+
+/**
  * Lesson state, derived from its guided exercises (B12).
  *
  * The single definition of "this lesson is done", consumed by the recommendation
  * engine (B16), roadmap nodes (I4), and the analytics funnel (F6). Deriving it
  * in one place is what stops three surfaces disagreeing about whether a learner
  * has finished something.
- *
- * A lesson with no exercises can never be "complete" — there is nothing to
- * complete. It reports `not_started` rather than silently counting as done,
- * which would inflate every roadmap that contains it.
  */
 export function deriveLessonState(
   exerciseIds: readonly string[],
   progress: readonly ExerciseProgressRecord[],
 ): ProgressState {
-  if (exerciseIds.length === 0) return 'not_started';
+  return deriveGroupState(exerciseIds, progress);
+}
 
-  const byId = new Map(progress.map((p) => [p.exerciseId, p]));
-  const states = exerciseIds.map((id) => byId.get(id)?.state ?? 'not_started');
-
-  if (states.every((s) => s === 'complete')) return 'complete';
-  if (states.some((s) => s !== 'not_started')) return 'in_progress';
-  return 'not_started';
+/**
+ * Challenge state, derived from its steps (tier 3).
+ *
+ * Steps are addressed exactly as a lesson's exercises are — `challenges/{slug}/
+ * {step}` — so nothing about storage changes for tier 3. What changes is only
+ * which ids are grouped, which is why this is a second name over one rule rather
+ * than a second implementation.
+ *
+ * Note what is *not* here: no step consults the state of the one before it.
+ * Steps are independently solvable by construction (the content gate proves it),
+ * so a learner may do them in any order and progress reflects what they did
+ * rather than how far along a track they got.
+ */
+export function deriveChallengeState(
+  stepIds: readonly string[],
+  progress: readonly ExerciseProgressRecord[],
+): ProgressState {
+  return deriveGroupState(stepIds, progress);
 }
 
 /** Lesson state for a signed-in learner, read through the same derivation. */
