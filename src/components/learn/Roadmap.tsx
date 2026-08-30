@@ -8,6 +8,7 @@ import { TopicPanel } from './TopicPanel';
 import { useTopicStatuses } from '@/lib/topic-status';
 import { DIFFICULTY_BADGE, DIFFICULTY_NOTE, lessonBase } from './difficulty';
 import type { Lesson, Problem } from '@/content/schema';
+import type { Concept } from '@/content/concepts';
 
 /**
  * The roadmap view (K2) — the reference's central idea, and the reason the
@@ -33,6 +34,8 @@ export interface RoadmapTopic {
   problems: readonly Problem[];
   /** Pattern cues rendered on the server — see the note in TopicPanel. */
   cues?: ReactNode;
+  /** Reference terms this lesson covers. */
+  concepts?: readonly Concept[];
 }
 
 const TRACK_LABELS: Record<Lesson['track'], string> = {
@@ -315,6 +318,7 @@ export function Roadmap({ topics }: { topics: RoadmapTopic[] }) {
         <TopicPanel
           lesson={open.lesson}
           problems={open.problems}
+          concepts={open.concepts}
           cues={open.cues}
           onClose={() => setOpenSlug(null)}
         />

@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { matchesQuery } from '@/components/learn/ConceptMindMap';
-import { getAllConcepts, getConceptCategories } from '@/content/concepts';
+import {
+  findConcept,
+  getAllConcepts,
+  getConceptCategories,
+  getPatternCategories,
+  getSystemDesignCategories,
+} from '@/content/concepts';
+import { getLessons } from '@/content/registry';
 
 /**
  * The concept reference (A14).
@@ -64,5 +71,58 @@ describe('concept anchors', () => {
     for (const category of getConceptCategories()) {
       expect(category.concepts.length, `${category.slug} is empty`).toBeGreaterThan(0);
     }
+  });
+});
+
+/**
+ * The join between the path and the vocabulary.
+ *
+ * System Design lessons and the concept reference were two diagrams of the same
+ * material, so a learner reading about caching had to scroll to a separate map
+ * to find out what a cache stampede is. Lessons now declare the terms they
+ * cover — and a declaration that points at nothing is a dead end in the one
+ * surface whose job is answering "what does this word mean?".
+ */
+describe('lesson to concept links', () => {
+  const lessons = getLessons().filter((l) => l.concepts.length > 0);
+
+  it('is actually used, not just available', () => {
+    expect(lessons.length).toBeGreaterThan(0);
+  });
+
+  it.each(lessons.map((l) => [l.slug, l] as const))(
+    '%s only claims concepts that exist',
+    (_slug, lesson) => {
+      for (const slug of lesson.concepts) {
+        expect(findConcept(slug), `${lesson.slug} claims missing concept "${slug}"`).toBeTruthy();
+      }
+    },
+  );
+
+  it('never claims the same concept from two lessons', () => {
+    // A term belongs to the lesson that teaches it. Two claims mean a learner
+    // meets the same definition twice and neither lesson owns it.
+    const seen = new Map<string, string>();
+    for (const lesson of lessons) {
+      for (const slug of lesson.concepts) {
+        const owner = seen.get(slug);
+        expect(owner, `"${slug}" claimed by both ${owner} and ${lesson.slug}`).toBeUndefined();
+        seen.set(slug, lesson.slug);
+      }
+    }
+  });
+
+  it('keeps named patterns out of the system design reference', () => {
+    // The split: a pattern has a proper name and answers "what is the known
+    // solution?"; system design vocabulary describes how a system behaves.
+    const design = getSystemDesignCategories().map((c) => c.slug);
+    const patterns = getPatternCategories().map((c) => c.slug);
+
+    expect(patterns.length).toBeGreaterThan(0);
+    expect(design.length).toBeGreaterThan(0);
+    for (const slug of patterns) expect(design).not.toContain(slug);
+    // Together they must still account for every category — a term that fell
+    // into neither would be unreachable from any page.
+    expect(design.length + patterns.length).toBe(getConceptCategories().length);
   });
 });

@@ -16,6 +16,8 @@ export const scalingLesson: LessonInput = {
     { name: 'cost curve', time: 'superlinear vertically, linear horizontally', note: 'The biggest instance costs far more than twice the one below it.' },
   ],
 
+  concepts: ['latency-vs-throughput', 'availability', 'scalability', 'vertical-vs-horizontal', 'statelessness', 'microservices', 'chatty-io', 'noisy-neighbour'],
+
   variants: [
     { name: 'Vertical (scale up)', what: 'A bigger machine. No code changes, no distributed systems problems, a hard ceiling.' },
     { name: 'Horizontal (scale out)', what: 'More machines. No ceiling, but every piece of local state becomes a problem.' },

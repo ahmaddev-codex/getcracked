@@ -16,6 +16,8 @@ export const databasesLesson: LessonInput = {
     { name: 'join across tables', time: 'varies', note: 'Cheap in SQL, usually unavailable in NoSQL — you denormalise instead.' },
   ],
 
+  concepts: ['sql-vs-nosql', 'indexing', 'normalization', 'n-plus-one', 'busy-database'],
+
   variants: [
     { name: 'Relational (Postgres, MySQL)', what: 'Rows, schemas, joins, transactions. The correct default until something rules it out.' },
     { name: 'Document (MongoDB, DynamoDB)', what: 'Self-contained documents. Good when a record is read whole and rarely joined.' },

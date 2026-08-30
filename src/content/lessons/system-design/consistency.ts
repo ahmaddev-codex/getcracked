@@ -16,6 +16,8 @@ export const consistencyLesson: LessonInput = {
     { name: 'quorum read/write', time: 'majority round trip', note: 'R + W > N gives strong consistency without a single primary.' },
   ],
 
+  concepts: ['cap-theorem', 'eventual-consistency', 'strong-consistency', 'quorum'],
+
   variants: [
     { name: 'Strong consistency', what: 'Every read sees the latest write. What a single database gives you by default.' },
     { name: 'Eventual consistency', what: 'Replicas converge given time. The default in most distributed stores.' },

@@ -17,6 +17,8 @@ export const replicationShardingLesson: LessonInput = {
     { name: 'resharding', time: 'hours to days', note: 'The reason to think about the key up front.' },
   ],
 
+  concepts: ['sharding', 'replication'],
+
   variants: [
     { name: 'Single-primary replication', what: 'One writer, many readers. Simple, and the default.' },
     { name: 'Multi-primary replication', what: 'Several writers. Removes the write bottleneck and introduces write conflicts.' },

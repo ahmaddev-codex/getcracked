@@ -16,6 +16,8 @@ export const rateLimitingLesson: LessonInput = {
     { name: 'sliding window log', time: 'O(requests in window)', note: 'Exact, and the memory grows with the rate.' },
   ],
 
+  concepts: ['rate-limiting', 'authn-authz', 'least-privilege', 'defense-in-depth'],
+
   variants: [
     { name: 'Fixed window', what: 'N per calendar minute. Trivial, and allows 2N across a boundary.' },
     { name: 'Sliding window log', what: 'Timestamps of recent requests. Exact, and the most memory.' },

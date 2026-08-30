@@ -188,6 +188,22 @@ export const lessonSchema = z.object({
     )
     .default([]),
 
+  /**
+   * Concept-reference terms this lesson covers.
+   *
+   * The join between the path and the vocabulary. System Design lessons and the
+   * concept map were two separate diagrams describing the same material, which
+   * made a learner check both; declaring the relationship lets the terms hang
+   * off the lesson that teaches them, exactly as practice problems hang off a
+   * DSA lesson.
+   *
+   * Authored deliberately rather than inferred from category names, because the
+   * mapping is genuinely uneven — `networking` splits across load balancing and
+   * CDNs, and some terms belong to no lesson at all. A forced mapping would
+   * assert a relationship the curriculum does not have.
+   */
+  concepts: z.array(z.string().regex(/^[a-z0-9-]+$/)).default([]),
+
   /** Named variants worth recognising by name. */
   variants: z
     .array(z.object({ name: z.string().min(1), what: z.string().min(1) }))

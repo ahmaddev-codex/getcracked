@@ -16,6 +16,8 @@ export const messageQueuesLesson: LessonInput = {
     { name: 'throughput (SQS, RabbitMQ)', time: 'thousands/s', note: 'Per queue. Richer routing and per-message semantics.' },
   ],
 
+  concepts: ['message-queue', 'pub-sub', 'backpressure', 'at-least-once'],
+
   variants: [
     { name: 'Work queue', what: 'One consumer per message. Jobs: resize this image, send this email.' },
     { name: 'Publish/subscribe', what: 'Every subscriber sees every message. Events: an order was placed.' },

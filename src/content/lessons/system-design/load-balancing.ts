@@ -16,6 +16,8 @@ export const loadBalancingLesson: LessonInput = {
     { name: 'connection draining', time: '30-300 s', note: 'How long in-flight requests get to finish during a deploy.' },
   ],
 
+  concepts: ['load-balancer', 'reverse-proxy', 'dns', 'api-gateway', 'health-check'],
+
   variants: [
     { name: 'Layer 4 (transport)', what: 'Routes by IP and port without reading the request. Fast, protocol-agnostic, cannot make content-based decisions.' },
     { name: 'Layer 7 (application)', what: 'Reads the HTTP request, so it can route by path, header, or cookie. Slower, far more capable.' },

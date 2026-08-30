@@ -30,7 +30,21 @@ export const DIFFICULTY_BADGE: Record<Lesson['difficulty'], string> = {
  * two import each other.
  */
 export function lessonBase(track: Lesson['track']): string {
-  return track === 'system-design' ? '/learn/system-design' : '/learn/dsa';
+  return trackIndex(track).href;
+}
+
+/**
+ * The index a track's lessons belong to — href and label together.
+ *
+ * Deliberately one function returning both. When they were separate, the
+ * breadcrumb on a System Design lesson routed correctly and read "Learn DSA",
+ * because only the href was made track-aware and the label stayed hardcoded.
+ * Returning the pair makes that particular drift impossible.
+ */
+export function trackIndex(track: Lesson['track']): { href: string; label: string } {
+  return track === 'system-design'
+    ? { href: '/learn/system-design', label: 'System Design' }
+    : { href: '/learn/dsa', label: 'Learn DSA' };
 }
 
 export const DIFFICULTY_NOTE: Record<Lesson['difficulty'], string> = {

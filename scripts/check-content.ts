@@ -8,6 +8,7 @@ import {
 } from '../src/content/schema';
 import { runTestSpec } from '../src/content/test-runner';
 import { walkthroughSpec } from '../src/content/walkthrough';
+import { findConcept } from '../src/content/concepts';
 
 /**
  * Content validation gate (ADR 0001 §8, AD-3).
@@ -137,6 +138,15 @@ async function main() {
     for (const prereq of lesson.recommendedAfter) {
       if (!slugs.has(prereq)) {
         fail(id, `recommendedAfter names "${prereq}", which is not an authored lesson.`);
+      }
+    }
+
+    // A lesson claiming a concept that does not exist renders a term with no
+    // definition behind it — a dead end in the one surface whose whole job is
+    // answering "what does this word mean?".
+    for (const slug of lesson.concepts) {
+      if (!findConcept(slug)) {
+        fail(id, `declares concept "${slug}", which is not in the concept reference.`);
       }
     }
 

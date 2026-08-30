@@ -16,6 +16,8 @@ export const cachingLesson: LessonInput = {
     { name: 'cross-region round trip', time: '50-150 ms', note: 'Physics. No amount of tuning removes it.' },
   ],
 
+  concepts: ['cache-aside', 'write-through', 'eviction-policy', 'cache-stampede'],
+
   variants: [
     { name: 'Cache-aside (lazy)', what: 'The app checks the cache, then the database, then populates. The default, and the one to describe unless asked otherwise.' },
     { name: 'Write-through', what: 'Writes go to cache and database together. Consistent, and slower on every write.' },

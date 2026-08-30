@@ -25,6 +25,7 @@ import { useSession } from '@/lib/auth-client';
 const LINKS = [
   { href: '/learn/dsa', label: 'Learn DSA' },
   { href: '/learn/system-design', label: 'System Design' },
+  { href: '/learn/design-patterns', label: 'Patterns' },
   { href: '/problems', label: 'Problems' },
 ];
 

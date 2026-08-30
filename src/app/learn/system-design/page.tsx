@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ConceptMindMap } from '@/components/learn/ConceptMindMap';
 import { Markdown } from '@/components/Markdown';
 import { Roadmap } from '@/components/learn/Roadmap';
-import { conceptCount, getConceptCategories } from '@/content/concepts';
+import { findConcept, getSystemDesignCategories } from '@/content/concepts';
 import { getTrack } from '@/content/registry';
 
 /**
@@ -26,7 +26,7 @@ export const metadata = {
 };
 
 export default function SystemDesignPage() {
-  const categories = getConceptCategories();
+  const categories = getSystemDesignCategories();
   const lessons = getTrack('system-design');
 
   const topics = lessons.map((lesson) => ({
@@ -34,6 +34,9 @@ export default function SystemDesignPage() {
     // System Design has no runnable problem sets yet, so nothing branches off
     // the spine. The renderer draws a bare path, which is the honest picture.
     problems: [],
+    concepts: lesson.concepts
+      .map((slug) => findConcept(slug))
+      .filter((c): c is NonNullable<typeof c> => Boolean(c)),
     cues:
       lesson.patternCues.length > 0 ? (
         <ul className="flex list-disc flex-col gap-1 pl-4 text-sm text-foreground-muted">
@@ -69,9 +72,12 @@ export default function SystemDesignPage() {
         <div className="flex flex-col gap-1">
           <h2 className="font-sans text-2xl font-bold tracking-tight">Concept reference</h2>
           <p className="text-sm text-foreground-muted">
-            {conceptCount()} concepts across {categories.length} areas, laid out the same way
-            as the path above. Every term is visible without opening anything, and each one
-            links to itself — so you can send someone straight to a definition.
+            {categories.reduce((sum, c) => sum + c.concepts.length, 0)} terms across{' '}
+            {categories.length} areas, laid out the same way as the path above. Named{' '}
+            <Link href="/learn/design-patterns" className="text-link underline underline-offset-2">
+              design patterns
+            </Link>{' '}
+            have their own catalogue — they answer a different question.
           </p>
         </div>
         <ConceptMindMap categories={categories} />

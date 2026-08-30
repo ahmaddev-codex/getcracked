@@ -4,7 +4,8 @@ import { Markdown } from '@/components/Markdown';
 import { LessonSection } from '@/components/learn/LessonSection';
 import { Node } from '@/components/ui/Node';
 import { findLesson, getLessons, getLessonPosition, getProblemSet } from '@/content/registry';
-import { lessonBase } from '@/components/learn/difficulty';
+import { trackIndex } from '@/components/learn/difficulty';
+import { findConcept } from '@/content/concepts';
 import { exerciseId } from '@/content/schema';
 import { GuidedExercises } from '@/components/learn/GuidedExercises';
 import { Walkthrough } from '@/components/learn/Walkthrough';
@@ -42,7 +43,11 @@ export default async function LessonPage(props: LessonRouteProps) {
 
   const { index, total, previous, next } = getLessonPosition(lesson);
   const problems = getProblemSet(lesson.slug);
-  const base = lessonBase(lesson.track);
+  const lessonConcepts = lesson.concepts
+    .map((slug) => findConcept(slug))
+    .filter((c): c is NonNullable<typeof c> => Boolean(c));
+  const trackLink = trackIndex(lesson.track);
+  const base = trackLink.href;
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-8 sm:px-6">
@@ -54,7 +59,7 @@ export default async function LessonPage(props: LessonRouteProps) {
       <header className="node-surface flex flex-col gap-2 bg-surface p-6">
         <p className="text-xs text-foreground-muted">
           <Link href={base} className="text-link underline underline-offset-2">
-            ← Learn DSA
+            ← {trackLink.label}
           </Link>
           {` · Lesson ${index + 1} of ${total}`}
         </p>
@@ -135,6 +140,27 @@ export default async function LessonPage(props: LessonRouteProps) {
               ))}
             </div>
           )}
+        </LessonSection>
+      )}
+
+      {/* Vocabulary this lesson covers, merged from the concept reference. */}
+      {lessonConcepts.length > 0 && (
+        <LessonSection title="Key terms">
+          <dl className="flex flex-col gap-3 text-sm">
+            {lessonConcepts.map((concept) => (
+              <div key={concept.slug}>
+                <dt className="font-semibold">
+                  <Link
+                    href={`/learn/system-design#${concept.slug}`}
+                    className="text-link underline underline-offset-2"
+                  >
+                    {concept.term}
+                  </Link>
+                </dt>
+                <dd className="text-foreground-muted">{concept.definition}</dd>
+              </div>
+            ))}
+          </dl>
         </LessonSection>
       )}
 

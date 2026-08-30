@@ -20,6 +20,7 @@ import {
 import { setTopicStatus, useTopicStatuses, type TopicStatus } from '@/lib/topic-status';
 import type { ReactNode } from 'react';
 import type { Lesson, Problem } from '@/content/schema';
+import type { Concept } from '@/content/concepts';
 import { DIFFICULTY_BADGE, lessonBase } from './difficulty';
 
 /**
@@ -88,11 +89,14 @@ function Section({
 export function TopicPanel({
   lesson,
   problems,
+  concepts = [],
   cues,
   onClose,
 }: {
   lesson: Lesson;
   problems: readonly Problem[];
+  /** Reference terms this lesson covers, resolved from `lesson.concepts`. */
+  concepts?: readonly Concept[];
   /**
    * Pattern cues, rendered on the server.
    *
@@ -235,15 +239,34 @@ export function TopicPanel({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold">{lesson.title}</p>
+                {/*
+                  Describes what this lesson actually contains.
+
+                  These were hardcoded, so a System Design topic advertised
+                  "0 exercises · animated walkthrough" — both false, on a card
+                  whose whole job is telling a learner what they are about to
+                  open. A panel that promises a walkthrough there is not is
+                  worse than one that promises nothing.
+                */}
                 <p className="mt-1 flex flex-wrap items-center gap-3 text-xs text-foreground-muted">
-                  <span className="inline-flex items-center gap-1">
-                    <ListChecks size={13} aria-hidden />
-                    {exerciseCount} {exerciseCount === 1 ? 'exercise' : 'exercises'}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <BookOpen size={13} aria-hidden />
-                    animated walkthrough
-                  </span>
+                  {lesson.walkthrough && (
+                    <span className="inline-flex items-center gap-1">
+                      <BookOpen size={13} aria-hidden />
+                      animated walkthrough
+                    </span>
+                  )}
+                  {exerciseCount > 0 && (
+                    <span className="inline-flex items-center gap-1">
+                      <ListChecks size={13} aria-hidden />
+                      {exerciseCount} {exerciseCount === 1 ? 'exercise' : 'exercises'}
+                    </span>
+                  )}
+                  {!lesson.walkthrough && exerciseCount === 0 && (
+                    <span className="inline-flex items-center gap-1">
+                      <BookOpen size={13} aria-hidden />
+                      explainer, cues and pitfalls
+                    </span>
+                  )}
                 </p>
               </div>
               <Link
@@ -350,6 +373,44 @@ export function TopicPanel({
               title="How to spot it"
             >
               {cues}
+            </Section>
+          )}
+
+          {/*
+            The lesson's vocabulary, merged in from the concept reference.
+            
+            These were two diagrams of the same material on one page, so a
+            learner reading about caching had to scroll to a separate map to find
+            out what a cache stampede is. The terms now hang off the lesson that
+            teaches them — the same relationship practice problems have to a DSA
+            lesson — and each still links to its own anchor, so the reference
+            remains the canonical place to send someone.
+          */}
+          {concepts.length > 0 && (
+            <Section
+              icon={<BookOpen size={15} className="text-alt" aria-hidden />}
+              title="Key terms"
+              meta={
+                <span className="font-normal text-foreground-muted">
+                  · {concepts.length} from the reference
+                </span>
+              }
+            >
+              <dl className="flex flex-col gap-2 text-sm">
+                {concepts.map((concept) => (
+                  <div key={concept.slug}>
+                    <dt className="font-semibold">
+                      <a
+                        href={`${lessonBase(lesson.track)}#${concept.slug}`}
+                        className="text-link underline underline-offset-2 hover:no-underline"
+                      >
+                        {concept.term}
+                      </a>
+                    </dt>
+                    <dd className="text-foreground-muted">{concept.definition}</dd>
+                  </div>
+                ))}
+              </dl>
             </Section>
           )}
 

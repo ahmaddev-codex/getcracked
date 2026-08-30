@@ -16,6 +16,8 @@ export const cdnLesson: LessonInput = {
     { name: 'cache purge propagation', time: 'seconds to minutes', note: 'Global invalidation is not instant. Version your URLs instead.' },
   ],
 
+  concepts: ['cdn'],
+
   variants: [
     { name: 'Static asset CDN', what: 'Images, CSS, JavaScript, video. The original use, and still the biggest win.' },
     { name: 'Full-page caching', what: 'Whole HTML responses at the edge, for pages that are the same for everyone.' },

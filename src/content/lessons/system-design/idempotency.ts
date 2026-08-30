@@ -16,6 +16,8 @@ export const idempotencyLesson: LessonInput = {
     { name: 'circuit breaker open', time: '10-60 s', note: 'Stop calling a failing dependency and let it recover.' },
   ],
 
+  concepts: ['idempotency', 'metrics-logs-traces', 'slo', 'percentiles'],
+
   variants: [
     { name: 'Naturally idempotent', what: 'PUT, DELETE, "set status to shipped". Repeating changes nothing.' },
     { name: 'Idempotency key', what: 'The client sends a unique id; the server stores the result and replays it on retry. What payment APIs do.' },
