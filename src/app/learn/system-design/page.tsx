@@ -53,8 +53,9 @@ export default function SystemDesignPage() {
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6">
       <header className="node-surface flex flex-col gap-2 bg-surface p-6">
         <p className="text-xs text-foreground-muted">
-          <Link href="/learn" className="text-link underline underline-offset-2">
-            ← Learn
+          Related:{' '}
+          <Link href="/learn/design-patterns" className="text-link underline underline-offset-2">
+            Design Patterns
           </Link>
         </p>
         <h1 className="font-sans text-4xl font-bold tracking-tight sm:text-5xl">

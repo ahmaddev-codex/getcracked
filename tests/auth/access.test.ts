@@ -12,8 +12,8 @@ import { isPublicPath, ACCOUNT_SCOPED_PAGE_PREFIXES } from '@/lib/access';
 describe('content is public', () => {
   it.each([
     '/',
-    '/learn',
     '/learn/dsa',
+    '/learn/design-patterns',
     '/learn/dsa/hashing',
     '/learn/system-design',
     '/problems',

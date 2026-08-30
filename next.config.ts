@@ -15,6 +15,21 @@ const nextConfig: NextConfig = {
         destination: '/learn/system-design',
         permanent: true,
       },
+      {
+        /**
+         * The `/learn` hub is gone — the site header now lists every track
+         * directly, so a page whose only content was links to them was one
+         * click of pure overhead.
+         *
+         * Redirected rather than left to 404 for the same reason as above: it
+         * was linked from inside the product and is exactly the kind of path
+         * that ends up in a bookmark. DSA is the destination because it is
+         * where a learner with no other signal should start.
+         */
+        source: '/learn',
+        destination: '/learn/dsa',
+        permanent: true,
+      },
     ];
   },
 };

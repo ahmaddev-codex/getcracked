@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import * as schema from '@/db/schema';
 import { getDb, type Database } from '@/db/client';
+import { socialProviderConfig } from './oauth';
 
 /**
  * Authentication (ADR 0001 §4).
@@ -52,6 +53,29 @@ export function createAuth(db: Database) {
       // Verification is a Phase 1 concern; blocking sign-in on it now would
       // require mail infrastructure that nothing else needs yet.
       requireEmailVerification: false,
+    },
+    /**
+     * Only providers whose credentials are actually present (see oauth.ts).
+     * Declaring one with an empty client id renders a button that leads to an
+     * OAuth error page, which reads as the product being broken.
+     */
+    socialProviders: socialProviderConfig(),
+    account: {
+      accountLinking: {
+        /**
+         * Link a social identity to an existing account when the email matches.
+         *
+         * Without this, signing up with a password and later clicking "Continue
+         * with Google" on the same address creates a *second* account, and the
+         * learner's progress silently splits in two.
+         *
+         * Restricted to providers that verify email addresses themselves.
+         * Trusting an unverified one would let anyone who can assert an address
+         * at that provider take over the account holding it.
+         */
+        enabled: true,
+        trustedProviders: ['google', 'github'],
+      },
     },
   });
 }

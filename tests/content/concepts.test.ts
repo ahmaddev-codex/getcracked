@@ -68,7 +68,7 @@ describe('deep linking', () => {
 
 describe('access', () => {
   it('is public — it is an acquisition surface, not account data', () => {
-    expect(isPublicPath('/learn')).toBe(true);
+    expect(isPublicPath('/learn/system-design')).toBe(true);
     expect(isPublicPath('/learn/system-design')).toBe(true);
   });
 });

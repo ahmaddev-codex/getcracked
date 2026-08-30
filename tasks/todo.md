@@ -20,6 +20,7 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 - [x] **T0.2** — 🔥 SPIKE: Python + JavaScript in-browser execution and trace capture · *M* · deps: T0.1 — findings: [docs/spikes/runtime-python-js.md](../docs/spikes/runtime-python-js.md). **QuickJS cannot trace without AST rewriting → R-2 stays High.** Trace payload is O(n²) — T2.7 must fix.
 - [x] **T0.3** — Database schema and migrations · *M* · deps: T0.1 — Drizzle + Neon per [ADR 0001 §3](../docs/adr/0001-stack.md). Tests run on embedded PGlite. ✅ verified end-to-end against local Docker Postgres (migrate + seed twice, idempotent). ⚠️ auth tables still need reconciling against Better Auth's generator in T0.4.
 - [x] **T0.4** — Auth for account-scoped data + reconcile Better Auth tables (A2, A15, §2.6) · *M* · deps: T0.3 — Better Auth on our schema, verified end-to-end. ⚠️ A15 anonymous-progress migration is **not** built (needs local progress from T1.4 to migrate)
+- [x] **Google and GitHub OAuth (A2)** — a provider is offered only when *both* halves of its credential are present, so a button that cannot complete is never rendered; an empty client id fails after the redirect, which reads as the product being broken rather than a deployment being incomplete. `accounts` already had every OAuth column, so no migration. Account linking is on for these two and restricted to them: without it, signing up with a password and later using Google on the same address silently splits a learner's progress across two accounts. No secrets reach the client — asserted by a test, since that is the worst available outcome here
 - [x] **T0.5** — Analytics event pipeline, **both tiers** (F6, A16) · *S* · deps: T0.3, T0.4 — signed-in by account, signed-out by rotating device id, with the A16 notice as the disclosure surface. ✅ rate-limited via Upstash sliding window (R-17 closed)
 - [x] **T0.7** — 🎨 Design system: tokens **sampled by decoding the `shots/` screenshots**, K3 node treatment, 5 components, CI contrast check over 15 pairs × 2 themes, ESLint rule banning hardcoded values (K1, K3, K8, K9, K10) · *M* · deps: T0.1
 - [ ] ~~**T0.6** — SPIKE: Java execution strategy~~ · **suspended** — first task of Phase 9; nothing depends on it
@@ -174,6 +175,11 @@ is crawled.
 - [ ] Further languages: TypeScript, Go, C++, Rust
 
 ---
+
+## Navigation and surfaces
+
+- [x] **`/learn` hub removed** — the site header lists every track directly, so a page whose only content was links to them was a click of pure overhead. Redirected rather than 404'd: it was linked from inside the product and is exactly the kind of path that ends up in a bookmark
+- [x] Four surfaces in the nav: Learn DSA · System Design · Patterns · Problems
 
 ## Module K — visual language *(cuts across phases; recorded here because it is not any one phase's task)*
 
