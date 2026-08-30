@@ -31,6 +31,7 @@ export const EVENT_NAMES = [
   // people who were experimenting.
   'sandbox_opened',
   'sandbox_run',
+  'sandbox_shared',
   // Anonymous -> account (A15/A16)
   'signed_out_notice_shown',
   'signed_out_notice_dismissed',

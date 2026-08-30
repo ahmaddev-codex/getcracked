@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { Play } from 'lucide-react';
+import { Link2, Play } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Node } from '@/components/ui/Node';
 import { Editor } from '@/components/problem/Editor';
@@ -14,6 +14,7 @@ import { clearDraft, readDraft, subscribeToDrafts, writeDraft } from '@/lib/draf
 import { track } from '@/lib/analytics/track';
 import { supportedLanguages } from '@/content/test-runner';
 import { DEFAULT_PRESET, SANDBOX_PRESETS } from '@/lib/sandbox-presets';
+import { decodeRun, encodeRun, MAX_LINK_LENGTH } from '@/lib/share-link';
 import type { Language } from '@/content/schema';
 import type { SpecResult } from '@/content/test-runner';
 
@@ -41,12 +42,29 @@ const DRAFT_ID = 'sandbox';
 export function Sandbox() {
   const available = supportedLanguages();
 
-  const [language, setLanguage] = useState<Language>('javascript');
+  /**
+   * A run someone shared, read from the fragment once at mount.
+   *
+   * Read in a lazy initialiser rather than an effect so the editor is seeded
+   * with the shared code on its first render — seeding it afterwards would mean
+   * mounting CodeMirror with the preset and then replacing the document, which
+   * a recipient sees as the page flickering to something else.
+   *
+   * `null` on the server, where there is no fragment, and on any malformed link.
+   */
+  const [shared] = useState<ReturnType<typeof decodeRun>>(() =>
+    typeof window === 'undefined' ? null : decodeRun(window.location.hash),
+  );
+
+  const [language, setLanguage] = useState<Language>(shared?.language ?? 'javascript');
   const [presetId, setPresetId] = useState(DEFAULT_PRESET.id);
   const preset = SANDBOX_PRESETS.find((p) => p.id === presetId) ?? DEFAULT_PRESET;
 
-  const [argsText, setArgsText] = useState(() => JSON.stringify(DEFAULT_PRESET.args));
-  const [chosenEntry, setChosenEntry] = useState<string | null>(null);
+  const [argsText, setArgsText] = useState(() =>
+    JSON.stringify(shared?.args ?? DEFAULT_PRESET.args),
+  );
+  const [chosenEntry, setChosenEntry] = useState<string | null>(shared?.entry ?? null);
+  const [copied, setCopied] = useState<string | null>(null);
   const [result, setResult] = useState<SpecResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
@@ -64,7 +82,15 @@ export function Sandbox() {
   );
 
   const starter = preset.source[language];
-  const initialDoc = resetCount === 0 ? (savedDraft ?? starter) : starter;
+  /**
+   * A shared link wins over a saved draft, and only on the first render.
+   *
+   * Someone opening a link expects to see what was sent them, not whatever they
+   * last left in the scratchpad. After that first render `resetCount` and the
+   * draft take over as normal, so their own edits are theirs.
+   */
+  const initialDoc =
+    resetCount === 0 ? (shared?.source ?? savedDraft ?? starter) : starter;
 
   /**
    * The document, in state rather than mirrored into a ref.
@@ -123,6 +149,46 @@ export function Sandbox() {
     setError(null);
     setTracedLine(null);
     setResetCount((n) => n + 1);
+  }
+
+  /**
+   * The link half of B6 — a live run rather than a recording.
+   *
+   * Written into the address bar as well as the clipboard, so a learner who
+   * blocks clipboard access can still copy it out of the URL themselves.
+   */
+  function copyLink() {
+    if (!entry) {
+      setCopied('Nothing to share yet — there is no function to run.');
+      return;
+    }
+
+    let args: unknown[];
+    try {
+      const parsed: unknown = JSON.parse(argsText);
+      if (!Array.isArray(parsed)) throw new Error('not an array');
+      args = parsed;
+    } catch {
+      setCopied('Fix the input first — a link has to carry valid JSON.');
+      return;
+    }
+
+    const fragment = encodeRun({ language, entry, source, args });
+    const url = `${window.location.origin}${window.location.pathname}${fragment}`;
+
+    if (url.length > MAX_LINK_LENGTH) {
+      // Truncation by whatever it is pasted into produces a broken sandbox
+      // rather than an error, so refusing is the honest outcome.
+      setCopied('Too long to share as a link. Trim the code, or send the file.');
+      return;
+    }
+
+    window.history.replaceState(null, '', fragment);
+    void navigator.clipboard
+      ?.writeText(url)
+      .then(() => setCopied('Link copied.'))
+      .catch(() => setCopied('Copy failed — the link is in the address bar.'));
+    track('sandbox_shared', { language });
   }
 
   const run = useCallback(async () => {
@@ -287,11 +353,20 @@ export function Sandbox() {
               className="node-surface w-full bg-surface px-2 py-1 font-mono text-xs text-foreground"
             />
           </label>
+
+          <Button
+            tone="surface"
+            onClick={copyLink}
+            className="inline-flex items-center gap-1.5 px-2 py-1 text-xs"
+          >
+            <Link2 size={13} aria-hidden />
+            Copy link
+          </Button>
         </div>
 
-        <p className="text-xs text-foreground-muted">
-          Nothing is graded and nothing is recorded — there is no right answer here.
-          Arguments are read as JSON, not evaluated.
+        <p className="text-xs text-foreground-muted" aria-live="polite">
+          {copied ??
+            'Nothing is graded and nothing is recorded — there is no right answer here. Arguments are read as JSON, not evaluated.'}
         </p>
       </Node>
 
