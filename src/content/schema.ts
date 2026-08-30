@@ -21,7 +21,17 @@ export const languageSchema = z.enum(LANGUAGES);
 export const tierSchema = z.enum(['lesson', 'problem', 'challenge']);
 export type Tier = z.infer<typeof tierSchema>;
 
-export const difficultySchema = z.enum(['warm-up', 'core', 'stretch']);
+/**
+ * Practice difficulty, in the words the rest of the industry uses.
+ *
+ * Deliberately *not* the same scale as a lesson's `difficulty`
+ * (foundational · core · advanced). They measure different things: a lesson is
+ * ranked by how much it assumes, a problem by how hard it is to solve. Sharing
+ * a vocabulary would imply a mapping between them that does not exist — an
+ * advanced topic can have an easy first problem.
+ */
+export const difficultySchema = z.enum(['easy', 'medium', 'hard']);
+export type Difficulty = z.infer<typeof difficultySchema>;
 
 /**
  * One test case: arguments in, expected value out.

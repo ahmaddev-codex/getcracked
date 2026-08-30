@@ -4,7 +4,7 @@ export const countComponents: ProblemInput = {
   tier: 'problem',
   slug: "count-components",
   topic: "graphs",
-  difficulty: "core",
+  difficulty: "medium",
   title: "Count Connected Components",
   companies: ["Amazon", "Google"],
   recommendedAfter: ["graphs"],

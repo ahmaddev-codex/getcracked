@@ -23,6 +23,7 @@ import {
 import { closeBrackets, closeBracketsKeymap, autocompletion, completionKeymap } from '@codemirror/autocomplete';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { editorTheme, syntaxExtension } from './editor-theme';
+import { applyHighlight, highlightField } from './line-highlight';
 import { languageExtension } from './language-support';
 import type { Language } from '@/content/schema';
 
@@ -45,6 +46,7 @@ export function Editor({
   onRun,
   docRef,
   language = 'javascript',
+  highlightedLine,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -60,6 +62,14 @@ export function Editor({
   docRef?: React.MutableRefObject<string>;
   /** Drives syntax highlighting. The editor is remounted per language anyway. */
   language?: Language;
+  /**
+   * Source line the visualizer is currently executing, highlighted in place.
+   *
+   * This is what lets the walkthrough drop its own copy of the code: the
+   * learner watches their *own* editor step through the run rather than a
+   * read-only duplicate of it sitting underneath.
+   */
+  highlightedLine?: number | null;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
@@ -99,6 +109,7 @@ export function Editor({
         history(),
         languageExtension(language),
         syntaxExtension,
+        highlightField,
         bracketMatching(),
         closeBrackets(),
         autocompletion(),
@@ -160,6 +171,14 @@ export function Editor({
       changes: { from: 0, to: current.length, insert: value },
     });
   }, [value]);
+
+  // Moves the executing-line highlight as the visualizer plays. Separate from
+  // the document effect above so scrubbing a trace does not touch the text.
+  useEffect(() => {
+    const instance = view.current;
+    if (!instance) return;
+    applyHighlight(instance, highlightedLine ?? null);
+  }, [highlightedLine]);
 
   return <div ref={host} className="node-surface overflow-hidden bg-surface" />;
 }

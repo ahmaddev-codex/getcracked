@@ -4,7 +4,7 @@ export const removeDuplicates: ProblemInput = {
   tier: 'problem',
   slug: "remove-duplicates",
   topic: "two-pointers",
-  difficulty: "core",
+  difficulty: "medium",
   title: "Remove Duplicates from Sorted Array",
   companies: ["Meta", "Microsoft"],
   recommendedAfter: ["two-pointers"],

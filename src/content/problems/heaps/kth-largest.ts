@@ -4,7 +4,7 @@ export const kthLargest: ProblemInput = {
   tier: 'problem',
   slug: "kth-largest",
   topic: "heaps",
-  difficulty: "core",
+  difficulty: "medium",
   title: "Kth Largest Element",
   companies: ["Amazon", "Meta", "Google"],
   recommendedAfter: ["heaps"],

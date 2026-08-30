@@ -4,7 +4,7 @@ export const containerWater: ProblemInput = {
   tier: 'problem',
   slug: "container-water",
   topic: "two-pointers",
-  difficulty: "stretch",
+  difficulty: "hard",
   title: "Container With Most Water",
   companies: ["Amazon", "Google"],
   recommendedAfter: ["two-pointers"],

@@ -4,7 +4,7 @@ export const fibMemo: ProblemInput = {
   tier: 'problem',
   slug: "fib-memo",
   topic: "recursion",
-  difficulty: "core",
+  difficulty: "medium",
   title: "Fibonacci with Memoisation",
   companies: ["Amazon"],
   recommendedAfter: ["recursion"],

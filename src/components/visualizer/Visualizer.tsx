@@ -47,48 +47,141 @@ function Legend() {
   );
 }
 
+/** How a value should read in a variables pane. */
+function display(value: Scalar): { text: string; type: string } {
+  if (value === null) return { text: 'null', type: 'null' };
+  if (typeof value === 'string') return { text: `"${value}"`, type: 'string' };
+  if (typeof value === 'boolean') return { text: String(value), type: 'boolean' };
+  if (typeof value === 'number') {
+    return { text: String(value), type: Number.isInteger(value) ? 'int' : 'float' };
+  }
+  return { text: String(value), type: typeof value };
+}
+
+/** A compact rendering of a collection's contents. */
+function preview(values: readonly unknown[], limit = 12): string {
+  const shown = values.slice(0, limit).map((v) => display(v as Scalar).text);
+  return `[${shown.join(', ')}${values.length > limit ? `, …${values.length - limit} more` : ''}]`;
+}
+
+function mapPreview(entries: ReadonlyMap<string, Scalar>, limit = 8): string {
+  const shown = [...entries]
+    .slice(0, limit)
+    .map(([k, v]) => `${k}: ${display(v).text}`);
+  return `{${shown.join(', ')}${entries.size > limit ? `, …${entries.size - limit} more` : ''}}`;
+}
+
 /**
- * The variables the trace can account for at this step.
+ * The variables pane — a debugger's, not a caption.
  *
- * A variable that changed on this step is highlighted and shown as `before → now`.
- * Without that, the panel is a list of numbers that silently mutate and the
- * learner has to diff two frames in their head to see which one moved.
+ * This was a run of name-value pairs wrapped onto one line: "target 9 i 1
+ * complement 2". Nothing separated a name from the value before it, the *type*
+ * was invisible — `"9"` behaving unlike `9` is a real and common bug — and a
+ * change only showed as a number that quietly differed from the frame before.
+ *
+ * Each variable now gets its own cell, laid out side by side so the pane stays
+ * a strip rather than a column that pushes the animation off screen. A changed
+ * value reads `before → after`, because the transition is the thing worth
+ * watching.
+ *
+ * **Collections are listed too.** Only one structure is drawn as a picture, so
+ * a `seen` map built alongside the array in two-sum was previously invisible —
+ * the learner could watch the array being scanned with no sight of the thing
+ * the algorithm was actually building. These show their contents inline, which
+ * is what a debugger's watch pane does.
  */
 function Inspector({
   variables,
   changed,
   previousValues,
+  arrays,
+  maps,
+  drawn,
 }: {
   variables: Map<string, Scalar>;
   changed: Set<string>;
   previousValues: Map<string, Scalar>;
+  arrays: Map<string, unknown[]>;
+  maps: Map<string, Map<string, Scalar>>;
+  /** Name of the collection already drawn above, so it is not repeated. */
+  drawn: string;
 }) {
-  const entries = [...variables].filter(([, v]) => v !== null);
-  if (entries.length === 0) return null;
+  const scalars = [...variables].filter(([, v]) => v !== null);
+  const collections = [
+    ...[...arrays].filter(([name]) => name !== drawn).map(([name, v]) => ({
+      name,
+      kind: 'array' as const,
+      text: preview(v),
+      size: v.length,
+    })),
+    ...[...maps].filter(([name]) => name !== drawn).map(([name, v]) => ({
+      name,
+      kind: 'map' as const,
+      text: mapPreview(v),
+      size: v.size,
+    })),
+  ];
+
+  if (scalars.length === 0 && collections.length === 0) {
+    return <p className="text-xs text-foreground-muted">No variables in scope at this step.</p>;
+  }
 
   return (
-    <dl className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs">
-      {entries.map(([name, value]) => {
-        const justChanged = changed.has(name);
-        const before = previousValues.get(name);
-        const showFrom = justChanged && before !== undefined && before !== null && !Object.is(before, value);
+    <Node tone="muted" className="flex flex-col gap-2 p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-foreground-muted">
+        Variables
+      </p>
 
-        return (
-          <div
-            key={name}
-            className={`flex gap-1 rounded-xs px-1 ${
-              justChanged ? 'bg-accent text-accent-foreground' : ''
-            }`}
-          >
-            <dt className={justChanged ? 'opacity-70' : 'text-foreground-muted'}>{name}</dt>
-            {showFrom && (
-              <dd className="opacity-70 line-through">{String(before)}</dd>
-            )}
-            <dd className={justChanged ? 'font-semibold' : ''}>{String(value)}</dd>
-          </div>
-        );
-      })}
-    </dl>
+      {scalars.length > 0 && (
+        <ul className="flex flex-wrap gap-2">
+          {scalars.map(([name, value]) => {
+            const justChanged = changed.has(name);
+            const before = previousValues.get(name);
+            const shows =
+              justChanged && before !== undefined && before !== null && !Object.is(before, value);
+            const now = display(value);
+
+            return (
+              <li
+                key={name}
+                className={`flex items-baseline gap-1.5 rounded-md border px-2 py-1 font-mono text-xs ${
+                  justChanged
+                    ? 'border-accent-strong bg-accent text-accent-foreground'
+                    : 'border-border-subtle bg-surface'
+                }`}
+              >
+                <span className="font-semibold">{name}</span>
+                <span className="opacity-60">{now.type}</span>
+                {shows && (
+                  <>
+                    <span className="opacity-60 line-through">{display(before).text}</span>
+                    <span className="opacity-60" aria-label="changed to">→</span>
+                  </>
+                )}
+                <span className="font-semibold">{now.text}</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {collections.length > 0 && (
+        <ul className="flex flex-col gap-1">
+          {collections.map((collection) => (
+            <li
+              key={`${collection.kind}-${collection.name}`}
+              className="flex flex-wrap items-baseline gap-1.5 rounded-md border border-border-subtle bg-surface px-2 py-1 font-mono text-xs"
+            >
+              <span className="font-semibold">{collection.name}</span>
+              <span className="opacity-60">
+                {collection.kind}[{collection.size}]
+              </span>
+              <span className="break-all">{collection.text}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Node>
   );
 }
 
@@ -101,6 +194,7 @@ export function Visualizer({
   call,
   visual = 'array',
   toolbar,
+  onLineChange,
 }: {
   trace: Trace;
   source?: string;
@@ -115,6 +209,14 @@ export function Visualizer({
   visual?: VisualKind;
   /** Caller-supplied controls (e.g. a language switcher) shown in the header. */
   toolbar?: ReactNode;
+  /**
+   * Reports the executing line so a caller can highlight it somewhere else.
+   *
+   * The problem workspace uses this instead of passing `source`: the learner
+   * already has their code on screen in a real editor, and rendering a
+   * read-only copy underneath is the same text twice.
+   */
+  onLineChange?: (line: number | null) => void;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<ReturnType<typeof selectRenderer>>(null);
@@ -130,6 +232,8 @@ export function Visualizer({
   const [variables, setVariables] = useState<Map<string, Scalar>>(new Map());
   const [changed, setChanged] = useState<Set<string>>(new Set());
   const [previousValues, setPreviousValues] = useState<Map<string, Scalar>>(new Map());
+  const [arrays, setArrays] = useState<Map<string, unknown[]>>(new Map());
+  const [maps, setMaps] = useState<Map<string, Map<string, Scalar>>>(new Map());
   const [returned, setReturned] = useState<{ value: unknown } | null>(null);
   const [drawable, setDrawable] = useState(true);
 
@@ -154,12 +258,17 @@ export function Visualizer({
       // React owns the code panel and the inspector; the renderer owns the
       // canvas. Only these two cheap values cross the boundary per step.
       setCurrentLine(state.line);
+      onLineChange?.(state.line);
       setVariables(state.variables);
       setChanged(state.changed);
       setPreviousValues(state.previousValues);
+      // Collections other than the drawn one are listed in the pane, so an
+      // algorithm building a map alongside the array it scans is visible.
+      setArrays(state.arrays);
+      setMaps(state.maps);
       setReturned(state.finished ? { value: state.returned } : null);
     },
-    [trace, total, arrayName],
+    [trace, total, arrayName, onLineChange],
   );
 
   useEffect(() => {
@@ -301,6 +410,9 @@ export function Visualizer({
             variables={variables}
             changed={changed}
             previousValues={previousValues}
+            arrays={arrays}
+            maps={maps}
+            drawn={arrayName}
           />
           {drawable && <Legend />}
         </Node>

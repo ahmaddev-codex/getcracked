@@ -4,7 +4,7 @@ export const groupAnagrams: ProblemInput = {
   tier: 'problem',
   slug: "group-anagrams",
   topic: "hashing",
-  difficulty: "stretch",
+  difficulty: "hard",
   title: "Group Anagrams",
   companies: ["Amazon", "Meta", "Uber"],
   recommendedAfter: ["hashing"],

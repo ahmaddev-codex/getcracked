@@ -4,7 +4,7 @@ export const binarySearch: ProblemInput = {
   tier: 'problem',
   slug: "binary-search",
   topic: "binary-search",
-  difficulty: "warm-up",
+  difficulty: "easy",
   title: "Binary Search",
   companies: ["Amazon", "Microsoft"],
   recommendedAfter: ["binary-search"],

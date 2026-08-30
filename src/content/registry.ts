@@ -109,7 +109,7 @@ export function findProblem(topic: string, slug: string): Problem | undefined {
   return getProblems().find((p) => p.topic === topic && p.slug === slug);
 }
 
-const DIFFICULTY_ORDER = ['warm-up', 'core', 'stretch'] as const;
+const DIFFICULTY_ORDER = ['easy', 'medium', 'hard'] as const;
 
 /**
  * A topic's problems in the order a learner should meet them (B17).

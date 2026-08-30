@@ -59,8 +59,8 @@ describe('position within the set', () => {
     }
   });
 
-  it('orders a set warm-up first, so the problem after a lesson is gentle', () => {
-    const order = ['warm-up', 'core', 'stretch'];
+  it('orders a set easiest first, so the problem after a lesson is gentle', () => {
+    const order = ['easy', 'medium', 'hard'];
     for (const topic of getTopics()) {
       const difficulties = getProblemSet(topic).map((p) => order.indexOf(p.difficulty));
       const sorted = [...difficulties].sort((a, b) => a - b);

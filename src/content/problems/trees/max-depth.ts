@@ -4,7 +4,7 @@ export const maxDepth: ProblemInput = {
   tier: 'problem',
   slug: "max-depth",
   topic: "trees",
-  difficulty: "core",
+  difficulty: "medium",
   title: "Maximum Depth of a Tree",
   companies: ["Amazon", "Meta"],
   recommendedAfter: ["trees", "recursion"],

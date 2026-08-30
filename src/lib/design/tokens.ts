@@ -126,6 +126,12 @@ export const CONTRAST_PAIRS: ReadonlyArray<{
   { name: 'link on page', fg: 'link', bg: 'background' },
   { name: 'link on surface', fg: 'link', bg: 'surface' },
   { name: 'error text on page', fg: 'danger', bg: 'background' },
+  // The middle difficulty label, which was rendering near-black on the dark
+  // surface because it borrowed the accent's foreground rather than having a
+  // colour of its own.
+  { name: 'medium label on surface', fg: 'warning', bg: 'surface' },
+  { name: 'medium label on page', fg: 'warning', bg: 'background' },
+  { name: 'success label on surface', fg: 'success', bg: 'surface' },
   { name: 'error text on surface', fg: 'danger', bg: 'surface' },
   // Code is the surface a learner stares at longest.
   { name: 'keyword in editor', fg: 'syntax-keyword', bg: 'surface' },

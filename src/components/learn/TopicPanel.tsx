@@ -57,9 +57,9 @@ const STATUS_ACTIONS: Array<{
 
 /** Keyed on the schema's own values, which are not easy/medium/hard. */
 const DIFFICULTY_TONE: Record<string, string> = {
-  'warm-up': 'bg-success-soft text-success',
-  core: 'bg-accent text-accent-foreground',
-  stretch: 'bg-danger-soft text-danger',
+  easy: 'bg-success-soft text-success',
+  medium: 'bg-warning-soft text-warning',
+  hard: 'bg-danger-soft text-danger',
 };
 
 /** A bordered section, the panel's one repeating shape. */

@@ -4,7 +4,7 @@ export const maxSumSubarrayK: ProblemInput = {
   tier: 'problem',
   slug: "max-sum-subarray-k",
   topic: "sliding-window",
-  difficulty: "warm-up",
+  difficulty: "easy",
   title: "Maximum Sum of Size K",
   companies: ["Amazon"],
   recommendedAfter: ["sliding-window"],

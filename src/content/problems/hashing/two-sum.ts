@@ -8,7 +8,7 @@ export const twoSum: ProblemInput = {
   tier: 'problem',
   slug: 'two-sum',
   topic: 'hashing',
-  difficulty: 'warm-up',
+  difficulty: 'easy',
   title: 'Two Sum',
   companies: ['Amazon', 'Google', 'Meta'],
   recommendedAfter: ['hashing'],

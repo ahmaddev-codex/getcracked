@@ -4,7 +4,7 @@ export const maxSubarray: ProblemInput = {
   tier: 'problem',
   slug: "max-subarray",
   topic: "arrays",
-  difficulty: "core",
+  difficulty: "medium",
   title: "Maximum Subarray",
   companies: ["Amazon", "Microsoft", "Meta"],
   recommendedAfter: ["arrays"],

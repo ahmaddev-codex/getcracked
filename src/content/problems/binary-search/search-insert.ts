@@ -4,7 +4,7 @@ export const searchInsert: ProblemInput = {
   tier: 'problem',
   slug: "search-insert",
   topic: "binary-search",
-  difficulty: "core",
+  difficulty: "medium",
   title: "Search Insert Position",
   companies: ["Amazon", "Adobe"],
   recommendedAfter: ["binary-search"],

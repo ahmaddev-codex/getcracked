@@ -4,7 +4,7 @@ export const coinChange: ProblemInput = {
   tier: 'problem',
   slug: "coin-change",
   topic: "dynamic-programming",
-  difficulty: "stretch",
+  difficulty: "hard",
   title: "Coin Change",
   companies: ["Amazon", "Google", "Uber"],
   recommendedAfter: ["dynamic-programming"],

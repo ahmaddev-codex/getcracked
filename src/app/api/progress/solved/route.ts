@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { getDb } from '@/db/client';
 import { getAuth } from '@/lib/auth';
 import { getAllProgress } from '@/lib/progress';
+import { getActivity, streaks } from '@/lib/account';
 
 /**
  * Every exercise this learner has completed, in one call.
@@ -19,13 +20,20 @@ import { getAllProgress } from '@/lib/progress';
  */
 export async function GET() {
   const session = await getAuth().api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ solved: [] });
+  if (!session) return NextResponse.json({ solved: [], currentStreak: 0, longestStreak: 0 });
 
-  const progress = await getAllProgress(getDb(), session.user.id);
+  const [progress, activity] = await Promise.all([
+    getAllProgress(getDb(), session.user.id),
+    getActivity(session.user.id),
+  ]);
 
   return NextResponse.json(
     {
       solved: [...new Set(progress.filter((p) => p.state === 'complete').map((p) => p.exerciseId))],
+      // Returned alongside rather than from its own endpoint: the header needs
+      // the streak on every page, and this call already happens on the ones
+      // that show a listing.
+      ...streaks(activity),
     },
     // Private: this is per-account. A shared cache here would serve one
     // learner's ticks to the next visitor.

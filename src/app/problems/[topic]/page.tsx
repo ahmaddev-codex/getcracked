@@ -9,7 +9,7 @@ import { exerciseId } from '@/content/schema';
 /**
  * One problem set (B15, B17).
  *
- * Ordered warm-up → core → stretch, so the problem straight after a lesson is
+ * Ordered easy → medium → hard, so the problem straight after a lesson is
  * deliberately gentle. Fully enterable regardless of what has been read; the
  * only thing prerequisites produce is the banner (B16).
  */
@@ -56,7 +56,7 @@ export default async function ProblemSetPage(props: TopicRouteProps) {
           {topic.replace(/-/g, ' ')}
         </h1>
         <p className="text-sm text-foreground-muted">
-          {set.length} {set.length === 1 ? 'problem' : 'problems'}, warm-up first. Every one is
+          {set.length} {set.length === 1 ? 'problem' : 'problems'}, easiest first. Every one is
           open — nothing here is locked behind the others.
         </p>
       </header>

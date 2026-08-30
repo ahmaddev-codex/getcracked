@@ -4,7 +4,7 @@ export const dailyTemperatures: ProblemInput = {
   tier: 'problem',
   slug: "daily-temperatures",
   topic: "stacks-queues",
-  difficulty: "core",
+  difficulty: "medium",
   title: "Daily Temperatures",
   companies: ["Amazon", "Google"],
   recommendedAfter: ["stacks-queues"],

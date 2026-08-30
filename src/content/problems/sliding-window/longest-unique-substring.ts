@@ -4,7 +4,7 @@ export const longestUniqueSubstring: ProblemInput = {
   tier: 'problem',
   slug: "longest-unique-substring",
   topic: "sliding-window",
-  difficulty: "core",
+  difficulty: "medium",
   title: "Longest Substring Without Repeats",
   companies: ["Amazon", "Google", "Meta", "Bloomberg"],
   recommendedAfter: ["sliding-window", "hashing"],

@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { KeyRound, Mail, ShieldCheck } from 'lucide-react';
 import { Node } from '@/components/ui/Node';
 import { Avatar } from '@/components/account/Avatar';
+import { ActivityHeatmap } from '@/components/account/ActivityHeatmap';
+import { DifficultyBreakdown } from '@/components/account/DifficultyBreakdown';
 import { StatCard } from '@/components/account/StatCard';
 import { getAccountSummary, methodLabel } from '@/lib/account';
 import { getSession } from '@/lib/session';
@@ -58,13 +60,10 @@ export default async function AccountPage() {
       </header>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold">What this account is holding</h2>
+        <h2 className="text-sm font-semibold">Practice</h2>
+        <DifficultyBreakdown tallies={summary.byDifficulty} />
+
         <div className="grid gap-3 sm:grid-cols-3">
-          <StatCard
-            label="Problems solved"
-            value={summary.solvedProblems}
-            of={summary.totalProblems}
-          />
           <StatCard
             label="Lesson exercises"
             value={summary.completedExercises}
@@ -77,6 +76,15 @@ export default async function AccountPage() {
               summary.inProgress > 0 ? 'Started but not yet passing.' : 'Nothing part-finished.'
             }
           />
+          <StatCard
+            label="Current streak"
+            value={summary.currentStreak}
+            hint={
+              summary.longestStreak > 0
+                ? `Longest ${summary.longestStreak} days.`
+                : 'Practise on two days in a row to start one.'
+            }
+          />
         </div>
 
         {summary.languages.length > 0 && (
@@ -84,6 +92,16 @@ export default async function AccountPage() {
             You have submitted in {summary.languages.join(' and ')}.
           </p>
         )}
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-semibold">Activity</h2>
+        <ActivityHeatmap
+          activity={summary.activity}
+          activeDays={summary.activeDays}
+          currentStreak={summary.currentStreak}
+          longestStreak={summary.longestStreak}
+        />
       </section>
 
       <section className="flex flex-col gap-3">

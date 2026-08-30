@@ -4,7 +4,7 @@ export const climbStairs: ProblemInput = {
   tier: 'problem',
   slug: "climb-stairs",
   topic: "dynamic-programming",
-  difficulty: "warm-up",
+  difficulty: "easy",
   title: "Climbing Stairs",
   companies: ["Amazon", "Adobe"],
   recommendedAfter: ["dynamic-programming", "recursion"],

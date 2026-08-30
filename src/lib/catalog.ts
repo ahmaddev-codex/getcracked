@@ -15,7 +15,7 @@ export interface CatalogFilter {
   topic?: string;
 }
 
-export const DIFFICULTIES = ['warm-up', 'core', 'stretch'] as const;
+export const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 
 export function filterProblems(filter: CatalogFilter): readonly Problem[] {
   return getProblems().filter((p) => {

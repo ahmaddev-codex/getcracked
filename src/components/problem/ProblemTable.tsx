@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { Node } from '@/components/ui/Node';
 import { useSolved } from '@/lib/use-solved';
+import { SignInToTrack } from '@/components/account/SignInToTrack';
 import { exerciseId, type Problem } from '@/content/schema';
 
 /**
@@ -21,9 +22,9 @@ import { exerciseId, type Problem } from '@/content/schema';
  */
 
 const DIFFICULTY_TONE: Record<string, string> = {
-  'warm-up': 'bg-success-soft text-success',
-  core: 'bg-accent text-accent-foreground',
-  stretch: 'bg-danger-soft text-danger',
+  easy: 'bg-success-soft text-success',
+  medium: 'bg-warning-soft text-warning',
+  hard: 'bg-danger-soft text-danger',
 };
 
 export function ProblemTable({ problems }: { problems: readonly Problem[] }) {
@@ -35,9 +36,12 @@ export function ProblemTable({ problems }: { problems: readonly Problem[] }) {
       {/* The count LeetCode puts above its list: a tick per row answers "have I
           done this one", and the total answers "how far through am I", which is
           the question that actually keeps someone going. */}
-      <p className="text-xs text-foreground-muted" aria-live="polite">
-        {done} / {problems.length} solved
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-foreground-muted" aria-live="polite">
+          {done} / {problems.length} solved
+        </p>
+        <SignInToTrack what="solved count" />
+      </div>
 
     <Node tone="surface" className="overflow-x-auto p-0">
       <table className="w-full min-w-md text-left text-sm">

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronDown, LayoutDashboard, LogOut, User } from 'lucide-react';
 import { signOut, useSession } from '@/lib/auth-client';
 import { Avatar } from '@/components/account/Avatar';
+import { StreakBadge } from '@/components/account/StreakBadge';
 
 /**
  * The signed-in account menu (A2).
@@ -130,11 +131,14 @@ export function AccountSlot() {
 
   if (session) {
     return (
-      <AccountMenu
-        email={session.user.email}
-        name={session.user.name}
-        image={session.user.image}
-      />
+      <>
+        <StreakBadge />
+        <AccountMenu
+          email={session.user.email}
+          name={session.user.name}
+          image={session.user.image}
+        />
+      </>
     );
   }
 

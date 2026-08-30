@@ -35,22 +35,21 @@ export function StatCard({
       {pct !== null && (
         // SVG rather than a div with a percentage width: the project bans inline
         // styles so that colour and spacing cannot bypass the token layer (K1),
-        // and a progress bar is the one place a genuinely dynamic length is
-        // needed. An SVG width is a presentation attribute, not a style, so this
-        // respects the rule instead of working around it — and it is the same
-        // primitive the visualizer already draws with.
+        // and an SVG width is a presentation attribute rather than a style.
+        //
+        // Percentage widths rather than a stretched viewBox — scaling a
+        // fixed-unit viewBox to the real width scales `rx` with it, which turns
+        // the rounded ends into elongated ovals.
         <svg
           role="progressbar"
           aria-valuenow={pct}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-label={`${label}: ${pct}%`}
-          viewBox="0 0 100 6"
-          preserveAspectRatio="none"
           className="h-1.5 w-full"
         >
-          <rect x="0" y="0" width="100" height="6" rx="3" fill="var(--surface-muted)" />
-          <rect x="0" y="0" width={pct} height="6" rx="3" fill="var(--accent-strong)" />
+          <rect x="0" y="0" width="100%" height="6" rx="3" fill="var(--surface-muted)" />
+          <rect x="0" y="0" width={`${pct}%`} height="6" rx="3" fill="var(--accent-strong)" />
         </svg>
       )}
 

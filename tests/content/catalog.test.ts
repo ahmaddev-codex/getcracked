@@ -10,8 +10,8 @@ describe('filtering', () => {
   });
 
   it('filters by difficulty', () => {
-    const out = filterProblems({ difficulty: 'warm-up' });
-    expect(out.every((p) => p.difficulty === 'warm-up')).toBe(true);
+    const out = filterProblems({ difficulty: 'easy' });
+    expect(out.every((p) => p.difficulty === 'easy')).toBe(true);
   });
 
   it('filters by topic', () => {
@@ -21,8 +21,8 @@ describe('filtering', () => {
   });
 
   it('combines filters rather than treating them as alternatives', () => {
-    const out = filterProblems({ topic: 'hashing', difficulty: 'warm-up' });
-    expect(out.every((p) => p.topic === 'hashing' && p.difficulty === 'warm-up')).toBe(true);
+    const out = filterProblems({ topic: 'hashing', difficulty: 'easy' });
+    expect(out.every((p) => p.topic === 'hashing' && p.difficulty === 'easy')).toBe(true);
   });
 
   it('returns empty rather than throwing for an unknown value', () => {

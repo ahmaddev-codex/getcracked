@@ -4,7 +4,7 @@ export const firstUniqueChar: ProblemInput = {
   tier: 'problem',
   slug: "first-unique-char",
   topic: "hashing",
-  difficulty: "core",
+  difficulty: "medium",
   title: "First Unique Character",
   companies: ["Amazon", "Bloomberg"],
   recommendedAfter: ["hashing"],

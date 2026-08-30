@@ -4,7 +4,7 @@ export const runningSum: ProblemInput = {
   tier: 'problem',
   slug: "running-sum",
   topic: "arrays",
-  difficulty: "warm-up",
+  difficulty: "easy",
   title: "Running Sum",
   companies: ["Amazon"],
   recommendedAfter: ["arrays"],

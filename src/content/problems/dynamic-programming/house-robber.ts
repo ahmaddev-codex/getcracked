@@ -4,7 +4,7 @@ export const houseRobber: ProblemInput = {
   tier: 'problem',
   slug: "house-robber",
   topic: "dynamic-programming",
-  difficulty: "core",
+  difficulty: "medium",
   title: "House Robber",
   companies: ["Amazon", "Google"],
   recommendedAfter: ["dynamic-programming"],

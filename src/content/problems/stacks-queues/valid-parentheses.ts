@@ -4,7 +4,7 @@ export const validParentheses: ProblemInput = {
   tier: 'problem',
   slug: "valid-parentheses",
   topic: "stacks-queues",
-  difficulty: "warm-up",
+  difficulty: "easy",
   title: "Valid Parentheses",
   companies: ["Amazon", "Meta", "Google"],
   recommendedAfter: ["stacks-queues"],

@@ -27,7 +27,7 @@ export default function ProblemsPage() {
       <header className="node-surface flex flex-col gap-2 bg-surface p-6">
         <h1 className="font-sans text-4xl font-bold tracking-tight sm:text-5xl">Problems</h1>
         <p className="max-w-2xl text-sm text-foreground-muted">
-          {all.length} problems across {topics.length} topics, ordered warm-up first. Every set
+          {all.length} problems across {topics.length} topics, easiest first. Every set
           is open — if you already know a topic, start there.
         </p>
       </header>

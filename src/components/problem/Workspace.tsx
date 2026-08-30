@@ -7,8 +7,9 @@ import { Editor } from './Editor';
 import { TestCases } from './TestCases';
 import { Complexity } from './Complexity';
 import { Visualizer } from '@/components/visualizer/Visualizer';
+import { WatchPanel } from './WatchPanel';
 import { RuntimeClient } from '@/lib/runtime/client';
-import { TIMEOUT_MESSAGE } from '@/lib/runtime/errors';
+import { humanizeError, TIMEOUT_MESSAGE } from '@/lib/runtime/errors';
 import { clearDraft, readDraft, subscribeToDrafts, writeDraft } from '@/lib/drafts';
 import { track } from '@/lib/analytics/track';
 import { recordLocalAttempt } from '@/lib/progress-local';
@@ -74,11 +75,19 @@ export function Workspace({
    * after running would otherwise see a highlighted line pointing into code
    * that never executed.
    */
-  const [ranSource, setRanSource] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   /** Bumped to remount the editor with fresh starter code. */
   const [resetCount, setResetCount] = useState(0);
+  /** Trace from a watch-only run, which grades nothing. */
+  const [watchTrace, setWatchTrace] = useState<SpecResult['trace']>(null);
+  /** Line the visualizer is executing, highlighted in the learner's own editor. */
+  const [tracedLine, setTracedLine] = useState<number | null>(null);
+  /** True once a passing run was recorded, so the state is legible. */
+  const [submitted, setSubmitted] = useState(false);
+
+  /** The problem's own first visible case — what a learner is trying to satisfy. */
+  const defaultWatchArgs = (spec.cases.find((c) => !c.hidden) ?? spec.cases[0])?.args ?? [];
 
   // Read through an external store rather than an effect, so restoring a draft
   // does not set state during render (see lib/drafts.ts).
@@ -125,7 +134,20 @@ export function Workspace({
     [exerciseId, language],
   );
 
-  const run = useCallback(async () => {
+  /**
+   * Runs the tests.
+   *
+   * `record` is what separates Run from Submit. Running shows a learner where
+   * they stand without committing anything, which is what lets them test freely
+   * — the previous behaviour marked a problem attempted the first time someone
+   * pressed Run to see what the cases even were, and passing by accident while
+   * exploring silently counted as solving it.
+   *
+   * Guided lesson exercises keep recording on a plain run: they are
+   * comprehension checks with no separate submit step, and gating them behind
+   * one would add a button whose only job is to say "yes, really".
+   */
+  const runTests = useCallback(async (record: boolean) => {
     if (running || !runtime.current) return;
 
     setRunning(true);
@@ -144,7 +166,11 @@ export function Workspace({
         trace: !compact,
       });
       setResult(outcome);
-      setRanSource(codeRef.current);
+      setWatchTrace(null);
+      setSubmitted(record && outcome.passed);
+
+      if (!record) return;
+
       if (outcome.passed) {
         track('exercise_solved', { exerciseId, language });
         onSolvedRef.current?.();
@@ -166,6 +192,57 @@ export function Workspace({
     }
   }, [language, spec, running, exerciseId, tier, compact]);
 
+  /** A problem is only recorded on an explicit submit; a lesson check is not. */
+  const requiresSubmit = tier === 'problem' && !compact;
+  const run = useCallback(() => runTests(!requiresSubmit), [runTests, requiresSubmit]);
+  const submit = useCallback(() => runTests(true), [runTests]);
+
+  /**
+   * Runs the code purely to watch it, without grading.
+   *
+   * "Run tests" answers *whether* it works; this answers *what it does* — which
+   * is the question a learner has while still writing, before there is anything
+   * worth grading. It records no attempt and reports no pass or fail, so
+   * experimenting mid-solution cannot mark a problem attempted.
+   *
+   * Traces the first failing case when there is one, because "why is this
+   * failing" is the question the animation is best placed to answer; otherwise
+   * the first visible case.
+   */
+  const watch = useCallback(async (args: unknown[]) => {
+    if (running || !runtime.current) return;
+
+    setRunning(true);
+    setError(null);
+    try {
+      const outcome = await runtime.current.run({
+        // Expected is null: nothing is being graded, so there is nothing to
+        // compare against — the run exists to be watched.
+        spec: { ...spec, cases: [{ args, expected: null, hidden: false }] },
+        source: codeRef.current,
+        language,
+        trace: true,
+      });
+      /**
+       * A run that threw has no trace, and "No trace to show for this run" is
+       * a useless thing to tell someone whose code did not parse. Surface the
+       * error instead — the whole point of watching is to find out why.
+       */
+      const failure = outcome.cases[0]?.error;
+      if (failure) {
+        setError(humanizeError(failure) ?? failure);
+        setWatchTrace(null);
+        return;
+      }
+      setWatchTrace(outcome.trace);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      setError(message === 'TIMEOUT' ? TIMEOUT_MESSAGE : message);
+    } finally {
+      setRunning(false);
+    }
+  }, [language, spec, running]);
+
   const reset = useCallback(() => {
     clearDraft(exerciseId, language);
     // Remounting the editor re-seeds the mirror; this keeps them in step even
@@ -173,7 +250,8 @@ export function Workspace({
     codeRef.current = starter;
     setResetCount((n) => n + 1);
     setResult(null);
-    setRanSource(null);
+    setWatchTrace(null);
+    setTracedLine(null);
     setError(null);
   }, [exerciseId, language, starter]);
 
@@ -217,19 +295,59 @@ export function Workspace({
         onChange={handleChange}
         onRun={run}
         language={language}
+        highlightedLine={tracedLine}
       />
+
+      {/*
+        Watch, then the animation, directly under the editor. The highlight it
+        drives lands in that editor, so putting anything between them would mean
+        watching a line move somewhere off screen.
+      */}
+      {!compact && (
+        <WatchPanel
+          defaultArgs={defaultWatchArgs}
+          running={running}
+          onWatch={watch}
+        />
+      )}
+
+      {!compact && (watchTrace ?? result?.trace) && (
+        <Visualizer
+          trace={(watchTrace ?? result?.trace)!}
+          language={language}
+          onLineChange={setTracedLine}
+        />
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <Button onClick={run} disabled={running}>
           {running ? 'Running…' : 'Run tests'}
         </Button>
+
+        {requiresSubmit && (
+          <Button tone="strong" onClick={submit} disabled={running}>
+            Submit
+          </Button>
+        )}
+
         <Button tone="surface" onClick={reset} disabled={running}>
           Reset
         </Button>
+
         <span className="text-xs text-foreground-muted">
-          {running ? 'Executing in a sandbox…' : 'Or press ⌘↩'}
+          {running
+            ? 'Executing in a sandbox…'
+            : requiresSubmit
+              ? 'Running is free — Submit is what records it. Or press ⌘↩'
+              : 'Or press ⌘↩'}
         </span>
       </div>
+
+      {requiresSubmit && submitted && (
+        <Node tone="muted" className="p-3 text-sm">
+          Recorded. This problem now counts toward your progress.
+        </Node>
+      )}
 
       {error && (
         <Node tone="surface" className="p-3 text-sm text-danger">
@@ -238,14 +356,6 @@ export function Workspace({
       )}
 
       <TestCases spec={spec} result={result} />
-
-      {!compact && result?.trace && (
-        <Visualizer
-          trace={result.trace}
-          source={ranSource ?? undefined}
-          language={language}
-        />
-      )}
 
       {!compact && (
         <Complexity
