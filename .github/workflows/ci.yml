@@ -60,7 +60,7 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://getcracked:getcracked@localhost:5432/getcracked
-      BETTER_AUTH_SECRET: test-secret-for-ci
+      BETTER_AUTH_SECRET: test-secret-for-ci-on-push-to-github-for-production-build
       BETTER_AUTH_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { StepList } from '@/components/challenge/StepList';
 import { Hints } from '@/components/problem/Hints';
 import { findChallenge, getChallenges } from '@/content/registry';
@@ -18,6 +18,17 @@ import { recordLocalAttempt } from '@/lib/progress-local';
 
 // `useSolved` merges local progress with the account's. Nothing is signed in
 // here, so the endpoint answers empty and the local tier is what is asserted.
+//
+// Rendered through `act` and awaited, so that reply lands before the assertions
+// rather than after them. Without it React warns about an update outside `act`
+// on every one of these — a warning that is correct, and that would bury a real
+// one in the CI log.
+const renderSettled = async (ui: React.ReactElement) => {
+  await act(async () => {
+    render(ui);
+  });
+};
+
 beforeEach(() => {
   vi.stubGlobal(
     'fetch',
@@ -62,10 +73,10 @@ describe('StepList', () => {
     id: stepId(challenge, s),
   }));
 
-  it('links every step, including ones after an unfinished step', () => {
+  it('links every step, including ones after an unfinished step', async () => {
     // Nothing is locked (§6.6). Steps are independently solvable by
     // construction, so ordering must never become authorization.
-    render(<StepList challengeSlug={challenge.slug} steps={steps} />);
+    await renderSettled(<StepList challengeSlug={challenge.slug} steps={steps} />);
 
     for (const step of steps) {
       expect(screen.getByRole('link', { name: new RegExp(step.title) })).toHaveAttribute(
@@ -75,7 +86,7 @@ describe('StepList', () => {
     }
   });
 
-  it('counts finished steps rather than assuming a prefix', () => {
+  it('counts finished steps rather than assuming a prefix', async () => {
     // A learner who did steps 2 and 4 has done two steps, not zero.
     recordLocalAttempt({
       exerciseId: steps[1].id,
@@ -90,12 +101,12 @@ describe('StepList', () => {
       state: 'complete',
     });
 
-    render(<StepList challengeSlug={challenge.slug} steps={steps} />);
+    await renderSettled(<StepList challengeSlug={challenge.slug} steps={steps} />);
     expect(screen.getByText(`· 2 of ${steps.length} done`)).toBeInTheDocument();
   });
 
-  it('marks the step being worked on', () => {
-    render(
+  it('marks the step being worked on', async () => {
+    await renderSettled(
       <StepList challengeSlug={challenge.slug} steps={steps} currentSlug={steps[2].slug} />,
     );
     expect(
@@ -103,20 +114,20 @@ describe('StepList', () => {
     ).toHaveAttribute('aria-current', 'step');
   });
 
-  it('drops the heading and the sign-in nudge in the sidebar', () => {
-    render(<StepList compact challengeSlug={challenge.slug} steps={steps} />);
+  it('drops the heading and the sign-in nudge in the sidebar', async () => {
+    await renderSettled(<StepList compact challengeSlug={challenge.slug} steps={steps} />);
     expect(screen.queryByText(/of 4 done/)).not.toBeInTheDocument();
     expect(screen.getAllByRole('link')).toHaveLength(steps.length);
   });
 });
 
 describe('hints on a step', () => {
-  it('address the step, so two steps do not share reveals', () => {
+  it('address the step, so two steps do not share reveals', async () => {
     const challenge = findChallenge('lru-cache')!;
     const [first, second] = stepIds(challenge);
     expect(first).not.toBe(second);
 
-    render(<Hints exerciseId={first} hints={challenge.steps[0].hints} />);
+    await renderSettled(<Hints exerciseId={first} hints={challenge.steps[0].hints} />);
     expect(screen.getByRole('button', { name: 'Show a hint' })).toBeInTheDocument();
   });
 });

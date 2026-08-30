@@ -115,23 +115,98 @@ describe('cross-language trace equivalence', () => {
     TIMEOUT,
   );
 
+  /**
+   * The cap is a correctness property, so this must not also be a speed test.
+   *
+   * It failed in CI and passed locally, and the reason was neither flakiness nor
+   * the runtime: a traced run that trips the sandbox deadline returns
+   * `timedOut: true` with `truncated: false` and no events, so a slow machine
+   * turned "the cap works" into "expected false to be true". Raising the loop
+   * from 500 to 1000 in an earlier attempt to stabilise it made that strictly
+   * worse, because the tracing cost was quadratic in the loop length.
+   *
+   * The runtime fix — checking the cap before building an event rather than
+   * after — is what makes the work bounded. This keeps the deadline generous
+   * anyway and asserts it was not hit, so if the cost ever regresses the failure
+   * names the cause instead of pointing at the assertion after it.
+   */
   it(
     'truncates rather than flooding when a run exceeds the event cap',
     async () => {
+      const SIZE = 500;
+      const CAP = 50;
+
       const js = await runJavaScript({
-        source: 'function fill(xs) { for (let i = 0; i < 1000; i++) { xs[i] = i; } return xs.length; }',
+        source: `function fill(xs) { for (let i = 0; i < ${SIZE}; i++) { xs[i] = i; } return xs.length; }`,
         entry: 'fill',
-        args: [new Array(1000).fill(0)],
+        args: [new Array(SIZE).fill(0)],
         trace: true,
-        maxEvents: 50,
+        maxEvents: CAP,
+        // Ten times the deadline a learner gets, so this measures the cap and
+        // not the runner.
+        timeoutMs: 50_000,
       });
 
-      // The loop generates 1000 array writes, which should exceed the cap.
-      // Increased from 500 to 1000 to ensure truncation even if some writes
-      // aren't captured by the proxy in certain environments.
+      expect(js.timedOut, 'the run hit the deadline, so the cap was never reached').toBe(
+        false,
+      );
       expect(js.truncated).toBe(true);
       expect(js.events.at(-1)).toMatchObject({ kind: 'truncated' });
-      expect(js.events.length).toBeLessThanOrEqual(51);
+      // The cap, plus the one marker that says it was reached.
+      expect(js.events.length).toBeLessThanOrEqual(CAP + 1);
+    },
+    TIMEOUT,
+  );
+
+  /**
+   * The cap bounds work, not just payload — and in both languages.
+   *
+   * Without this, a capped trace stays *correct* while costing time quadratic in
+   * the input, which is invisible until a slow machine turns it into a timeout.
+   * Asserting a ratio rather than an absolute time keeps it meaningful on any
+   * machine: ten times the input must not cost ten times the time, because
+   * beyond the cap there is nothing left to record.
+   */
+  it.each(['javascript', 'python'] as const)(
+    'stops paying for events it will not keep (%s)',
+    async (language) => {
+      const run = (size: number) => {
+        const source =
+          language === 'javascript'
+            ? `function fill(xs) { for (let i = 0; i < ${size}; i++) { xs[i] = i; } return xs.length; }`
+            : `def fill(xs):\n    for i in range(${size}):\n        xs[i] = i\n    return len(xs)\n`;
+        const adapter = language === 'javascript' ? runJavaScript : runPython;
+        return adapter({
+          source,
+          entry: 'fill',
+          args: [new Array(size).fill(0)],
+          trace: true,
+          maxEvents: 50,
+          timeoutMs: 50_000,
+        });
+      };
+
+      // Warm the runtime first, so the small run is not paying WASM startup and
+      // flattering the ratio.
+      await run(50);
+
+      const smallStart = Date.now();
+      const small = await run(200);
+      const smallMs = Date.now() - smallStart;
+
+      const largeStart = Date.now();
+      const large = await run(2000);
+      const largeMs = Date.now() - largeStart;
+
+      expect(small.truncated).toBe(true);
+      expect(large.truncated).toBe(true);
+      // Both keep exactly the cap, whatever the input size.
+      expect(small.events.length).toBe(large.events.length);
+
+      // A generous bound: the point is that it is not ~10x, not that it is 1x.
+      // A few ms of fixed overhead makes a tight ratio meaningless on a fast
+      // machine, so the small side gets a floor.
+      expect(largeMs).toBeLessThan(Math.max(smallMs, 20) * 5);
     },
     TIMEOUT,
   );

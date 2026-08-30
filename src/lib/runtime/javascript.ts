@@ -100,6 +100,19 @@ function __push(e) {
   if (__events.length >= ${maxEvents}) { __dropped++; return; }
   __events.push(e);
 }
+// True once nothing more will be recorded.
+//
+// Checked by every call site *before* it builds the event, because building
+// one is the whole cost of tracing and the cap used to bound only the payload.
+// A line event snapshots every live variable, so a loop over a 1000-element
+// array paid a 1000-element snapshot on each of 1000 iterations to keep the
+// first 50 — quadratic work for a fixed-size result. Recording is suspended
+// during a snapshot, so a suspended tracer must not count a drop.
+function __dropping() {
+  if (!__tracing || !__recording) return true;
+  if (__events.length >= ${maxEvents}) { __dropped++; return true; }
+  return false;
+}
 function __snap(v, d) {
   d = d || 0;
   if (d > 4) return '[nested]';
@@ -117,6 +130,7 @@ function __quiet(fn) {
   try { return fn(); } finally { __recording = prev; }
 }
 function __t(line, vars) {
+  if (__dropping()) return;
   var snapped = __quiet(function () {
     var o = {};
     for (var k in vars) { if (Object.prototype.hasOwnProperty.call(vars, k)) o[k] = __snap(vars[k]); }
@@ -128,14 +142,14 @@ function __wrapArr(name, arr) {
   if (!__tracing || !Array.isArray(arr)) return arr;
   return new Proxy(arr, {
     get: function (t, k, r) {
-      if (typeof k === 'string' && /^[0-9]+$/.test(k)) {
+      if (typeof k === 'string' && /^[0-9]+$/.test(k) && !__dropping()) {
         var rv = __quiet(function () { return __snap(t[k]); });
         __push({ kind: 'array_read', array: name, index: Number(k), value: rv });
       }
       return Reflect.get(t, k, r);
     },
     set: function (t, k, v, r) {
-      if (typeof k === 'string' && /^[0-9]+$/.test(k)) {
+      if (typeof k === 'string' && /^[0-9]+$/.test(k) && !__dropping()) {
         var wv = __quiet(function () { return __snap(v); });
         __push({ kind: 'array_write', array: name, index: Number(k), value: wv });
       }
