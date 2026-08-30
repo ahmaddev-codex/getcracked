@@ -45,12 +45,14 @@ function build(orientation: Orientation): Renderer {
   let svg: SVGSVGElement | null = null;
   let slots: Slot[] = [];
   let name = '';
+  let indexedBy: readonly string[] | undefined;
 
   return {
     mount(container: HTMLElement, trace: Trace) {
       const collection = trace.collections.find((c) => c.kind === 'array');
       if (!collection) return;
       name = collection.name;
+      indexedBy = collection.indexedBy;
 
       const count = Math.max(1, collection.initial.length);
       const vertical = orientation === 'stack';
@@ -124,7 +126,7 @@ function build(orientation: Orientation): Renderer {
       }
 
       slots.forEach((slot, index) => {
-        const status = statusAt(state, name, index);
+        const status = statusAt(state, name, index, indexedBy);
         const inside = index < live;
 
         setAttr(slot.box, 'fill', fillFor(status));

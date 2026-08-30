@@ -197,3 +197,65 @@ describe('shapes', () => {
     },
   );
 });
+
+/**
+ * Pointer marks (B2).
+ *
+ * A variable is drawn on the structure only when the source actually subscripts
+ * that collection with it. Matching on value alone marked every integer that
+ * landed in range — which made the picture assert something false about the
+ * code, not merely something cluttered.
+ */
+describe('pointer marks', () => {
+  const withIndexes = (indexedBy: string[]) => {
+    const t = toProtocol(
+      [
+        { kind: 'line', line: 1, vars: { heap: [9, 8, 7], i: 0, swaps: 0 } },
+        { kind: 'array_read', array: 'heap', index: 0, value: 9 },
+      ],
+      { indexedBy: { heap: indexedBy } },
+    );
+    return t;
+  };
+
+  function labels(trace: ReturnType<typeof toProtocol>) {
+    const host = document.createElement('div');
+    const renderer = createRenderer('array')!;
+    renderer.mount(host, trace);
+    renderer.update(stateAtStep(trace, 1));
+    const out = [...host.querySelectorAll('text')].map((t) => t.textContent ?? '');
+    renderer.destroy();
+    return out;
+  }
+
+  it('marks a variable the source uses as a subscript', () => {
+    expect(labels(withIndexes(['i']))).toContain('i');
+  });
+
+  it('does not mark a counter that never indexes the array', () => {
+    // `swaps` is 0 exactly when `i` is 0. Only one of them points at element 0.
+    const shown = labels(withIndexes(['i']));
+    expect(shown).toContain('i');
+    expect(shown).not.toContain('swaps');
+    expect(shown.some((l) => l.includes('swaps'))).toBe(false);
+  });
+
+  it('marks nothing when the trace cannot say which variables index', () => {
+    // Silence beats a confident wrong claim — and an older trace carrying no
+    // index information must not fall back to labelling everything.
+    const trace = toProtocol([
+      { kind: 'line', line: 1, vars: { heap: [9, 8, 7], i: 0, swaps: 0 } },
+      { kind: 'array_read', array: 'heap', index: 0, value: 9 },
+    ]);
+    const shown = labels(trace);
+    expect(shown).not.toContain('i');
+    expect(shown).not.toContain('swaps');
+    // The index number is still drawn; only the pointer name is withheld.
+    expect(shown).toContain('0');
+  });
+
+  it('carries the index variables through the protocol per collection', () => {
+    const trace = withIndexes(['i', 'left']);
+    expect(trace.collections.find((c) => c.name === 'heap')?.indexedBy).toEqual(['i', 'left']);
+  });
+});

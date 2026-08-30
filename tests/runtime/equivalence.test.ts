@@ -133,3 +133,72 @@ describe('cross-language trace equivalence', () => {
     TIMEOUT,
   );
 });
+
+/**
+ * Both runtimes must report the same index variables.
+ *
+ * The visualizer draws pointer marks from this, so a disagreement would mean
+ * the same walkthrough labels different variables depending on which language
+ * the learner picked — the animation contradicting itself across a toggle.
+ *
+ * The two analyses are necessarily separate implementations: only Python's own
+ * parser can answer this for Python. That is exactly why they are tested
+ * together rather than each on its own.
+ */
+describe('index variables agree across languages', () => {
+  it('reports the same subscript variables for the same algorithm', async () => {
+    const js = await runJavaScript({
+      source: `function siftDown(heap) {
+  let i = 0;
+  let swaps = 0;
+  const left = 2 * i + 1;
+  if (left < heap.length && heap[left] > heap[i]) {
+    swaps = swaps + 1;
+  }
+  return swaps;
+}`,
+      entry: 'siftDown',
+      args: [[1, 8, 6]],
+      trace: true,
+    });
+
+    const py = await runPython({
+      source: `def sift_down(heap):
+    i = 0
+    swaps = 0
+    left = 2 * i + 1
+    if left < len(heap) and heap[left] > heap[i]:
+        swaps = swaps + 1
+    return swaps`,
+      entry: 'sift_down',
+      args: [[1, 8, 6]],
+      trace: true,
+    });
+
+    expect(js.indexedBy?.heap).toEqual(['i', 'left']);
+    expect(py.indexedBy?.heap).toEqual(['i', 'left']);
+  }, 120_000);
+
+  it('neither reports a counter that never indexes', async () => {
+    // The bug this whole mechanism exists to fix, checked on both sides.
+    const js = await runJavaScript({
+      source: 'function f(a) { let n = 0; for (let i = 0; i < a.length; i++) { n = n + a[i]; } return n; }',
+      entry: 'f',
+      args: [[1, 2, 3]],
+      trace: true,
+    });
+    const py = await runPython({
+      source: `def f(a):
+    n = 0
+    for i in range(len(a)):
+        n = n + a[i]
+    return n`,
+      entry: 'f',
+      args: [[1, 2, 3]],
+      trace: true,
+    });
+
+    expect(js.indexedBy?.a).toEqual(['i']);
+    expect(py.indexedBy?.a).toEqual(['i']);
+  }, 120_000);
+});

@@ -106,6 +106,31 @@ import sys, json, time
 # its frames and ignore this runner's own.
 _SOURCE_FILE = "<learner>"
 
+
+def _index_variables(src):
+    # Which variables the source uses as array subscripts. The mirror of
+    # index-vars.ts, kept here because Python's own parser is the only thing
+    # that can answer it for Python - and both runtimes must answer the same
+    # question the same way, or the same walkthrough would label different
+    # pointers in each language.
+    #
+    # Only a bare name counts: a[i + 1] names no single position and a[f(x)]
+    # names none at all, so neither earns a pointer mark.
+    import ast as _ast
+    found = {}
+    try:
+        tree = _ast.parse(src)
+    except SyntaxError:
+        return found
+    for node in _ast.walk(tree):
+        if not isinstance(node, _ast.Subscript):
+            continue
+        target = node.value
+        key = node.slice
+        if isinstance(target, _ast.Name) and isinstance(key, _ast.Name):
+            found.setdefault(target.id, set()).add(key.id)
+    return {name: sorted(vars) for name, vars in found.items()}
+
 class _TracedList(list):
     def __init__(self, values, name, sink):
         super().__init__(values)
@@ -199,7 +224,12 @@ def _run(source, entry, args_json, tracing, max_events, deadline):
         sys.settrace(None)
 
     sink({"kind": "return", "value": _snap(value)})
-    return json.dumps({"value": _snap(value), "events": events, "dropped": dropped[0]})
+    return json.dumps({
+        "value": _snap(value),
+        "events": events,
+        "dropped": dropped[0],
+        "indexedBy": _index_variables(source),
+    })
 `;
 
 export async function runPython(opts: RunOptions): Promise<RunResult> {
@@ -241,6 +271,7 @@ export async function runPython(opts: RunOptions): Promise<RunResult> {
       value: unknown;
       events: TraceEvent[];
       dropped: number;
+      indexedBy?: Record<string, string[]>;
     };
 
     const events = payload.events ?? [];
@@ -255,6 +286,7 @@ export async function runPython(opts: RunOptions): Promise<RunResult> {
       events,
       truncated: payload.dropped > 0,
       traceDegraded: false,
+      indexedBy: payload.indexedBy ?? {},
     };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);

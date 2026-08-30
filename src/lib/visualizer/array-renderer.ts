@@ -81,6 +81,7 @@ export function createArrayRenderer(): Renderer {
   let svg: SVGSVGElement | null = null;
   let cells: Cell[] = [];
   let name = '';
+  let indexedBy: readonly string[] | undefined;
   let width = MAX_CELL;
   let cellHeight = MAX_CELL_HEIGHT;
   let showLabels = true;
@@ -101,6 +102,8 @@ export function createArrayRenderer(): Renderer {
       if (!collection) return;
 
       name = collection.name;
+
+      indexedBy = collection.indexedBy;
       const values = collection.initial;
 
       const numbers = values.filter((v): v is number => typeof v === 'number');
@@ -209,7 +212,7 @@ export function createArrayRenderer(): Renderer {
       const changed = write && !Object.is(write.previous, write.value);
 
       cells.forEach((cell, index) => {
-        const status = statusAt(state, name, index);
+        const status = statusAt(state, name, index, indexedBy);
 
         setAttr(cell.box, 'fill', fillFor(status));
         setAttr(cell.box, 'stroke', strokeFor(status));

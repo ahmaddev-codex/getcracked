@@ -44,12 +44,14 @@ export function createListRenderer(): Renderer {
   let svg: SVGSVGElement | null = null;
   let cells: Cell[] = [];
   let name = '';
+  let indexedBy: readonly string[] | undefined;
 
   return {
     mount(container: HTMLElement, trace: Trace) {
       const collection = trace.collections.find((c) => c.kind === 'array');
       if (!collection) return;
       name = collection.name;
+      indexedBy = collection.indexedBy;
       const values = collection.initial;
       const pitch = NODE_R * 2 + LINK;
 
@@ -164,7 +166,7 @@ export function createListRenderer(): Renderer {
       const values = state.arrays.get(name);
       if (!values) return;
       cells.forEach((cell, index) => {
-        const status = statusAt(state, name, index);
+        const status = statusAt(state, name, index, indexedBy);
         setAttr(cell.shape, 'fill', fillFor(status));
         setAttr(cell.shape, 'stroke', strokeFor(status));
         setAttr(cell.shape, 'stroke-width', status.pointers.length > 0 ? '3' : '2');
@@ -192,12 +194,14 @@ export function createGraphRenderer(): Renderer {
   let svg: SVGSVGElement | null = null;
   let cells: Cell[] = [];
   let name = '';
+  let indexedBy: readonly string[] | undefined;
 
   return {
     mount(container: HTMLElement, trace: Trace) {
       const collection = trace.collections.find((c) => c.kind === 'array');
       if (!collection) return;
       name = collection.name;
+      indexedBy = collection.indexedBy;
       const values = collection.initial;
 
       svg = svgEl('svg', {
@@ -264,7 +268,7 @@ export function createGraphRenderer(): Renderer {
       const values = state.arrays.get(name);
       if (!values) return;
       cells.forEach((cell, index) => {
-        const status = statusAt(state, name, index);
+        const status = statusAt(state, name, index, indexedBy);
         setAttr(cell.shape, 'fill', fillFor(status));
         setAttr(cell.shape, 'stroke', strokeFor(status));
         setAttr(cell.shape, 'stroke-width', status.pointers.length > 0 ? '2.5' : '1');

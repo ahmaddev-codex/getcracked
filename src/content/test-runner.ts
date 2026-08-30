@@ -110,6 +110,7 @@ export async function runTestSpec(opts: RunSpecOptions): Promise<SpecResult> {
   let timedOut = false;
   let traceEvents: RunResult['events'] = [];
   let traceDegraded = false;
+  let indexedBy: RunResult['indexedBy'];
 
   for (const [i, testCase] of spec.cases.entries()) {
     const result = await run({
@@ -125,6 +126,7 @@ export async function runTestSpec(opts: RunSpecOptions): Promise<SpecResult> {
     if (i === 0 && trace) {
       traceEvents = result.events;
       traceDegraded = result.traceDegraded;
+      indexedBy = result.indexedBy;
     }
 
     if (result.timedOut) {
@@ -180,7 +182,7 @@ export async function runTestSpec(opts: RunSpecOptions): Promise<SpecResult> {
     passed,
     cases,
     timedOut,
-    trace: trace ? toProtocol(traceEvents, { degraded: traceDegraded }) : null,
+    trace: trace ? toProtocol(traceEvents, { degraded: traceDegraded, indexedBy }) : null,
     traceDegraded,
     metrics,
   };

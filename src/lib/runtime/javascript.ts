@@ -6,6 +6,7 @@
 import { shouldInterruptAfterDeadline } from 'quickjs-emscripten-core';
 import { getQuickJS } from './quickjs';
 import { instrument } from './instrument';
+import { javaScriptIndexVariables, type IndexVariables } from './index-vars';
 import { DEFAULT_MAX_EVENTS, type TraceEvent } from './trace';
 
 export interface RunOptions {
@@ -34,6 +35,14 @@ export interface RunResult {
    * R-2 mitigation in instrument.ts.
    */
   traceDegraded: boolean;
+  /**
+   * Array name to the variables the source uses to subscript it.
+   *
+   * Read statically from the source, because no runtime trace can tell an index
+   * from a number that happens to be in range — by the time the access fires,
+   * `a[i]` and `a[0]` are the same call. See index-vars.ts.
+   */
+  indexedBy?: IndexVariables;
 }
 
 const DEFAULT_TIMEOUT_MS = 5_000;
@@ -213,6 +222,7 @@ async function executeOnce(
       events,
       truncated: payload.dropped > 0,
       traceDegraded: degraded,
+      indexedBy: javaScriptIndexVariables(source),
     };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);

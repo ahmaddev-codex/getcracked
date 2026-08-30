@@ -53,12 +53,14 @@ export function createTreeRenderer(): Renderer {
   let svg: SVGSVGElement | null = null;
   let nodes: (NodeCell | null)[] = [];
   let name = '';
+  let indexedBy: readonly string[] | undefined;
 
   return {
     mount(container: HTMLElement, trace: Trace) {
       const collection = trace.collections.find((c) => c.kind === 'array');
       if (!collection) return;
       name = collection.name;
+      indexedBy = collection.indexedBy;
 
       const values = collection.initial;
       const depth = Math.max(1, Math.ceil(Math.log2(values.length + 1)));
@@ -188,7 +190,7 @@ export function createTreeRenderer(): Renderer {
 
       nodes.forEach((node, index) => {
         if (!node) return;
-        const status = statusAt(state, name, index);
+        const status = statusAt(state, name, index, indexedBy);
 
         setAttr(node.circle, 'fill', fillFor(status));
         setAttr(node.circle, 'stroke', strokeFor(status));

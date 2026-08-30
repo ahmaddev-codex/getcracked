@@ -39,6 +39,19 @@ export interface CollectionSnapshot {
   initial: unknown[];
   /** True when the value was too large to send in full. */
   truncated: boolean;
+  /**
+   * Variables the source uses to subscript this collection.
+   *
+   * Static, from the source, because a trace cannot tell an index from a number
+   * that happens to be in range. Renderers mark a variable as a pointer only if
+   * it appears here, which is what stops a counter like `swaps` being drawn as
+   * pointing at element 0.
+   *
+   * Empty means "unknown", not "none": a trace from before this existed, or
+   * source that would not parse, should fall back to labelling nothing rather
+   * than to labelling everything.
+   */
+  indexedBy?: string[];
 }
 
 export type ProtocolEvent =
@@ -81,7 +94,10 @@ function isScalar(value: unknown): value is Scalar {
  *  2. **Diffing** — a line event keeps only the scalars that changed since the
  *     last one. A loop counter changes; the six other variables in scope do not.
  */
-export function toProtocol(raw: RawEvent[], options: { degraded?: boolean } = {}): Trace {
+export function toProtocol(
+  raw: RawEvent[],
+  options: { degraded?: boolean; indexedBy?: Record<string, string[]> } = {},
+): Trace {
   const collections: CollectionSnapshot[] = [];
   const seenCollections = new Set<string>();
   const events: ProtocolEvent[] = [];
@@ -114,6 +130,7 @@ export function toProtocol(raw: RawEvent[], options: { degraded?: boolean } = {}
               kind: Array.isArray(value) ? 'array' : 'object',
               initial: asArray.slice(0, MAX_COLLECTION_ELEMENTS),
               truncated: asArray.length > MAX_COLLECTION_ELEMENTS,
+              indexedBy: options.indexedBy?.[name],
             });
           }
         }

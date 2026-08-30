@@ -44,11 +44,23 @@ export interface CellStatus {
   pointers: string[];
 }
 
-export function statusAt(state: RenderState, name: string, index: number): CellStatus {
+export function statusAt(
+  state: RenderState,
+  name: string,
+  index: number,
+  /**
+   * Variables the source actually uses to subscript this collection.
+   *
+   * Undefined means the trace could not say, in which case nothing is labelled:
+   * a silent omission beats a confident wrong claim about what the code points
+   * at.
+   */
+  indexedBy?: readonly string[],
+): CellStatus {
   return {
     read: state.lastRead?.array === name && state.lastRead.index === index,
     write: state.lastWrite?.array === name && state.lastWrite.index === index,
-    pointers: pointersAt(state, index),
+    pointers: pointersAt(state, index, indexedBy),
   };
 }
 
@@ -58,10 +70,23 @@ export function statusAt(state: RenderState, name: string, index: number): CellS
  * What makes a two-pointer or sliding-window solution legible rather than a wall
  * of numbers: `i` and `j` become marks on the structure instead of entries in a
  * list the learner has to cross-reference.
+ *
+ * **A variable qualifies only if the source subscripts this collection with
+ * it.** Matching on value alone drew every integer that happened to land in
+ * range: in the heap walkthrough, the counter `swaps` was marked as pointing at
+ * element 0 simply because it was 0. That is not a rendering nit — it is the
+ * picture asserting something about the code that is false.
  */
-export function pointersAt(state: RenderState, index: number): string[] {
+export function pointersAt(
+  state: RenderState,
+  index: number,
+  indexedBy?: readonly string[],
+): string[] {
+  if (!indexedBy || indexedBy.length === 0) return [];
+
   const names: string[] = [];
-  for (const [name, value] of state.variables) {
+  for (const name of indexedBy) {
+    const value = state.variables.get(name);
     if (typeof value === 'number' && Number.isInteger(value) && value === index) {
       names.push(name);
     }
