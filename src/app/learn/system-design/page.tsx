@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ConceptMap } from '@/components/learn/ConceptMap';
+import { ConceptMindMap } from '@/components/learn/ConceptMindMap';
 import { Markdown } from '@/components/Markdown';
 import { Roadmap } from '@/components/learn/Roadmap';
 import { conceptCount, getConceptCategories } from '@/content/concepts';
@@ -69,11 +69,12 @@ export default function SystemDesignPage() {
         <div className="flex flex-col gap-1">
           <h2 className="font-sans text-2xl font-bold tracking-tight">Concept reference</h2>
           <p className="text-sm text-foreground-muted">
-            {conceptCount()} concepts across {categories.length} areas. Definitions, not essays
-            — each one links to itself, so you can send someone straight to a term.
+            {conceptCount()} concepts across {categories.length} areas, laid out the same way
+            as the path above. Every term is visible without opening anything, and each one
+            links to itself — so you can send someone straight to a definition.
           </p>
         </div>
-        <ConceptMap categories={categories} />
+        <ConceptMindMap categories={categories} />
       </section>
     </main>
   );
