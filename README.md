@@ -14,24 +14,27 @@ Not slides, not videos — you write the code, run it against real tests, and wa
  /learn/dsa         /problems           /challenges        /roadmaps
 ```
 
-The arrows are **recommendations, not gates**. Nothing on the platform is locked — a senior engineer skips straight to the problems, a beginner gets a path. See [§6.6](docs/getcracked-prd.md).
+The arrows are **recommendations, not gates**. Nothing on the platform is locked — a senior engineer skips straight to the problems, a beginner gets a path.
 
 ---
 
 ## Status
 
-Early. Phase 0 of [the plan](tasks/plan.md) — foundations, not features.
+In progress. The core loop works end to end — read a topic, practise it, build the
+thing, and watch your own code animate while it runs.
 
 | | State |
 |---|---|
-| App skeleton, CI, test tooling | ✅ Done (T0.1) |
-| Code execution + trace capture | ✅ Spike proven (T0.2) — [findings](docs/spikes/runtime-python-js.md) |
-| Database schema and migrations | ✅ Done (T0.3) |
-| Auth for account-scoped data | ⬜ Next (T0.4) |
-| Design system | ⬜ T0.7 |
-| Lessons, problems, animation, roadmaps | ⬜ Phases 1–5 |
+| Foundations — app, CI, database, auth, analytics, design system | ✅ |
+| Execution in the browser — Python and JavaScript, sandboxed, no server | ✅ |
+| **Tier 1** — 31 lessons across data structures, algorithms, and system design | ✅ |
+| **Tier 2** — 20 practice problems, grouped by topic | ✅ |
+| **Tier 3** — 3 multi-step build challenges over a multi-file workspace | ✅ |
+| Animation — 9 structure-shaped renderers driven by real traces | ✅ |
+| Roadmaps — three node graphs with per-node progress | ✅ |
+| Catalog volume, System Design labs, company question bank, AI assistant | ⬜ |
 
-There is no product to use yet. `/runtime` is a throwaway spike page.
+`/runtime` is a throwaway spike page and is not part of the product.
 
 ---
 
@@ -89,12 +92,12 @@ Postgres is pinned to 17 to match Neon's major version. A local/production major
 
 ## Key design choices
 
-The decisions that actually determine whether this ships. Full reasoning in [ADR 0001](docs/adr/0001-stack.md).
+The decisions that actually determine whether this ships.
 
 - **The expensive compute runs in the browser.** Python (Pyodide) and JavaScript (QuickJS-WASM) both execute client-side, so a learner costs the platform essentially nothing to run code for. This is what makes a free, ungated product financially survivable — and it is why sign-in is required only for progress and personalization, never to use the product.
 - **Content lives in the repo, not the database.** Lessons, problems, and challenges are typed modules validated in CI. The database holds only user-owned state. An invalid test spec fails the build rather than failing a learner.
 - **One test spec compiles to every language.** Hand-maintaining parallel suites means a learner passes in Python and fails in JavaScript on identical logic. One declarative spec, per-language harness generators.
-- **Tracing is language-agnostic.** CPython's `sys.settrace` and AST-instrumented QuickJS emit the same event shape, so one renderer consumes either. [Proven in CI](docs/spikes/runtime-python-js.md) — identical algorithms produce identical array-access sequences.
+- **Tracing is language-agnostic.** CPython's `sys.settrace` and AST-instrumented QuickJS emit the same event shape, so one renderer consumes either. Proven in CI — identical algorithms produce identical array-access sequences.
 - **The animation loop stays out of React.** 500 SVG rects is unremarkable; 500 React components reconciling every frame is not.
 - **Nothing is locked.** Prerequisites drive recommendations, never access control. Guidance has to earn attention rather than compel it.
 
@@ -124,27 +127,12 @@ getcracked/
 │       ├── javascript.ts       #   QuickJS adapter
 │       └── python.ts           #   Pyodide adapter
 ├── db/migrations/              # generated SQL
-├── docs/
-│   ├── getcracked-prd.md       #   product spec — the authority on scope
-│   ├── adr/                    #   architecture decisions
-│   └── spikes/                 #   investigation writeups
-├── tasks/
-│   ├── plan.md                 #   phased plan, acceptance criteria, risks
-│   └── todo.md                 #   working checklist
 └── tests/                      # vitest suites
 ```
 
----
-
-## Documentation
-
-| Document | What it answers |
-|----------|-----------------|
-| [PRD](docs/getcracked-prd.md) | What the product is and every feature in scope. The authority — code follows it, not the reverse |
-| [ADR 0001](docs/adr/0001-stack.md) | Why this stack, what was rejected, and what is still unresolved |
-| [Runtime spike](docs/spikes/runtime-python-js.md) | Whether in-browser execution and tracing actually work, with measurements |
-| [Plan](tasks/plan.md) | Phased tasks with acceptance criteria, risks, and open questions |
-| [Checklist](tasks/todo.md) | What is done and what is next |
+The product spec, the architecture decision record, and the phased plan are kept
+outside the repository — they are working documents rather than part of the
+codebase, and are git-ignored.
 
 ---
 
