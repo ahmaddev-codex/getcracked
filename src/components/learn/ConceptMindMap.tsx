@@ -273,7 +273,7 @@ export function ConceptMindMap({ categories }: { categories: readonly ConceptCat
         <div className="relative">
           <span
             aria-hidden
-            className="absolute left-1/2 top-0 hidden h-full w-[3.5px] -translate-x-1/2 bg-connector md:block"
+            className="absolute left-1/2 top-0 hidden spine-line h-full -translate-x-1/2 bg-connector md:block"
           />
           <ol className="relative flex flex-col gap-8">
             {rows.map((row, index) => (

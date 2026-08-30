@@ -36,8 +36,21 @@ const POLICIES: Record<LimitPolicy, PolicyConfig> = {
   // Tight: this is the credential-stuffing surface.
   auth: { limit: 10, window: '1 m', failOpen: false },
   mutation: { limit: 60, window: '1 m', failOpen: false },
-  // Real money per call (L9). Lowest ceiling, and never fails open.
-  assistant: { limit: 20, window: '1 h', failOpen: false },
+  /**
+   * Real money per call (L9). Lowest ceiling, and never fails open.
+   *
+   * **Ten per day, per learner.** Written as `24 h` rather than `1 d` because
+   * Upstash's `Duration` type stops at hours; it is the same window. A daily
+   * span rather than an hourly one because the
+   * cost being controlled is monthly: an hourly cap of 20 permits 480 a day,
+   * which bounds a burst and not a bill. Ten is enough to work through a
+   * problem with help and far short of using the assistant as a search engine.
+   *
+   * Fails closed. An unavailable limiter means unmetered spend against a
+   * third-party API, which is the one failure mode worth refusing service over
+   * — the rest of the product keeps working without the assistant.
+   */
+  assistant: { limit: 10, window: '24 h', failOpen: false },
 };
 
 let redis: Redis | null | undefined;

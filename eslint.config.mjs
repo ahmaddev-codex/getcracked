@@ -46,11 +46,29 @@ const eslintConfig = defineConfig([
           message:
             "Inline style bypasses the token layer. Use a token-backed utility class instead.",
         },
+        /**
+         * Tailwind arbitrary values like bg-[#fff] or text-[14px] reintroduce
+         * raw values through the back door.
+         *
+         * Matched on *any* string in these directories, not only on a
+         * `className` attribute. Two real leaks came from the narrower rule: a
+         * `.ts` module exporting class strings never has a JSX attribute at
+         * all, and a class assembled in a template literal is a
+         * `TemplateElement` rather than a `Literal`. Both passed a lint whose
+         * whole job is stopping exactly that.
+         *
+         * The unit list covers decimals too — `w-[3.5px]` slipped past a `\d+px`
+         * pattern, which is the kind of gap a regex acquires quietly.
+         */
         {
-          // Tailwind arbitrary values like bg-[#fff] or text-[14px] reintroduce
-          // raw values through the back door.
           selector:
-            "JSXAttribute[name.name='className'] > Literal[value=/\\[(#[0-9a-fA-F]{3,8}|\\d+px)\\]/]",
+            "Literal[value=/\\[(#[0-9a-fA-F]{3,8}|[\\d.]+(px|rem|em|vh|vw|%))\\]/]",
+          message:
+            "Arbitrary Tailwind value re-introduces a raw colour or size. Add a token instead.",
+        },
+        {
+          selector:
+            "TemplateElement[value.raw=/\\[(#[0-9a-fA-F]{3,8}|[\\d.]+(px|rem|em|vh|vw|%))\\]/]",
           message:
             "Arbitrary Tailwind value re-introduces a raw colour or size. Add a token instead.",
         },

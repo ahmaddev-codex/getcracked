@@ -40,3 +40,54 @@ describe('failure policy', () => {
     );
   });
 });
+
+/**
+ * The assistant's daily quota (L9).
+ *
+ * Ten requests per learner per day. The distinction that matters is the
+ * *window*: an hourly cap of 20 bounds a burst but permits 480 a day, and the
+ * thing being controlled here is a monthly bill, not a spike.
+ */
+describe('assistant quota', () => {
+  /** Windows are strings; compare the duration they mean, not the spelling. */
+  const hours = (window: string): number => {
+    const [n, unit] = window.split(' ');
+    const factor = { s: 1 / 3600, m: 1 / 60, h: 1 }[unit] ?? 0;
+    return Number(n) * factor;
+  };
+
+  it('is ten per day', () => {
+    expect(RATE_LIMIT_POLICIES.assistant.limit).toBe(10);
+    // Spelled `24 h` because Upstash's Duration type stops at hours.
+    expect(hours(RATE_LIMIT_POLICIES.assistant.window)).toBe(24);
+  });
+
+  it('spans a full day, because the cost being bounded is monthly', () => {
+    // An hourly ceiling caps a burst and not a bill — 20/hour is 480/day.
+    expect(hours(RATE_LIMIT_POLICIES.assistant.window)).toBeGreaterThanOrEqual(24);
+  });
+
+  it('fails closed, unlike analytics', () => {
+    // An unavailable limiter here means unmetered spend against a third-party
+    // API. Analytics failing open loses a data point; this would lose money.
+    expect(RATE_LIMIT_POLICIES.assistant.failOpen).toBe(false);
+    expect(RATE_LIMIT_POLICIES.events.failOpen).toBe(true);
+  });
+
+  it('is the tightest daily allowance of any policy', () => {
+    // Every other policy is per-minute, so comparing raw limits is meaningless;
+    // what matters is that nothing else is this restrictive per day.
+    const perDay = (p: { limit: number; window: string }) => {
+      const [n, unit] = p.window.split(' ');
+      const perWindow = Number(n);
+      const windows = { s: 86_400, m: 1440, h: 24 }[unit] ?? 1;
+      return (p.limit / perWindow) * windows;
+    };
+
+    const assistant = perDay(RATE_LIMIT_POLICIES.assistant);
+    for (const [name, policy] of Object.entries(RATE_LIMIT_POLICIES)) {
+      if (name === 'assistant') continue;
+      expect(perDay(policy), `${name} is tighter than the assistant`).toBeGreaterThan(assistant);
+    }
+  });
+});

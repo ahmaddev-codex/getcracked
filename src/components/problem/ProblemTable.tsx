@@ -81,7 +81,7 @@ export function ProblemTable({ problems }: { problems: readonly Problem[] }) {
               <td className="px-4 py-2.5 text-foreground-muted">{problem.topic}</td>
               <td className="px-4 py-2.5">
                 <span
-                  className={`rounded px-1.5 py-0.5 text-[11px] font-semibold capitalize ${
+                  className={`rounded px-1.5 py-0.5 text-xs font-semibold capitalize ${
                     DIFFICULTY_TONE[problem.difficulty] ?? 'bg-surface-muted'
                   }`}
                 >

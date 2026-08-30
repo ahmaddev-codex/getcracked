@@ -28,7 +28,7 @@ export function Button({ tone = 'strong', className = '', ...props }: ButtonProp
         tone,
         `px-3 py-1.5 text-sm font-medium transition-transform
          duration-(--duration-fast) ease-(--ease-out)
-         active:translate-x-[2px] active:translate-y-[2px] active:shadow-none
+         node-pressable
          focus-visible:outline-2 focus-visible:outline-offset-2
          focus-visible:outline-link
          disabled:cursor-not-allowed disabled:opacity-50 ${className}`,

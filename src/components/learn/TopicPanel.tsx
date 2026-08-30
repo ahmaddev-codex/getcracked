@@ -454,7 +454,7 @@ export function TopicPanel({
                 {problems.map((problem) => (
                   <li key={problem.slug} className="flex items-center gap-2">
                     <span
-                      className={`rounded px-1.5 py-0.5 text-[11px] font-semibold capitalize ${
+                      className={`rounded px-1.5 py-0.5 text-xs font-semibold capitalize ${
                         DIFFICULTY_TONE[problem.difficulty] ?? 'bg-surface-muted'
                       }`}
                     >

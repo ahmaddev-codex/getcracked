@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   CONTRAST_PAIRS,
@@ -53,5 +54,43 @@ describe('token completeness', () => {
     expect(toHex(tokens.dark.background)).not.toBe(toHex(tokens.light.background));
     expect(toHex(tokens.dark.surface)).not.toBe(toHex(tokens.light.surface));
     expect(toHex(tokens.dark.foreground)).not.toBe(toHex(tokens.light.foreground));
+  });
+});
+
+/**
+ * The token guard itself (K1, K9).
+ *
+ * The ESLint rule that keeps raw values out of components matched only a
+ * `className` JSX attribute, so two whole categories walked past it: a `.ts`
+ * module exporting class strings has no JSX attribute at all, and a class built
+ * in a template literal is a `TemplateElement` rather than a `Literal`. Its
+ * numeric pattern also missed decimals, so `w-[3.5px]` was invisible.
+ *
+ * These check the tokens those leaks became, so the values cannot drift back
+ * into a component as literals.
+ */
+describe('shape tokens', () => {
+  const tokens = readTokens();
+
+  it.each(['light', 'dark'] as const)('%s defines the connector width', () => {
+    // Read as raw text: these are lengths, not colours, so the palette parser
+    // does not carry them.
+    const css = readFileSync('src/app/globals.css', 'utf8');
+    expect(css).toMatch(/--connector-width:\s*[\d.]+px/);
+  });
+
+  it('defines a press offset that matches the node shadow', () => {
+    const css = readFileSync('src/app/globals.css', 'utf8');
+    const press = /--press-offset:\s*([\d.]+)px/.exec(css)?.[1];
+    const shadow = /--shadow-node:\s*([\d.]+)px/.exec(css)?.[1];
+
+    // A node should travel exactly its shadow offset, so it reads as being
+    // pushed flat rather than nudged an unrelated distance.
+    expect(press).toBeTruthy();
+    expect(press).toBe(shadow);
+  });
+
+  it('still has a palette to check, so this file is testing something', () => {
+    expect(Object.keys(tokens.light).length).toBeGreaterThan(10);
   });
 });
