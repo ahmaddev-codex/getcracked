@@ -42,14 +42,16 @@ import {
  * (H5). Deliberately outside React (ADR 0001 §7).
  */
 
-const MAX_CELL = 44;
+const MAX_CELL = 84;
 const MIN_CELL = 6;
 const GAP = 4;
-const CELL_HEIGHT = 44;
+const MAX_CELL_HEIGHT = 72;
+const MIN_CELL_HEIGHT = 36;
 const INDEX_BAND = 16;
 /** Headroom for the "was N" annotation above a changed cell. */
 const WAS_BAND = 14;
-const MAX_WIDTH = 680;
+/** Used only when the container has not been laid out yet. */
+const FALLBACK_WIDTH = 680;
 
 interface Cell {
   group: SVGGElement;
@@ -60,9 +62,19 @@ interface Cell {
   was: SVGTextElement | null;
 }
 
-function cellWidth(count: number): number {
+/**
+ * Cell size, from the space actually available.
+ *
+ * Previously a fixed 680px budget capped at 44px, which meant a five-element
+ * array drew 240px wide however much room it had — smaller than the code panel
+ * beside it, and unreadable next to a lesson set in 16px. Measuring the
+ * container lets a short array be large and a long one stay on screen, which is
+ * the same rule at both ends rather than two different ones.
+ */
+function cellWidth(count: number, available: number): number {
   if (count <= 0) return MAX_CELL;
-  return Math.max(MIN_CELL, Math.min(MAX_CELL, Math.floor(MAX_WIDTH / count) - GAP));
+  const budget = available > 0 ? available : FALLBACK_WIDTH;
+  return Math.max(MIN_CELL, Math.min(MAX_CELL, Math.floor(budget / count) - GAP));
 }
 
 export function createArrayRenderer(): Renderer {
@@ -70,6 +82,7 @@ export function createArrayRenderer(): Renderer {
   let cells: Cell[] = [];
   let name = '';
   let width = MAX_CELL;
+  let cellHeight = MAX_CELL_HEIGHT;
   let showLabels = true;
   let scaleMin = 0;
   let scaleMax = 1;
@@ -79,7 +92,7 @@ export function createArrayRenderer(): Renderer {
   function fillHeight(value: unknown): number {
     if (!numeric || typeof value !== 'number' || !Number.isFinite(value)) return 0;
     const span = scaleMax - scaleMin || 1;
-    return Math.max(0, ((value - scaleMin) / span) * CELL_HEIGHT);
+    return Math.max(0, ((value - scaleMin) / span) * cellHeight);
   }
 
   return {
@@ -95,7 +108,10 @@ export function createArrayRenderer(): Renderer {
       scaleMin = numbers.length ? Math.min(0, ...numbers) : 0;
       scaleMax = numbers.length ? Math.max(...numbers) : 1;
 
-      width = cellWidth(values.length);
+      width = cellWidth(values.length, container.clientWidth);
+      // Height follows width so cells stay roughly square rather than becoming
+      // letterboxes when a short array gets a lot of room.
+      cellHeight = Math.max(MIN_CELL_HEIGHT, Math.min(MAX_CELL_HEIGHT, width));
       // Below this the text is unreadable and the labels become noise.
       showLabels = width >= 18;
 
@@ -103,7 +119,7 @@ export function createArrayRenderer(): Renderer {
         role: 'img',
         'aria-label': `Array ${name}: ${values.length} indexed boxes. A text description of each step follows.`,
         width: values.length * (width + GAP),
-        height: WAS_BAND + CELL_HEIGHT + INDEX_BAND,
+        height: WAS_BAND + cellHeight + INDEX_BAND,
       });
 
       values.forEach((value, index) => {
@@ -114,7 +130,7 @@ export function createArrayRenderer(): Renderer {
         const box = svgEl('rect', {
           class: 'gc-cell',
           width,
-          height: CELL_HEIGHT,
+          height: cellHeight,
           rx: 3,
           fill: 'var(--surface-muted)',
           stroke: 'var(--border)',
@@ -129,7 +145,7 @@ export function createArrayRenderer(): Renderer {
             class: 'gc-cell-fill',
             x: 1,
             width: Math.max(0, width - 2),
-            y: CELL_HEIGHT - h,
+            y: cellHeight - h,
             height: h,
             fill: 'var(--accent)',
             opacity: 0.35,
@@ -145,17 +161,18 @@ export function createArrayRenderer(): Renderer {
         if (showLabels) {
           value_ = svgEl('text', {
             x: width / 2,
-            y: CELL_HEIGHT / 2 + 4,
+            y: cellHeight / 2 + 5,
             'text-anchor': 'middle',
-            'font-size': 12,
+            'font-size': Math.max(11, Math.min(18, Math.round(width / 3.4))),
             'font-family': 'var(--font-mono)',
+            'font-weight': 600,
             fill: 'var(--foreground)',
           });
           value_.textContent = formatValue(value);
 
           index_ = svgEl('text', {
             x: width / 2,
-            y: CELL_HEIGHT + 12,
+            y: cellHeight + 12,
             'text-anchor': 'middle',
             'font-size': 9,
             'font-family': 'var(--font-mono)',
@@ -201,7 +218,7 @@ export function createArrayRenderer(): Renderer {
         if (cell.fill) {
           const h = fillHeight(values[index]);
           setAttr(cell.fill, 'height', String(h));
-          setAttr(cell.fill, 'y', String(CELL_HEIGHT - h));
+          setAttr(cell.fill, 'y', String(cellHeight - h));
           // Hidden on a highlighted cell: the fill would fight the status colour.
           setAttr(cell.fill, 'opacity', status.read || status.write ? '0' : '0.35');
         }

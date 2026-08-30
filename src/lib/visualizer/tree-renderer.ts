@@ -30,9 +30,12 @@ import {
  * does not describe.
  */
 
-const RADIUS = 16;
-const LEVEL_H = 58;
+const MIN_RADIUS = 16;
+const MAX_RADIUS = 26;
+const MIN_LEVEL_H = 58;
 const MIN_GAP = 38;
+/** Used only when the container has not been laid out yet. */
+const FALLBACK_WIDTH = 680;
 
 interface NodeCell {
   circle: SVGCircleElement;
@@ -59,9 +62,21 @@ export function createTreeRenderer(): Renderer {
 
       const values = collection.initial;
       const depth = Math.max(1, Math.ceil(Math.log2(values.length + 1)));
-      const widest = 2 ** (depth - 1);
-      const width = Math.max(320, widest * MIN_GAP + RADIUS * 2);
-      const height = depth * LEVEL_H;
+
+      // Spread across the room available rather than a fixed minimum: a
+      // six-node heap in a 700px panel should not draw itself at 320px and
+      // leave the learner squinting at circles half the size of the body text.
+      const present = values.filter((v) => !isAbsent(v)).length || 1;
+      const available = container.clientWidth || FALLBACK_WIDTH;
+      const width = Math.max(280, Math.min(available, present * MIN_GAP * 1.6));
+      // Radius follows the horizontal room each node actually gets, so a small
+      // tree reads large and a wide one still fits.
+      const radius = Math.max(
+        MIN_RADIUS,
+        Math.min(MAX_RADIUS, Math.floor(width / present / 2.6)),
+      );
+      const levelH = Math.max(MIN_LEVEL_H, radius * 2.8);
+      const height = depth * levelH + radius;
 
       svg = svgEl('svg', {
         role: 'img',
@@ -70,14 +85,37 @@ export function createTreeRenderer(): Renderer {
         height,
       });
 
-      /** Centre of node `index`, spread evenly across its level. */
+      /**
+       * Node positions by in-order rank, which is how VisuAlgo and every
+       * textbook draw a tree.
+       *
+       * The obvious alternative — divide each level into 2^depth equal slots —
+       * is what this used to do, and it wastes the width on any tree that is
+       * not perfect: a chain of three nodes spreads across the full panel with
+       * two thirds of it empty, and a sparse level pushes its one child to a
+       * position that implies siblings which do not exist.
+       *
+       * In-order rank fixes both. A node's column is how many nodes precede it
+       * in an in-order walk, so the drawing is as narrow as the tree really is,
+       * left children genuinely sit left of their parent, and nothing overlaps.
+       */
+      const columns = new Map<number, { col: number; depth: number }>();
+      let cursor = 0;
+      const assign = (i: number, level: number): void => {
+        if (i >= values.length || isAbsent(values[i])) return;
+        assign(2 * i + 1, level + 1);
+        columns.set(i, { col: cursor++, depth: level });
+        assign(2 * i + 2, level + 1);
+      };
+      assign(0, 0);
+
+      const totalCols = Math.max(1, cursor);
+      const band = width / totalCols;
+
       const position = (index: number) => {
-        const level = Math.floor(Math.log2(index + 1));
-        const first = 2 ** level - 1;
-        const slotsOnLevel = 2 ** level;
-        const offset = index - first;
-        const band = width / slotsOnLevel;
-        return { x: band * (offset + 0.5), y: level * LEVEL_H + RADIUS + 4 };
+        const slot = columns.get(index);
+        if (!slot) return { x: 0, y: 0 };
+        return { x: band * (slot.col + 0.5), y: slot.depth * levelH + radius + 4 };
       };
 
       // Edges first, so nodes paint over them.
@@ -111,16 +149,16 @@ export function createTreeRenderer(): Renderer {
           class: 'gc-cell',
           cx: x,
           cy: y,
-          r: RADIUS,
+          r: radius,
           fill: 'var(--surface-muted)',
           stroke: 'var(--border)',
         });
 
         const text = svgEl('text', {
           x,
-          y: y + 4,
+          y: y + 5,
           'text-anchor': 'middle',
-          'font-size': 11,
+          'font-size': Math.max(11, Math.round(radius * 0.72)),
           'font-family': 'var(--font-mono)',
           fill: 'var(--foreground)',
         });
@@ -128,7 +166,7 @@ export function createTreeRenderer(): Renderer {
 
         const idx = svgEl('text', {
           x,
-          y: y + RADIUS + 11,
+          y: y + radius + 12,
           'text-anchor': 'middle',
           'font-size': 8,
           'font-family': 'var(--font-mono)',

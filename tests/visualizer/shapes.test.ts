@@ -86,10 +86,51 @@ describe('shapes', () => {
     renderer.destroy();
   });
 
-  it('draws a linked list with an arrow per node and a null tail', () => {
+  it('draws a linked list as vertices joined by arrows, not adjacent boxes', () => {
+    // Following VisuAlgo: a row of touching rectangles is a picture of an
+    // array, which is the one structure a list is defined by not being.
     const { host, renderer } = draw('linked-list');
+    expect(host.querySelectorAll('circle').length).toBe(4);
+    expect(host.querySelectorAll('rect').length).toBe(0);
+    // One arrow between each pair, plus the one to null.
     expect(host.querySelectorAll('line').length).toBe(4);
-    expect([...host.querySelectorAll('text')].map((t) => t.textContent)).toContain('null');
+    renderer.destroy();
+  });
+
+  it('labels the ends of a linked list and terminates it in null', () => {
+    const { host, renderer } = draw('linked-list');
+    // Labels combine the landmark with any pointer sitting there, so "head i"
+    // is the expected shape rather than "head" alone.
+    const labels = [...host.querySelectorAll('text')].map((t) => t.textContent ?? '');
+    expect(labels.some((l) => l.includes('head'))).toBe(true);
+    expect(labels.some((l) => l.includes('tail'))).toBe(true);
+    // null is why a traversal stops, which a learner meeting lists needs to see.
+    expect(labels).toContain('null');
+    renderer.destroy();
+  });
+
+  it('lays a tree out by in-order rank rather than by level', () => {
+    // A chain leans; it does not spread across the full width with two thirds
+    // empty, which is what per-level slotting produced.
+    const chain = toProtocol([
+      { kind: 'line', line: 1, vars: { t: [3, 2, -1, 1], i: 0 } },
+      { kind: 'array_read', array: 't', index: 0, value: 3 },
+    ]);
+    const host = document.createElement('div');
+    const renderer = createRenderer('tree')!;
+    renderer.mount(host, chain);
+
+    // Circles are emitted in array-index order — root, then its left child,
+    // then that child's left child — so the root is drawn *first* but sits
+    // *rightmost*, because its entire subtree hangs to the left of it. That
+    // inversion is exactly what in-order layout produces and what per-level
+    // slotting does not.
+    const xs = [...host.querySelectorAll('circle')].map((c) => Number(c.getAttribute('cx')));
+    expect(xs).toHaveLength(3);
+    expect(new Set(xs).size, 'nodes must not share a column').toBe(3);
+    const [root, child, grandchild] = xs;
+    expect(root).toBeGreaterThan(child);
+    expect(child).toBeGreaterThan(grandchild);
     renderer.destroy();
   });
 

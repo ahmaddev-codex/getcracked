@@ -256,11 +256,22 @@ export function Visualizer({
         </p>
       )}
 
-      <div className={source ? 'grid gap-3 lg:grid-cols-2' : ''}>
+      {/*
+        Code above, animation below — not side by side.
+        
+        Side by side gave each half about 340px on a 768px column, which left
+        the picture smaller than the code that produced it and forced the array
+        into 44px cells. Stacking gives the animation the full measure, which is
+        what it needs: the code is read line by line and is happy narrow, while
+        the structure is scanned across and is not.
+      */}
+      <div className="flex flex-col gap-3">
         {source && <CodePanel source={source} line={currentLine} language={language} />}
 
         <Node tone="surface" className="flex flex-col gap-3 overflow-x-auto p-4">
-          <div ref={hostRef} />
+          {/* Reserves height so the panel does not collapse before the first
+              frame and jump when it arrives. */}
+          <div ref={hostRef} className="flex min-h-40 items-center justify-center" />
           {!drawable && (
             // Saying so beats an empty box that reads as a bug. Only arrays have
             // a renderer today; the others arrive in Phase 4.
