@@ -46,6 +46,9 @@
   --alt: #4136d6;               /* sampled — alternate/indigo nodes */
   --alt-foreground: #ffffff;
   --danger: #b91c1c;            /* derived — form and run errors */
+  --danger-soft: #fee2e2;       /* derived — the same hue as a quiet fill */
+  --success: #15803d;           /* derived — passing tests, completed topics */
+  --success-soft: #dcfce7;
 
   /* ── Syntax highlighting ──────────────────────────────────────────────── */
   /* Derived, and contrast-checked against --surface like any other text: code
@@ -124,6 +127,9 @@
   --alt: #a5b4fc;
   --alt-foreground: #030713;
   --danger: #fca5a5;
+  --danger-soft: #45161a;
+  --success: #86efac;
+  --success-soft: #14321f;
 
   --syntax-keyword: #c4b5fd;
   --syntax-string: #86efac;
@@ -152,6 +158,9 @@
 
   --color-link: var(--link);
   --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
   --color-syntax-keyword: var(--syntax-keyword);
   --color-syntax-string: var(--syntax-string);
   --color-syntax-number: var(--syntax-number);
@@ -193,6 +202,33 @@ body {
 
 /* The K3 treatment as a utility, so every component composes the same shape
    rather than each restating border/radius/shadow and drifting. */
+/* Hover feedback for anything clickable wearing the node treatment.
+
+   Deliberately not a transform: a card that lifts on hover shifts the text the
+   pointer is aimed at, and on a dense roadmap the whole graph twitches as the
+   cursor crosses it. A fill change says "clickable" without moving anything.
+
+   Expressed as a brightness filter rather than a second colour per tone, so one
+   rule covers every fill — yellow nodes, white cards, dark buttons — and stays
+   correct when a token changes. Inverted in dark mode, where darkening reads as
+   disabled rather than as hover. */
+@utility node-interactive {
+  transition: filter var(--duration-fast) var(--ease-out);
+  &:hover {
+    filter: brightness(0.95);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .node-interactive {
+    transition: none;
+  }
+}
+
+:root[data-theme='dark'] .node-interactive:hover {
+  filter: brightness(1.15);
+}
+
 @utility node-surface {
   border: var(--border-width-node) solid var(--border-strong);
   border-radius: var(--radius-node);

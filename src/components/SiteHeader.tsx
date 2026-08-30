@@ -100,7 +100,7 @@ export function SiteHeader() {
               </Link>
               <Link
                 href="/sign-up"
-                className="rounded-node border-2 border-accent-strong bg-accent-strong px-3 py-1 text-sm font-semibold text-accent-foreground transition-transform hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
+                className="rounded-node border-2 border-accent-strong bg-accent-strong px-3 py-1 text-sm font-semibold text-accent-foreground node-interactive focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
               >
                 Sign up
               </Link>

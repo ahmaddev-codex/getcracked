@@ -1,4 +1,9 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
+import { TopicPanel } from './TopicPanel';
+import type { ReactNode } from 'react';
 import type { Lesson, Problem } from '@/content/schema';
 
 /**
@@ -24,6 +29,8 @@ import type { Lesson, Problem } from '@/content/schema';
 export interface RoadmapTopic {
   lesson: Lesson;
   problems: readonly Problem[];
+  /** Pattern cues rendered on the server — see the note in TopicPanel. */
+  cues?: ReactNode;
 }
 
 function Spine() {
@@ -37,6 +44,9 @@ function Spine() {
 }
 
 export function Roadmap({ topics }: { topics: RoadmapTopic[] }) {
+  const [openSlug, setOpenSlug] = useState<string | null>(null);
+  const open = topics.find((t) => t.lesson.slug === openSlug) ?? null;
+
   return (
     <div className="relative flex flex-col gap-6">
       <Spine />
@@ -49,31 +59,64 @@ export function Roadmap({ topics }: { topics: RoadmapTopic[] }) {
           // makes the trunk read as a margin rule rather than the path.
           const branchRight = index % 2 === 0;
 
+          /**
+           * The fan: a stub out of the lesson node to a vertical bus, then one
+           * elbow off the bus into each problem.
+           *
+           * A single straight line between the node and the column says the two
+           * are related but not which problem is which — with four problems
+           * stacked, the line points at the gap between two of them. One
+           * terminating segment per card is what makes the branching readable.
+           *
+           * The bus spans first-to-last card centre rather than the full column
+           * height, so it starts and ends on a connection instead of overshooting
+           * into empty space. With a single problem it collapses to zero height
+           * and the elbow degenerates to a straight line, which is correct.
+           */
+          const connectors = problems.length > 0 && (
+            <span aria-hidden className="pointer-events-none hidden md:block">
+              {/* Stub from the node edge to the bus, at the row's centre. */}
+              <span
+                className={`absolute top-1/2 w-6 border-t-2 border-dotted border-link/60 ${
+                  branchRight ? '-left-12' : '-right-12'
+                }`}
+              />
+              {/* The bus itself. */}
+              <span
+                className={`absolute top-[1.0625rem] bottom-[1.0625rem] border-l-2 border-dotted border-link/60 ${
+                  branchRight ? '-left-6' : '-right-6'
+                }`}
+              />
+            </span>
+          );
+
           const branches = (
-            <ul
-              className={`relative flex w-full flex-col gap-2 md:w-72 ${
-                branchRight ? 'md:ml-8' : 'md:ml-auto md:mr-8'
+            <div
+              className={`relative w-full md:w-72 ${
+                branchRight ? 'md:ml-12' : 'md:ml-auto md:mr-12'
               }`}
             >
-              {problems.length > 0 && (
-                <span
-                  aria-hidden
-                  className={`absolute top-1/2 hidden h-0 w-8 border-t-2 border-dotted border-link/60 md:block ${
-                    branchRight ? '-left-8' : '-right-8'
-                  }`}
-                />
-              )}
-              {problems.map((problem) => (
-                <li key={problem.slug}>
-                  <Link
-                    href={`/problems/${problem.topic}/${problem.slug}`}
-                    className="node-surface block bg-accent px-3 py-1.5 text-sm text-accent-foreground transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
-                  >
-                    {problem.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+              {connectors}
+              <ul className="flex flex-col gap-2">
+                {problems.map((problem) => (
+                  <li key={problem.slug} className="relative">
+                    {/* The elbow's terminating segment, one per card. */}
+                    <span
+                      aria-hidden
+                      className={`absolute top-1/2 hidden w-6 border-t-2 border-dotted border-link/60 md:block ${
+                        branchRight ? '-left-6' : '-right-6'
+                      }`}
+                    />
+                    <Link
+                      href={`/problems/${problem.topic}/${problem.slug}`}
+                      className="node-surface node-interactive block bg-accent px-3 py-1.5 text-sm text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+                    >
+                      {problem.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           );
 
           return (
@@ -81,9 +124,22 @@ export function Roadmap({ topics }: { topics: RoadmapTopic[] }) {
               <div className="grid items-center gap-3 md:grid-cols-[1fr_auto_1fr]">
                 <div className="hidden md:block">{!branchRight && branches}</div>
 
+                {/*
+                  Still a real anchor with a real href, so the lesson is
+                  crawlable (ADR 0001 §1 makes search the primary channel) and
+                  ⌘-click, middle-click and "open in new tab" all work. A plain
+                  left click is intercepted to open the panel instead, which is
+                  the only case where staying on the roadmap is the better
+                  outcome.
+                */}
                 <Link
                   href={`/learn/dsa/${lesson.slug}`}
-                  className="node-surface relative z-10 mx-auto flex w-full max-w-sm flex-col gap-0.5 bg-accent-strong px-4 py-2.5 text-accent-foreground transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link md:w-80"
+                  onClick={(event) => {
+                    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                    event.preventDefault();
+                    setOpenSlug(lesson.slug);
+                  }}
+                  className="node-surface node-interactive relative z-10 mx-auto flex w-full max-w-sm flex-col gap-0.5 bg-accent-strong px-4 py-2.5 text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link md:w-80"
                 >
                   <span className="text-base font-bold">
                     {index + 1}. {lesson.title}
@@ -102,6 +158,15 @@ export function Roadmap({ topics }: { topics: RoadmapTopic[] }) {
           );
         })}
       </ol>
+
+      {open && (
+        <TopicPanel
+          lesson={open.lesson}
+          problems={open.problems}
+          cues={open.cues}
+          onClose={() => setOpenSlug(null)}
+        />
+      )}
     </div>
   );
 }

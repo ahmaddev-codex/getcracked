@@ -1,4 +1,5 @@
 import { Roadmap } from '@/components/learn/Roadmap';
+import { Markdown } from '@/components/Markdown';
 import { getLessons, getProblemSet } from '@/content/registry';
 
 /**
@@ -19,6 +20,16 @@ export default function LearnDsaPage() {
   const topics = lessons.map((lesson) => ({
     lesson,
     problems: getProblemSet(lesson.slug),
+    cues:
+      lesson.patternCues.length > 0 ? (
+        <ul className="flex list-disc flex-col gap-1 pl-4 text-sm text-foreground-muted">
+          {lesson.patternCues.slice(0, 4).map((cue) => (
+            <li key={cue}>
+              <Markdown>{cue}</Markdown>
+            </li>
+          ))}
+        </ul>
+      ) : null,
   }));
 
   return (
