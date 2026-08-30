@@ -44,6 +44,24 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: getcracked
+          POSTGRES_PASSWORD: getcracked
+          POSTGRES_DB: getcracked
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://getcracked:getcracked@localhost:5432/getcracked
+      BETTER_AUTH_SECRET: test-secret-for-ci
+      BETTER_AUTH_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
@@ -63,6 +81,24 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: getcracked
+          POSTGRES_PASSWORD: getcracked
+          POSTGRES_DB: getcracked
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://getcracked:getcracked@localhost:5432/getcracked
+      BETTER_AUTH_SECRET: test-secret-for-ci
+      BETTER_AUTH_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup

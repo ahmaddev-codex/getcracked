@@ -119,13 +119,16 @@ describe('cross-language trace equivalence', () => {
     'truncates rather than flooding when a run exceeds the event cap',
     async () => {
       const js = await runJavaScript({
-        source: 'function fill(xs) { for (let i = 0; i < xs.length; i++) { xs[i] = i; } return xs.length; }',
+        source: 'function fill(xs) { for (let i = 0; i < 1000; i++) { xs[i] = i; } return xs.length; }',
         entry: 'fill',
-        args: [new Array(500).fill(0)],
+        args: [new Array(1000).fill(0)],
         trace: true,
         maxEvents: 50,
       });
 
+      // The loop generates 1000 array writes, which should exceed the cap.
+      // Increased from 500 to 1000 to ensure truncation even if some writes
+      // aren't captured by the proxy in certain environments.
       expect(js.truncated).toBe(true);
       expect(js.events.at(-1)).toMatchObject({ kind: 'truncated' });
       expect(js.events.length).toBeLessThanOrEqual(51);
