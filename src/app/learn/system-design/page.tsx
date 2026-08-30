@@ -69,6 +69,23 @@ export default function SystemDesignPage() {
 
       <Roadmap topics={topics} />
 
+      <section className="flex flex-col gap-3">
+        <h2 className="font-sans text-2xl font-bold tracking-tight">Labs</h2>
+        <ul className="grid gap-3 sm:grid-cols-2">
+          <li>
+            <Link
+              href="/learn/system-design/capacity"
+              className="node-surface node-interactive flex h-full flex-col gap-1 bg-accent-strong px-4 py-3 text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+            >
+              <span className="text-sm font-bold">Capacity calculator</span>
+              <span className="text-xs opacity-80">
+                Size a system out loud — QPS, storage and bandwidth, with the arithmetic shown
+              </span>
+            </Link>
+          </li>
+        </ul>
+      </section>
+
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <h2 className="font-sans text-2xl font-bold tracking-tight">Concept reference</h2>

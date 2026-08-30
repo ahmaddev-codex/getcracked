@@ -135,7 +135,7 @@ is crawled.
 - [x] **Pointer marks earn their claim** — a variable is drawn on the structure only where the source subscripts that collection with it, read statically because no trace can tell an index from a number that happens to be in range
 - [x] **Both launch languages per walkthrough**, with a switcher that re-runs rather than relabels — the Python trace comes from `sys.settrace`, the JavaScript one from instrumented QuickJS
 - [ ] GIF / shareable-link export (B6) · free-play sandbox (B7) · mobile viewing (B8)
-- [ ] Problem ↔ challenge cross-links (B20)
+- [ ] **Problem ↔ challenge cross-links (B20)** — half of this is not buildable: tier 3 challenges do not exist, so there is nothing to link *to*. The problem→lesson direction is already carried by the recommendation banner and the set page's "stuck on the pattern?" note
 
 ## Phase 5 — Visual roadmaps (Module I) · *epic* — **in progress**
 - [x] **Canvas (I1)** — a spine of lesson nodes with each topic's problems fanning off on curved dotted connectors, measured from the reference. Drawn with layout + measured SVG rather than a fixed viewBox, so it reflows and every node stays a focusable link read in curriculum order
@@ -152,9 +152,13 @@ is crawled.
 - [ ] Search across the DSA roadmap itself (I6, partial) · share/embed (I7) · PDF/PNG export (I8)
 - [ ] *Deferred:* community/custom roadmaps (I9)
 
-## Phase 6 — System Design labs (Module C) · *epic*
+## Phase 6 — System Design labs (Module C) · *epic* — **started**
+- [x] **Capacity calculator (C3)** — QPS, peak, read/write split, storage over retention and replicas, and peak egress, each shown **with the arithmetic that produced it**. The number is not the point: an interviewer asking "how many servers?" is testing whether you can reach an order of magnitude out loud, and a calculator that returns a figure and nothing else automates away the skill it exists to teach
+  - Presets (social feed · chat · video) because a learner who has never sized a system does not know what a plausible write ratio is, and a guess produces an estimate they cannot sanity-check
+  - Bytes are SI throughout, stated on the page: mixing 1000 and 1024 drifts an estimate ~10% with nobody noticing
+  - A "getting it wrong" section naming the four real errors — sizing on the average, forgetting replication, deriving storage from total requests rather than writes, and never estimating bandwidth at all
 - [ ] Whiteboard canvas + component palette (C1) · guided scenario labs (C2)
-- [ ] Capacity calculator (C3) · trade-off decision trees (C4) · design-review rubric (C5)
+- [ ] Trade-off decision trees (C4) · design-review rubric (C5)
 - [ ] "Build it" bridge to matching code challenges (C6 — key differentiator, open to all)
 - [ ] Timed mode (C7) · concept-map deep links (C9) · solution gallery (C10)
 
