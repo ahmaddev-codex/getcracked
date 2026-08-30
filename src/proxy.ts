@@ -37,6 +37,15 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Static assets and image optimization never need the check.
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  /**
+   * Static assets, image optimization and platform telemetry never need the
+   * check.
+   *
+   * `_vercel` covers the Analytics and Speed Insights endpoints. They are not
+   * ours to authorise — they carry no session and read no user row — and
+   * running an auth guard on every beacon is work with no possible outcome.
+   */
+  matcher: [
+    '/((?!_next/static|_next/image|_vercel|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 };

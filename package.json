@@ -35,6 +35,8 @@
     "@lezer/highlight": "^1.2.3",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.3",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "acorn": "^8.18.0",
     "acorn-walk": "^8.3.5",
     "better-auth": "^1.7.2",

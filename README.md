@@ -148,6 +148,37 @@ than to gate the curriculum. A paid tier is planned but not yet designed — see
 
 ---
 
+## Measurement and privacy
+
+Three things measure this app, and they answer different questions.
+
+| | What it answers | Where it goes |
+|---|---|---|
+| **First-party events** (`/api/events`) | Which lesson, which hint, which test run — the product funnel | Our own database |
+| **Vercel Analytics** | How many people arrive, and from where | Vercel |
+| **Vercel Speed Insights** | What the site actually feels like on a real device | Vercel |
+
+Nothing here uses cookies. Signed-in activity is keyed to the account; signed-out
+activity is counted against a **random id that resets every month**, never a
+fingerprint and never anything derived from the person or their device. Vercel's
+two are cookieless as well, deriving a daily-rotating visitor hash server-side.
+
+The disclosure is a product surface rather than a policy page — a banner while
+you browse signed out, and a note at the moment you sign up. That is a better
+decision and a more fragile one, so `tests/analytics/disclosure.test.tsx` couples
+the copy to what the code actually does: the notice cannot claim signed-out
+visitors are untracked while the endpoint that tracks them accepts writes.
+
+**All three are blocked by common content blockers**, and that is respected
+rather than worked around — no renaming endpoints to slip past a filter list.
+The numbers under-report, which is a known cost.
+
+> **Deployment note.** Analytics and Speed Insights need to be enabled per
+> project in the Vercel dashboard. Until they are, `/_vercel/insights/*` returns
+> 404 and nothing is recorded — the app is unaffected either way.
+
+---
+
 ## Pricing
 
 **Free today.** Every lesson, problem, build challenge and lab is open, and every

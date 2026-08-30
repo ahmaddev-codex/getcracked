@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Balsamiq_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { SignedOutNotice } from "./SignedOutNotice";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -48,6 +50,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="fixed bottom-3 right-3 z-50">
           <ThemeToggle />
         </div>
+
+        {/* Vercel's own analytics and Core Web Vitals reporting. */}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
