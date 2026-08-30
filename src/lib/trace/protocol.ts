@@ -52,6 +52,14 @@ export interface CollectionSnapshot {
    * than to labelling everything.
    */
   indexedBy?: string[];
+  /**
+   * Starting contents of a map-like collection, as ordered pairs.
+   *
+   * Separate from `initial`, which is positional: a map has keys, not indices,
+   * and flattening one into the other would make a renderer guess which it was
+   * handed.
+   */
+  entries?: Array<[string, Scalar]>;
 }
 
 export type ProtocolEvent =
@@ -59,6 +67,19 @@ export type ProtocolEvent =
   | { kind: 'line'; line: number; changed: Record<string, Scalar> }
   | { kind: 'array_read'; array: string; index: number; value: Scalar }
   | { kind: 'array_write'; array: string; index: number; value: Scalar }
+  /**
+   * A key gained or changed a value in a map.
+   *
+   * Derived from the line snapshots rather than from a runtime hook. Both
+   * adapters already snapshot every live variable on every line, so the map's
+   * contents were in the raw trace all along — `toProtocol` was discarding
+   * them, hoisting the object with empty contents and never mentioning it
+   * again. Diffing consecutive snapshots recovers the mutations without either
+   * runtime having to wrap or instrument anything, which is also why the two
+   * languages produce identical map events for free.
+   */
+  | { kind: 'map_put'; map: string; key: string; value: Scalar }
+  | { kind: 'map_delete'; map: string; key: string }
   | { kind: 'return'; value: unknown }
   | { kind: 'truncated'; dropped: number };
 
@@ -73,6 +94,21 @@ export interface Trace {
 
 /** PRD H5 caps visualized arrays; larger ones are truncated with a marker. */
 export const MAX_COLLECTION_ELEMENTS = 500;
+
+/**
+ * A plain object's entries, keeping only scalar values.
+ *
+ * A nested value becomes null rather than being dropped: the key exists, and
+ * showing it with an unrepresentable value is more honest than pretending the
+ * map does not contain it.
+ */
+function mapEntries(value: unknown): Array<[string, Scalar]> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
+  return Object.entries(value as Record<string, unknown>).map(([k, v]) => [
+    k,
+    isScalar(v) ? v : null,
+  ]);
+}
 
 function isScalar(value: unknown): value is Scalar {
   return (
@@ -104,6 +140,8 @@ export function toProtocol(
 
   // Last known scalar value per variable, for diffing.
   const previous = new Map<string, Scalar>();
+  // Last known contents per map, for the same reason.
+  const previousMaps = new Map<string, Map<string, Scalar>>();
 
   for (const event of raw) {
     switch (event.kind) {
@@ -121,17 +159,45 @@ export function toProtocol(
             continue;
           }
 
+          const isArray = Array.isArray(value);
+
           // A collection: hoist it once and never repeat it.
           if (!seenCollections.has(name)) {
             seenCollections.add(name);
-            const asArray = Array.isArray(value) ? value : [];
+            const asArray = isArray ? (value as unknown[]) : [];
+            const asEntries = isArray ? [] : mapEntries(value);
             collections.push({
               name,
-              kind: Array.isArray(value) ? 'array' : 'object',
+              kind: isArray ? 'array' : 'map',
               initial: asArray.slice(0, MAX_COLLECTION_ELEMENTS),
-              truncated: asArray.length > MAX_COLLECTION_ELEMENTS,
+              truncated:
+                asArray.length > MAX_COLLECTION_ELEMENTS ||
+                asEntries.length > MAX_COLLECTION_ELEMENTS,
               indexedBy: options.indexedBy?.[name],
+              entries: isArray ? undefined : asEntries.slice(0, MAX_COLLECTION_ELEMENTS),
             });
+            if (!isArray) previousMaps.set(name, new Map(asEntries));
+          }
+
+          /**
+           * Arrays already describe their own changes through read and write
+           * events, so re-diffing them here would double-report. A map has no
+           * such events — nothing in either runtime hooks `counts[k] = v` — so
+           * its mutations are recovered by diffing consecutive snapshots.
+           */
+          if (!isArray && seenCollections.has(name)) {
+            const before = previousMaps.get(name) ?? new Map<string, Scalar>();
+            const after = new Map(mapEntries(value));
+
+            for (const [key, next] of after) {
+              if (!before.has(key) || !Object.is(before.get(key), next)) {
+                events.push({ kind: 'map_put', map: name, key, value: next });
+              }
+            }
+            for (const key of before.keys()) {
+              if (!after.has(key)) events.push({ kind: 'map_delete', map: name, key });
+            }
+            previousMaps.set(name, after);
           }
         }
 
@@ -183,8 +249,12 @@ export interface TraceState {
   line: number | null;
   variables: Map<string, Scalar>;
   arrays: Map<string, unknown[]>;
+  /** Map-like collections, replayed from their put and delete events. */
+  maps: Map<string, Map<string, Scalar>>;
   lastRead: { array: string; index: number; value: Scalar } | null;
   lastWrite: { array: string; index: number; value: Scalar; previous: Scalar } | null;
+  /** The map entry that changed on this step, with what it replaced. */
+  lastPut: { map: string; key: string; value: Scalar; previous: Scalar | undefined } | null;
   /** Variables whose value changed on this step, for highlighting. */
   changed: Set<string>;
   /** Value of each changed variable immediately before this step. */
@@ -211,14 +281,17 @@ export interface TraceState {
 export function stateAtStep(trace: Trace, step: number): TraceState {
   const variables = new Map<string, Scalar>();
   const arrays = new Map<string, unknown[]>();
+  const maps = new Map<string, Map<string, Scalar>>();
 
   for (const collection of trace.collections) {
-    arrays.set(collection.name, [...collection.initial]);
+    if (collection.kind === 'map') maps.set(collection.name, new Map(collection.entries ?? []));
+    else arrays.set(collection.name, [...collection.initial]);
   }
 
   let line: number | null = null;
   let lastRead: TraceState['lastRead'] = null;
   let lastWrite: TraceState['lastWrite'] = null;
+  let lastPut: TraceState['lastPut'] = null;
   let changed = new Set<string>();
   let previousValues = new Map<string, Scalar>();
   let returned: unknown;
@@ -262,6 +335,20 @@ export function stateAtStep(trace: Trace, step: number): TraceState {
         break;
       }
 
+      case 'map_put': {
+        const target = maps.get(event.map);
+        // The outgoing value, read before it is replaced — the only moment it
+        // is available, exactly as with an array write.
+        const before = target?.get(event.key);
+        target?.set(event.key, event.value);
+        lastPut = { map: event.map, key: event.key, value: event.value, previous: before };
+        break;
+      }
+
+      case 'map_delete':
+        maps.get(event.map)?.delete(event.key);
+        break;
+
       case 'return':
         returned = event.value;
         finished = true;
@@ -276,8 +363,10 @@ export function stateAtStep(trace: Trace, step: number): TraceState {
     line,
     variables,
     arrays,
+    maps,
     lastRead,
     lastWrite,
+    lastPut,
     changed,
     previousValues,
     returned,

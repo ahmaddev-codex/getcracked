@@ -205,3 +205,41 @@ describe('change annotation', () => {
     renderer.destroy();
   });
 });
+
+/**
+ * The narration must describe the picture.
+ *
+ * When a lesson draws its map, describing the input array instead leaves the
+ * words and the drawing talking about different things — the exact failure this
+ * function exists to prevent.
+ */
+describe('narration follows the drawn collection', () => {
+  const mapTrace = toProtocol([
+    { kind: 'line', line: 1, vars: { counts: {}, nums: [7], i: 0 } },
+    { kind: 'array_read', array: 'nums', index: 0, value: 7 },
+    { kind: 'line', line: 2, vars: { counts: { '7': 1 }, i: 1 } },
+    { kind: 'line', line: 3, vars: { counts: { '7': 2 }, i: 2 } },
+  ]);
+
+  const putAt = (n: number) =>
+    mapTrace.events.map((e, i) => (e.kind === 'map_put' ? i : -1)).filter((i) => i >= 0)[n];
+
+  it('reports a new key as added rather than changed', () => {
+    expect(describeStep(stateAtStep(mapTrace, putAt(0)), 'counts')).toMatch(
+      /counts\[7\] added, set to 1/i,
+    );
+  });
+
+  it('reports both sides when a key’s value changes', () => {
+    expect(describeStep(stateAtStep(mapTrace, putAt(1)), 'counts')).toMatch(
+      /counts\[7\] changed from 1 to 2/i,
+    );
+  });
+
+  it('prefers the map change over the array read that fed it', () => {
+    // The read is still visible on the highlighted source line; the put is the
+    // thing the picture just moved.
+    const text = describeStep(stateAtStep(mapTrace, putAt(0)), 'counts');
+    expect(text).not.toMatch(/read nums/i);
+  });
+});

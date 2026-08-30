@@ -2,6 +2,7 @@ import { createArrayRenderer } from './array-renderer';
 import { createStackRenderer, createQueueRenderer } from './stack-renderer';
 import { createTreeRenderer } from './tree-renderer';
 import { createListRenderer, createGraphRenderer } from './list-renderer';
+import { createMapRenderer } from './map-renderer';
 import { registerRenderer } from './registry';
 
 /**
@@ -23,3 +24,4 @@ registerRenderer('linked-list', createListRenderer);
 registerRenderer('tree', createTreeRenderer);
 registerRenderer('heap', createTreeRenderer);
 registerRenderer('graph', createGraphRenderer);
+registerRenderer('map', createMapRenderer);

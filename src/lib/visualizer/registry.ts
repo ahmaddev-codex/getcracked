@@ -49,7 +49,8 @@ export type VisualKind =
   | 'linked-list'
   | 'tree'
   | 'heap'
-  | 'graph';
+  | 'graph'
+  | 'map';
 
 const REGISTRY = new Map<string, RendererFactory>();
 
@@ -72,14 +73,25 @@ export function createRenderer(kind: string): Renderer | null {
  * honest, whereas a generic "here are some numbers" view would imply the
  * visualizer understands a structure it does not.
  */
+/** The collection kind each shape needs in order to draw anything. */
+function requires(kind: VisualKind): 'array' | 'map' {
+  return kind === 'map' ? 'map' : 'array';
+}
+
 export function selectRenderer(
   trace: Trace,
   preferred: VisualKind = 'array',
 ): { kind: string; renderer: Renderer } | null {
-  if (!trace.collections.some((c) => c.kind === 'array')) return null;
+  const has = (want: 'array' | 'map') => trace.collections.some((c) => c.kind === want);
 
-  const renderer = createRenderer(preferred) ?? createRenderer('array');
-  return renderer ? { kind: REGISTRY.has(preferred) ? preferred : 'array', renderer } : null;
+  // A shape the trace cannot feed falls back to one it can, rather than
+  // mounting a renderer that will find nothing and draw an empty box. A lesson
+  // declaring `map` whose run never built one still gets its array drawn.
+  const wanted = REGISTRY.has(preferred) && has(requires(preferred)) ? preferred : 'array';
+  if (!has(requires(wanted))) return null;
+
+  const renderer = createRenderer(wanted);
+  return renderer ? { kind: wanted, renderer } : null;
 }
 
 export function registeredKinds(): string[] {

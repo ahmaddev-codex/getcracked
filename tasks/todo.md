@@ -93,18 +93,31 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 - [ ] Editorial review queue — nothing publishes unreviewed (J10) · observability (J12)
 - [ ] **Resolve H10** — long-running jobs vs. serverless limits; record the H8 deviation if there is one
 
-## Phase 4 — Animation breadth (Module B) · *epic*
+## Phase 4 — Animation breadth (Module B) · *epic* — **in progress**
 *Sequence by **lesson** coverage — a topic's lesson is much weaker without its animation.*
-- [ ] Renderers: linked lists · trees/tries/segment trees · graphs · heaps · hash maps · stacks/queues · union-find · probabilistic structures · DP tables · spatial structures (B2)
-- [ ] Complexity overlay and operation counters (B4) · "explain this state" (B5 — largely delivered by L5)
+- [x] **Structure-shaped renderers, driven by a content-declared `visual`** — the shape cannot be inferred, since a heap, a DP table and a queue are all arrays to the trace. Registry selects by declared kind; unknown falls back to the array picture, which is always truthful (B2)
+  - [x] arrays — indexed boxes with a magnitude fill, the ordering cue the old bars carried
+  - [x] stacks · queues — top marked; front/back marked, because where you may touch it is the whole difference
+  - [x] trees · heaps — circles and edges laid out by **in-order rank**, following VisuAlgo; per-level slotting wasted the width on any tree that is not perfect
+  - [x] linked lists — circular vertices joined by arrows, head/tail labelled, null terminator. Adjacent rectangles are a picture of an array, the one structure a list is defined by not being
+  - [x] graphs — nodes joined to their neighbours (the adjacency the lesson's algorithm actually uses; not a general force-directed layout the trace cannot justify)
+  - [x] hash maps — key-to-value entries appearing as they are inserted, telling a first sighting apart from an increment. **Not drawn as buckets**: the trace knows nothing about placement, so numbered slots would invent a hash the code never chose. Rows are pre-allocated from the trace's own future and hidden until inserted, which keeps H5's no-allocation-per-frame rule without leaking where the run is going
+    - The blocker turned out to be imaginary: both adapters already snapshot every live variable on every line, so the map's contents were in the raw trace all along and `toProtocol` was discarding them. Diffing consecutive snapshots recovers `map_put`/`map_delete` with **no runtime change in either language**
+  - [ ] DP tables · union-find · tries/segment trees · probabilistic · spatial — no lesson uses them yet; building them now would be speculative
+- [x] **B4 complexity overlay and operation counters** — measured steps/reads/writes/time/memory, stated as measurements of one run, never as a complexity proof
+- [x] **B5 "explain this state"** — narration generated from the same state the renderer draws, so the two cannot describe different things. Reports the change (`nums[1] changed from 1 to 4`), not just the position
+- [x] **Pointer marks earn their claim** — a variable is drawn on the structure only where the source subscripts that collection with it, read statically because no trace can tell an index from a number that happens to be in range
+- [x] **Both launch languages per walkthrough**, with a switcher that re-runs rather than relabels — the Python trace comes from `sys.settrace`, the JavaScript one from instrumented QuickJS
 - [ ] GIF / shareable-link export (B6) · free-play sandbox (B7) · mobile viewing (B8)
 - [ ] Problem ↔ challenge cross-links (B20)
 
-## Phase 5 — Visual roadmaps (Module I) · *epic* — hardens the shared canvas primitive
-- [ ] Canvas + color-coded legend (I1, I2) — should look native, since K3 is already the platform's card language
-- [ ] Node detail panel: all three DSA tiers, with "lesson recommended first" where incomplete — shown, never locked (I3)
-- [ ] Tri-state per-node progress: lesson · problem set · challenge (I4)
-- [ ] DSA · System Design · Design Patterns roadmaps (I5)
+## Phase 5 — Visual roadmaps (Module I) · *epic* — **in progress**
+- [x] **Canvas (I1)** — a spine of lesson nodes with each topic's problems fanning off on curved dotted connectors, measured from the reference. Drawn with layout + measured SVG rather than a fixed viewBox, so it reflows and every node stays a focusable link read in curriculum order
+- [x] **Node detail panel (I3)** — opens over the roadmap instead of navigating, so a learner keeps their place in the path they were scanning. Lesson pages remain the canonical URLs and the SEO surface; nodes stay real anchors, so only a plain left click is intercepted
+- [x] **Self-reported topic status** — Learning · Done · Skip, deliberately *separate* from `deriveLessonState`. That derives what was completed; this is what the learner says. Merging them would let a click count as a completion in the F6 funnel
+- [ ] **I2 colour-coded legend** — the roadmap has no key yet
+- [ ] **I4 tri-state per-node progress** (lesson · problem set · challenge) — only the self-reported mark exists; derived progress is not yet shown on the node
+- [ ] **I5** System Design and Design Patterns roadmaps — DSA only so far
 - [ ] Search-within-roadmap (I6) · share/embed (I7) · PDF/PNG export (I8)
 - [ ] *Deferred:* community/custom roadmaps (I9)
 
@@ -134,6 +147,16 @@ Companion to [plan.md](plan.md). Full acceptance criteria and verification steps
 - [ ] Mobile responsiveness sweep (H3) · accessibility audit (H4)
 - [ ] **Restore Java** (H1) — start with the suspended T0.6 spike, then one adapter
 - [ ] Further languages: TypeScript, Go, C++, Rust
+
+---
+
+## Module K — visual language *(cuts across phases; recorded here because it is not any one phase's task)*
+
+- [x] **Site header (K1)** — dark bar carrying the wordmark, the three surfaces and auth actions; its own tokens, since the notice bar is yellow-on-dark to read as an interruption and sharing them meant restyling one silently restyled the other
+- [x] **K5 typography — corrected.** The PRD claimed the reference ships no web font. Re-verified in Chromium: it serves exactly one, `balsamiq.woff2`, applied only to node text; header and headings compute to the system stack. There is no Cerebri Sans, Mona Sans, Inter or JetBrains Mono anywhere in its DOM, CSS or assets. Balsamiq Sans (SIL OFL) is self-hosted via `next/font` and, per direction, carries body copy site-wide with page headings in the system stack — a deliberate departure from the reference
+- [x] **Connector blue corrected** — the graph was drawing `--link`, which is the reference's blue *darkened to clear AA as text*, a threshold that never applied to a decorative line. `--connector` is now its own token at the measured `rgb(43,120,228)` / 3.5px
+- [x] **Contrast harness gained a `graphic` flag** alongside `large` — same 3:1 bar, different reason. Reading `large: true` on a 2px border says the border is big text, which is the mislabel that darkened the connector in the first place
+- [x] **Hover without motion** — a card that lifts moves the text the pointer is aimed at, and on a dense roadmap the whole graph twitched as the cursor crossed it
 
 ---
 

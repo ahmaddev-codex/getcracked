@@ -134,7 +134,12 @@ export function Visualizer({
   const [drawable, setDrawable] = useState(true);
 
   const total = trace.events.length;
-  const arrayName = trace.collections.find((c) => c.kind === 'array')?.name ?? '';
+  // The collection the chosen shape draws, so the narration and the picture
+  // describe the same thing.
+  const arrayName =
+    (visual === 'map'
+      ? trace.collections.find((c) => c.kind === 'map')?.name
+      : trace.collections.find((c) => c.kind === 'array')?.name) ?? '';
 
   /** Draws one step. Called from the loop and from every control. */
   const draw = useCallback(

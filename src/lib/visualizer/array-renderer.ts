@@ -280,8 +280,25 @@ export function describeStep(state: RenderState, arrayName: string): string {
   const values = state.arrays.get(arrayName);
   const write = state.lastWrite?.array === arrayName ? state.lastWrite : null;
   const read = state.lastRead?.array === arrayName ? state.lastRead : null;
+  const put = state.lastPut;
 
-  if (write && !Object.is(write.previous, write.value)) {
+  /**
+   * A map change outranks an array access.
+   *
+   * When a lesson's picture is the map, describing the input array instead
+   * leaves the words and the drawing talking about different things — the exact
+   * failure this function exists to prevent. A put is also the more informative
+   * event: the array read that fed it is visible on the highlighted line.
+   */
+  if (put) {
+    parts.push(
+      put.previous === undefined
+        ? `${put.map}[${put.key}] added, set to ${format(put.value)}`
+        : Object.is(put.previous, put.value)
+          ? `${put.map}[${put.key}] rewritten with the same value, ${format(put.value)}`
+          : `${put.map}[${put.key}] changed from ${format(put.previous)} to ${format(put.value)}`,
+    );
+  } else if (write && !Object.is(write.previous, write.value)) {
     parts.push(
       `${arrayName}[${write.index}] changed from ${format(write.previous)} to ${format(write.value)}`,
     );

@@ -45,7 +45,7 @@ complexity" are usually discussed together.`,
         counts[value] = counts[value] + 1
     return distinct`,
     },
-    visual: 'array',
+    visual: 'map',
     args: [[2, 7, 2, 5, 7, 2]],
     caption: "One pass over the array, building a count for each value. Watch how every element is read exactly once.",
   },

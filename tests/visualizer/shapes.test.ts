@@ -259,3 +259,115 @@ describe('pointer marks', () => {
     expect(trace.collections.find((c) => c.name === 'heap')?.indexedBy).toEqual(['i', 'left']);
   });
 });
+
+/**
+ * The map renderer (B2).
+ *
+ * A hash map's contents are recovered by diffing the line snapshots both
+ * runtimes already produce, so these events exist without either runtime
+ * hooking assignment. What the renderer must get right is growth: keys appear
+ * as the code inserts them, and none of them may be legible before that.
+ */
+describe('map renderer', () => {
+  const trace = toProtocol([
+    { kind: 'line', line: 1, vars: { counts: {}, i: 0 } },
+    { kind: 'line', line: 2, vars: { counts: { a: 1 }, i: 1 } },
+    { kind: 'line', line: 3, vars: { counts: { a: 1, b: 1 }, i: 2 } },
+    { kind: 'line', line: 4, vars: { counts: { a: 2, b: 1 }, i: 3 } },
+  ]);
+
+  function mounted() {
+    const host = document.createElement('div');
+    const renderer = createRenderer('map')!;
+    renderer.mount(host, trace);
+    return { host, renderer };
+  }
+
+  const visibleRows = (host: HTMLElement) =>
+    [...host.querySelectorAll('g')].filter((g) => g.getAttribute('opacity') !== '0');
+
+  it('recovers map mutations the runtimes never reported directly', () => {
+    const puts = trace.events.filter((e) => e.kind === 'map_put');
+    expect(puts).toHaveLength(3);
+    expect(trace.collections.find((c) => c.name === 'counts')?.kind).toBe('map');
+  });
+
+  it('builds one row per key the run will ever hold', () => {
+    // Pre-allocated, because a renderer may not allocate DOM per frame (H5).
+    const { host, renderer } = mounted();
+    expect(host.querySelectorAll('g')).toHaveLength(2);
+    renderer.destroy();
+  });
+
+  /**
+   * A put is emitted *before* the line event that revealed it, which is correct
+   * rather than incidental: a line's variable snapshot describes state at the
+   * start of that line, so the mutation it exposes was performed by the line
+   * before. Steps are located by event kind rather than hardcoded, so the
+   * ordering can change without these tests quietly asserting the wrong frame.
+   */
+  const putSteps = trace.events
+    .map((e, i) => (e.kind === 'map_put' ? i : -1))
+    .filter((i) => i >= 0);
+
+  it('hides a key until the step that inserts it', () => {
+    const { host, renderer } = mounted();
+
+    renderer.update(stateAtStep(trace, 0));
+    expect(visibleRows(host), 'nothing before the first put').toHaveLength(0);
+
+    renderer.update(stateAtStep(trace, putSteps[0]));
+    expect(visibleRows(host)).toHaveLength(1);
+
+    renderer.update(stateAtStep(trace, putSteps[1]));
+    expect(visibleRows(host)).toHaveLength(2);
+    renderer.destroy();
+  });
+
+  it('does not leak a future key into the visible text', () => {
+    const { host, renderer } = mounted();
+    renderer.update(stateAtStep(trace, putSteps[0]));
+    const shown = visibleRows(host).flatMap((g) =>
+      [...g.querySelectorAll('text')].map((t) => t.textContent ?? ''),
+    );
+    expect(shown.some((t) => t.includes('b'))).toBe(false);
+    renderer.destroy();
+  });
+
+  it('tells a new key apart from one whose value changed', () => {
+    // The entire mechanic of a counting map: first sighting versus increment.
+    const { host, renderer } = mounted();
+
+    // Second put inserts a different key; third overwrites the first key.
+    renderer.update(stateAtStep(trace, putSteps[1]));
+    let labels = [...host.querySelectorAll('text')].map((t) => t.textContent ?? '');
+    expect(labels, 'a first sighting reads as new').toContain('new');
+
+    renderer.update(stateAtStep(trace, putSteps[2]));
+    labels = [...host.querySelectorAll('text')].map((t) => t.textContent ?? '');
+    expect(
+      labels.some((l) => l.startsWith('was')),
+      'an increment reports what it replaced',
+    ).toBe(true);
+    renderer.destroy();
+  });
+
+  it('allocates no DOM per frame', () => {
+    const { host, renderer } = mounted();
+    const before = host.querySelectorAll('*').length;
+    for (let step = 0; step < trace.events.length; step++) {
+      renderer.update(stateAtStep(trace, step));
+    }
+    expect(host.querySelectorAll('*').length).toBe(before);
+    renderer.destroy();
+  });
+
+  it('falls back to the array picture when the run built no map', () => {
+    // A lesson can declare `map` and still take a branch that never creates one.
+    const arrayOnly = toProtocol([
+      { kind: 'line', line: 1, vars: { xs: [1, 2], i: 0 } },
+      { kind: 'array_read', array: 'xs', index: 0, value: 1 },
+    ]);
+    expect(selectRenderer(arrayOnly, 'map')?.kind).toBe('array');
+  });
+});
