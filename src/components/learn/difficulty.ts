@@ -13,9 +13,9 @@ import type { Lesson } from '@/content/schema';
  * begin?", which curriculum order alone does not.
  */
 export const DIFFICULTY_BADGE: Record<Lesson['difficulty'], string> = {
-  foundational: 'rounded px-1.5 py-0.5 text-[11px] font-semibold bg-success-soft text-success',
-  core: 'rounded px-1.5 py-0.5 text-[11px] font-semibold bg-accent text-accent-foreground',
-  advanced: 'rounded px-1.5 py-0.5 text-[11px] font-semibold bg-danger-soft text-danger',
+  foundational: 'rounded px-1.5 py-0.5 text-xs font-semibold bg-success-soft text-success',
+  core: 'rounded px-1.5 py-0.5 text-xs font-semibold bg-accent text-accent-foreground',
+  advanced: 'rounded px-1.5 py-0.5 text-xs font-semibold bg-danger-soft text-danger',
 };
 
 /**

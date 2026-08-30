@@ -147,7 +147,8 @@ is crawled.
 - [x] **I2 colour-coded legend** — a bordered key beside the graph, as the reference does: what each node fill means, what the done marker means, and what each difficulty rank means. A graph whose colour carries meaning needs a key, or the meaning is decoration
 - [x] **I5 three roadmaps** — DSA (two tracks), System Design, and Design Patterns, each on its own surface with the same spine-and-fan language
 - [x] **I6 search** — over the concept and pattern maps, reaching definitions as well as names
-- [ ] **I4 tri-state per-node progress** (lesson · problem set · challenge) — only the self-reported mark exists; *derived* progress is not shown on a node yet, even though the listings now carry it
+- [x] **I4 per-node progress** — the node now shows both halves, kept visibly separate. The **self-reported** mark keeps its badge on the node edge, since it is a claim about the whole topic; the **derived** counts sit under the title as `1/2 exercises · 2/3 problems`, and a solved problem gets a tick on its own branch. Collapsing them into one mark would make clicking "Done" look identical to finishing the work, which is exactly what `deriveLessonState` exists to prevent. Counts appear only once something is done — a row of zeroes on every node is noise
+  - The third state, challenges, has no content to derive from: tier 3 does not exist yet
 - [ ] Search across the DSA roadmap itself (I6, partial) · share/embed (I7) · PDF/PNG export (I8)
 - [ ] *Deferred:* community/custom roadmaps (I9)
 
@@ -221,7 +222,7 @@ is crawled.
 - [ ] **Phase 3** — v1 catalog size, and what share of pipeline output must pass human review? *(PRD Q9, reopened — review ratio sets the real publish rate)*
 - [ ] **Phase 3** — ToS risk tolerance for sourcing *(PRD Q2)* · funding path for recurring compute *(PRD Q4)*
 - [ ] **Phase 7** — Company roadmaps auto-generated or editorially reviewed? *(PRD Q6)*
-- [ ] **Phase 8** — 🔑 **Which Groq model, and what monthly spend ceiling does L9 enforce?** *(new)*
+- [x] **Phase 8** — **Model chosen: `openai/gpt-oss-120b`**, verified against Groq's live catalogue on 2026-08-30 with `pnpm groq:models` rather than recalled. Of 14 active models only four are general-purpose chat with a 131k context; the rest are Whisper (speech), Prompt Guard (512-token classifiers) and Orpheus (TTS). It is the largest of the four, and Groq's compound models cap output at 8k, which is short for L6 code review. `openai/gpt-oss-20b` is the fast tier. Both are config, never named at a call site (AD-10). ⚠️ **Still open: the monthly spend ceiling L9 enforces** — that is a budget decision, not a technical one
 - [ ] **Phase 8** — E3 voice, chat, or both? *(PRD Q3)*
 - [ ] **Phase 9** — When Java returns: in-browser or server-side, and is server-side an acceptable H8 deviation? *(PRD Q1c)*
 - [x] **Anytime** — PRD §9 corrected: every feature is `planned`, Module A included — this is a greenfield rebuild

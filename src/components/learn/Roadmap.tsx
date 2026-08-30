@@ -6,6 +6,8 @@ import { Check } from 'lucide-react';
 import { ConnectorFan, FAN_ORIGIN, FAN_TARGET } from './ConnectorFan';
 import { TopicPanel } from './TopicPanel';
 import { useTopicStatuses } from '@/lib/topic-status';
+import { useSolved } from '@/lib/use-solved';
+import { exerciseId } from '@/content/schema';
 import { DIFFICULTY_BADGE, DIFFICULTY_NOTE, lessonBase } from './difficulty';
 import type { Lesson, Problem } from '@/content/schema';
 import type { Concept } from '@/content/concepts';
@@ -132,15 +134,54 @@ function Spine() {
   );
 }
 
-/** The reference marks completed nodes with a check on the node's edge. */
-function DoneBadge() {
+/**
+ * Per-node progress (I4).
+ *
+ * Two states, not one, because they are earned differently. The **self-reported**
+ * mark is what a learner says about a topic; the **derived** counts are what
+ * they actually did — lesson exercises passing, and problems solved. Collapsing
+ * them into a single tick would let clicking "Done" look identical to finishing
+ * the work, which is precisely the confusion `deriveLessonState` exists to
+ * prevent.
+ *
+ * The self-report keeps the badge on the node edge, since that is a claim about
+ * the whole topic. The derived counts sit under the title as fractions, because
+ * "2/3 problems" carries information a tick cannot.
+ */
+function DoneBadge({ title }: { title: string }) {
   return (
     <span
-      aria-hidden
+      title={title}
       className="absolute -right-2 top-1/2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full border-2 border-border-strong bg-alt text-alt-foreground"
     >
-      <Check size={11} strokeWidth={3} />
+      <Check size={11} strokeWidth={3} aria-hidden />
+      <span className="sr-only">{title}</span>
     </span>
+  );
+}
+
+function NodeProgress({
+  exercisesDone,
+  exercisesTotal,
+  problemsDone,
+  problemsTotal,
+}: {
+  exercisesDone: number;
+  exercisesTotal: number;
+  problemsDone: number;
+  problemsTotal: number;
+}) {
+  const parts: string[] = [];
+  if (exercisesTotal > 0) parts.push(`${exercisesDone}/${exercisesTotal} exercises`);
+  if (problemsTotal > 0) parts.push(`${problemsDone}/${problemsTotal} problems`);
+  if (parts.length === 0) return null;
+
+  // Only once something has been done. A row of zeroes on every node is noise
+  // that makes the graph harder to read and tells a new learner nothing.
+  if (exercisesDone === 0 && problemsDone === 0) return null;
+
+  return (
+    <span className="mt-0.5 block text-xs font-normal opacity-70">{parts.join(' · ')}</span>
   );
 }
 
@@ -150,6 +191,7 @@ function RoadmapRow({
   branchRight,
   onOpen,
   done,
+  solved,
 }: {
   topic: RoadmapTopic;
   /** Number shown on the node — its place within its own track. */
@@ -157,9 +199,17 @@ function RoadmapRow({
   branchRight: boolean;
   onOpen: () => void;
   done: boolean;
+  /** Completed exercise ids, for the derived half of the progress display. */
+  solved: ReadonlySet<string>;
 }) {
   const rowRef = useRef<HTMLLIElement>(null);
   const { lesson, problems } = topic;
+
+  // Derived from real results, unlike the self-reported mark beside it.
+  const exercisesDone = lesson.exercises.filter((e) =>
+    solved.has(exerciseId(lesson, e.slug)),
+  ).length;
+  const problemsDone = problems.filter((p) => solved.has(exerciseId(p))).length;
 
   const branches = (
     <ul className={`flex w-full flex-col gap-2 ${BRANCH_W}`}>
@@ -168,9 +218,13 @@ function RoadmapRow({
           <Link
             {...{ [FAN_TARGET]: problem.slug }}
             href={`/problems/${problem.topic}/${problem.slug}`}
-            className="node-surface node-interactive block truncate bg-accent px-3 py-2 text-center text-sm text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+            className="node-surface node-interactive flex items-center justify-center gap-1.5 truncate bg-accent px-3 py-2 text-center text-sm text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
           >
-            {problem.title}
+            {/* Derived, not self-reported: this tick means the tests passed. */}
+            {solved.has(exerciseId(problem)) && (
+              <Check size={13} strokeWidth={3} aria-label="Solved" className="shrink-0" />
+            )}
+            <span className="truncate">{problem.title}</span>
           </Link>
         </li>
       ))}
@@ -223,7 +277,13 @@ function RoadmapRow({
                 thing the node is for — its name. It lives in the panel, which
                 is where a learner is deciding whether to start. */}
             {position}. {lesson.title}
-            {done && <DoneBadge />}
+            <NodeProgress
+              exercisesDone={exercisesDone}
+              exercisesTotal={lesson.exercises.length}
+              problemsDone={problemsDone}
+              problemsTotal={problems.length}
+            />
+            {done && <DoneBadge title="You marked this done" />}
           </Link>
         </div>
 
@@ -270,6 +330,7 @@ function TrackLabel({ children }: { children: ReactNode }) {
 export function Roadmap({ topics }: { topics: RoadmapTopic[] }) {
   const [openSlug, setOpenSlug] = useState<string | null>(null);
   const statuses = useTopicStatuses();
+  const solved = useSolved();
   const open = topics.find((t) => t.lesson.slug === openSlug) ?? null;
 
   return (
@@ -307,6 +368,7 @@ export function Roadmap({ topics }: { topics: RoadmapTopic[] }) {
             // the trunk read as a margin rule rather than the path.
               branchRight={index % 2 === 0}
               done={statuses[topic.lesson.slug] === 'done'}
+              solved={solved}
               onOpen={() => setOpenSlug(topic.lesson.slug)}
             />
             </Fragment>
