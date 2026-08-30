@@ -187,7 +187,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
             aria-controls={listId}
             className="w-full bg-transparent text-sm outline-none placeholder:text-foreground-muted"
           />
-          <kbd className="shrink-0 text-xs text-foreground-muted">esc</kbd>
+          <kbd className="shrink-0 text-sm text-foreground-muted">esc</kbd>
         </div>
 
         {query.trim() && index.status === 'ready' && (

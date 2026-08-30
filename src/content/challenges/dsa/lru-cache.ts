@@ -236,7 +236,15 @@ export const lruCacheChallenge: ChallengeInput = {
   category: 'dsa',
   difficulty: 'medium',
   summary: 'Build a fixed-size cache that throws away whatever was used least recently.',
-  topics: ['hashing', 'linked-lists'],
+  /**
+   * `caching` is here for C6, not for the DSA roadmap.
+   *
+   * An LRU cache is the build the System Design caching lesson is *about* —
+   * eviction policy is the one part of that lesson you can only really
+   * understand by writing it — so the lesson bridges here. Declared on the
+   * challenge rather than inferred, because nothing in either title says so.
+   */
+  topics: ['hashing', 'linked-lists', 'caching'],
   recommendedAfter: ['hashing'],
 
   brief: `Every cache has to answer one awkward question: it is full, something new

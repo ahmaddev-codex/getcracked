@@ -1,14 +1,12 @@
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
 import { Node } from '@/components/ui/Node';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ChallengeProgress } from '@/components/challenge/StepList';
+import { ChallengeCard } from '@/components/challenge/ChallengeCard';
 import {
   getChallengeCategories,
   getChallenges,
   getChallengesInCategory,
 } from '@/content/registry';
-import { challengeLanguages, stepIds } from '@/content/challenge';
 import type { Challenge } from '@/content/schema';
 import { Page } from '@/components/ui/Page';
 
@@ -42,12 +40,6 @@ const CATEGORY_BLURB: Record<Challenge['category'], string> = {
   'design-patterns': 'Named solutions, built small enough to see the shape.',
 };
 
-const DIFFICULTY_TONE: Record<string, string> = {
-  easy: 'bg-success-soft text-success',
-  medium: 'bg-warning-soft text-warning',
-  hard: 'bg-danger-soft text-danger',
-};
-
 export default function ChallengesPage() {
   const all = getChallenges();
   const categories = getChallengeCategories();
@@ -77,32 +69,7 @@ export default function ChallengesPage() {
             <ul className="grid gap-3 sm:grid-cols-2">
               {getChallengesInCategory(category).map((challenge) => (
                 <li key={challenge.slug}>
-                  <Link
-                    href={`/challenges/${challenge.slug}`}
-                    className="node-surface node-interactive flex h-full flex-col gap-2 bg-surface p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
-                  >
-                    <span className="flex items-start justify-between gap-3">
-                      <span className="text-sm font-bold">{challenge.title}</span>
-                      <ArrowRight size={15} aria-hidden className="mt-0.5 shrink-0" />
-                    </span>
-
-                    <span className="text-xs text-foreground-muted">{challenge.summary}</span>
-
-                    <span className="mt-auto flex flex-wrap items-center gap-2 pt-1 text-xs">
-                      <span
-                        className={`px-2 py-0.5 font-medium ${DIFFICULTY_TONE[challenge.difficulty]}`}
-                      >
-                        {challenge.difficulty}
-                      </span>
-                      <span className="text-foreground-muted">
-                        {challenge.steps.length} steps
-                      </span>
-                      <span className="text-foreground-muted">
-                        {challengeLanguages(challenge).join(' · ')}
-                      </span>
-                      <ChallengeProgress stepIds={stepIds(challenge)} />
-                    </span>
-                  </Link>
+                  <ChallengeCard challenge={challenge} />
                 </li>
               ))}
             </ul>

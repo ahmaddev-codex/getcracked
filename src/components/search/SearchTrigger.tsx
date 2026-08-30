@@ -46,7 +46,7 @@ export function SearchTrigger() {
         aria-expanded={open}
         className="flex items-center gap-1.5 rounded-xs text-header-foreground/80 transition-colors hover:text-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
       >
-        <Search size={16} aria-hidden />
+        <Search size={17} aria-hidden />
         <span className="sr-only">Search</span>
         {/*
           The shortcut is shown rather than only bound, which is most of what
@@ -55,7 +55,7 @@ export function SearchTrigger() {
         */}
         <kbd
           aria-hidden
-          className="hidden text-xs text-header-foreground/60 lg:inline"
+          className="hidden text-sm text-header-foreground/75 lg:inline"
         >
           ⌘K
         </kbd>

@@ -11,6 +11,7 @@ import {
 } from '@/content/registry';
 import { exerciseId } from '@/content/schema';
 import { Page } from '@/components/ui/Page';
+import { ChallengeCard } from '@/components/challenge/ChallengeCard';
 
 /**
  * One problem set (B15, B17).
@@ -91,15 +92,8 @@ export default async function ProblemSetPage(props: TopicRouteProps) {
           <ul className="grid gap-3 sm:grid-cols-2">
             {builds.map((challenge) => (
               <li key={challenge.slug}>
-                <Link
-                  href={`/challenges/${challenge.slug}`}
-                  className="node-surface node-interactive flex h-full flex-col gap-1 bg-accent-strong px-4 py-3 text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
-                >
-                  <span className="text-sm font-bold">{challenge.title}</span>
-                  <span className="text-xs opacity-80">
-                    {challenge.summary} · {challenge.steps.length} steps
-                  </span>
-                </Link>
+                {/* Emphasised: a suggested next step, not a listing. */}
+                <ChallengeCard challenge={challenge} tone="strong" />
               </li>
             ))}
           </ul>

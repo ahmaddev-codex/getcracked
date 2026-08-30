@@ -3,10 +3,11 @@ import { notFound } from 'next/navigation';
 import { Markdown } from '@/components/Markdown';
 import { LessonSection } from '@/components/learn/LessonSection';
 import { Node } from '@/components/ui/Node';
-import { findLesson, getLessons, getLessonPosition, getProblemSet } from '@/content/registry';
+import { findLesson, getLessons, getLessonPosition, getChallengesForTopic, getProblemSet } from '@/content/registry';
 import { trackIndex } from '@/components/learn/difficulty';
 import { exerciseId } from '@/content/schema';
 import { GuidedExercises } from '@/components/learn/GuidedExercises';
+import { BuildItBridge } from '@/components/learn/BuildItBridge';
 import { Walkthrough } from '@/components/learn/Walkthrough';
 import { Page } from '@/components/ui/Page';
 
@@ -44,6 +45,8 @@ export default async function LessonPage(props: LessonRouteProps) {
 
   const { index, total, previous, next } = getLessonPosition(lesson);
   const problems = getProblemSet(lesson.slug);
+  // C6: the builds this topic actually applies, authored on the challenge.
+  const builds = getChallengesForTopic(lesson.slug);
   const trackLink = trackIndex(lesson.track);
   const base = trackLink.href;
 
@@ -191,6 +194,8 @@ export default async function LessonPage(props: LessonRouteProps) {
           </ul>
         </LessonSection>
       )}
+
+      <BuildItBridge lesson={lesson} challenges={builds} />
 
       <nav className="flex justify-between gap-3 border-t border-border-subtle pt-4 text-sm">
         {previous ? (
