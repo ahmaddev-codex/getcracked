@@ -1,8 +1,23 @@
 name: CI
 
+# One job per check, rather than four steps in one.
+#
+# They were sequential steps with `if: !cancelled()` so that a run reported
+# every problem rather than only the first — which worked, but paid for it: the
+# build waited on a test suite it does not depend on, and a red run showed a
+# single "verify" cross that had to be opened to find out which of four things
+# broke.
+#
+# As jobs they run in parallel, and each reports its own status. The cost is
+# four checkouts and installs instead of one, which the pnpm cache makes cheap
+# and which the parallelism more than repays — the test suite alone runs two
+# WebAssembly runtimes.
+
 on:
   push:
-    branches: [main]
+    # `dev` as well as `main`: work happens on dev, and a check that only runs
+    # after a merge reports the problem to the person least able to act on it.
+    branches: [main, dev]
   pull_request:
 
 concurrency:
@@ -10,37 +25,45 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify:
-    name: Lint, typecheck, test, build
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm lint
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm typecheck
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm test
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+  content:
+    name: Content
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      # Its own job rather than only inside `prebuild`, so a broken reference
+      # solution reports as "Content" rather than as a build failure — the two
+      # are fixed by different people looking at different files.
+      - run: pnpm content:check
 
-      # Each step runs even if an earlier one fails, so a single CI run
-      # reports every problem rather than only the first.
-      - name: Lint
-        run: pnpm lint
-
-      - name: Typecheck
-        if: '!cancelled()'
-        run: pnpm typecheck
-
-      - name: Test
-        if: '!cancelled()'
-        run: pnpm test
-
-      - name: Build
-        if: '!cancelled()'
-        run: pnpm build
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm build

@@ -142,4 +142,30 @@ Existing platforms make you choose. LeetCode has volume but no path through it. 
 
 Nothing combines runnable distributed-systems labs with an interview-simulation layer on top, and nothing animates the learner's own execution. That gap is the product.
 
-Everything is free. Sign-in exists to keep your progress, not to gate the curriculum.
+Everything is free right now, and sign-in exists to keep your progress rather
+than to gate the curriculum. A paid tier is planned but not yet designed — see
+[Pricing](#pricing).
+
+---
+
+## Pricing
+
+**Free today.** Every lesson, problem, build challenge and lab is open, and every
+one of them works without an account. Sign-in adds persistence and
+personalization; it has never added access.
+
+**A subscription is planned.** Nothing about its price, packaging, or the line
+between free and paid has been decided, so nothing here pretends otherwise. Two
+things are settled:
+
+- **Progress will never buy access.** Prerequisites recommend what to do next;
+  they do not lock anything, and a paid tier would not change that. "Finish this
+  to unlock that" is a model this project rejects on its merits, separately from
+  pricing.
+- **The reading surfaces stay open.** Public, indexable content is how anyone
+  finds this at all. Whatever is eventually metered, walling the lessons off
+  would close the channel that brings people to them.
+
+The one feature with a real per-user cost is the AI assistant, which calls a
+paid inference API — so if anything is metered first, the economics point there
+rather than at the curriculum.
