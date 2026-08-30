@@ -26,6 +26,11 @@ export const EVENT_NAMES = [
   // above, exactly as a problem does; this is the milestone that has no
   // equivalent there — the whole thing built.
   'challenge_completed',
+  // Free-play sandbox (B7). Separate from `test_run` because nothing here is
+  // graded — counting it as a test run would inflate the practice funnel with
+  // people who were experimenting.
+  'sandbox_opened',
+  'sandbox_run',
   // Anonymous -> account (A15/A16)
   'signed_out_notice_shown',
   'signed_out_notice_dismissed',

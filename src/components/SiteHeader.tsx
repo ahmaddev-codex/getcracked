@@ -29,6 +29,7 @@ const LINKS = [
   { href: '/learn/design-patterns', label: 'Patterns' },
   { href: '/problems', label: 'Problems' },
   { href: '/challenges', label: 'Build' },
+  { href: '/sandbox', label: 'Sandbox' },
 ];
 
 export function SiteHeader() {
