@@ -9,6 +9,7 @@ import { findConcept } from '@/content/concepts';
 import { exerciseId } from '@/content/schema';
 import { GuidedExercises } from '@/components/learn/GuidedExercises';
 import { BuildItBridge } from '@/components/learn/BuildItBridge';
+import { DecisionTree } from '@/components/learn/DecisionTree';
 import { Walkthrough } from '@/components/learn/Walkthrough';
 import { Page } from '@/components/ui/Page';
 
@@ -144,6 +145,18 @@ export default async function LessonPage(props: LessonRouteProps) {
               ))}
             </div>
           )}
+        </LessonSection>
+      )}
+
+      {/*
+        C4. Straight after "when to reach for it", because it is the same
+        material in the form an interview asks for — a decision you make rather
+        than a list you read — and it lands hardest while the prose version is
+        still on screen to compare against.
+      */}
+      {lesson.decisionTree && (
+        <LessonSection title={lesson.decisionTree.title}>
+          <DecisionTree tree={lesson.decisionTree} lessonSlug={lesson.slug} />
         </LessonSection>
       )}
 

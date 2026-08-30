@@ -4,6 +4,8 @@ import {
   exerciseId,
   LANGUAGES,
   type Challenge,
+  type DecisionQuestion,
+  type DecisionTree,
   type Language,
   type RunnableExercise,
 } from '../src/content/schema';
@@ -218,6 +220,65 @@ async function checkChallenge(id: string, challenge: Challenge) {
   }
 }
 
+/**
+ * A trade-off decision tree (C4).
+ *
+ * Nesting already makes cycles and orphans impossible, so what is left are the
+ * failures that render fine and teach nothing: a branch that stops at a question
+ * with no answers behind it, an option nobody could tell apart from its
+ * neighbour, or a tree so shallow it is a sentence with a button on it.
+ *
+ * None of these throw. All of them waste a learner's time, which is why they are
+ * a build failure rather than a review note.
+ */
+function checkDecisionTree(id: string, tree: DecisionTree) {
+  const MAX_DEPTH = 6;
+  let outcomes = 0;
+  let deepest = 0;
+
+  const walk = (node: DecisionQuestion, depth: number, trail: string[]) => {
+    deepest = Math.max(deepest, depth);
+    const where = `${id} · ${trail.join(' → ') || 'root'}`;
+
+    if (depth > MAX_DEPTH) {
+      fail(where, `Decision tree is deeper than ${MAX_DEPTH} questions — nobody finishes it.`);
+      return;
+    }
+
+    // Two options reading the same is a coin flip wearing a question. It is the
+    // easiest mistake to make while authoring and invisible once rendered.
+    const labels = node.options.map((o) => o.label.trim().toLowerCase());
+    if (new Set(labels).size !== labels.length) {
+      fail(where, `Two options share a label: ${labels.join(' / ')}`);
+    }
+
+    for (const option of node.options) {
+      if (option.next.kind === 'outcome') {
+        outcomes++;
+        // The recommendation without the reasoning is a flowchart, and the
+        // schema's `min(1)` would accept a single character.
+        if (option.next.because.length < 40) {
+          fail(
+            `${where} → ${option.label}`,
+            'Outcome reasoning is too short to be an argument. Say why, not just what.',
+          );
+        }
+      } else {
+        walk(option.next, depth + 1, [...trail, option.label]);
+      }
+    }
+  };
+
+  walk(tree.root, 1, []);
+
+  if (outcomes < 3) {
+    fail(id, `Decision tree has ${outcomes} outcome(s) — that is a sentence, not a decision.`);
+  }
+  if (deepest < 2) {
+    fail(id, 'Decision tree is one question deep. A single question is a radio button.');
+  }
+}
+
 async function main() {
   const seen = new Set<string>();
 
@@ -274,6 +335,8 @@ async function main() {
         fail(id, `declares concept "${slug}", which is not in the concept reference.`);
       }
     }
+
+    if (lesson.decisionTree) checkDecisionTree(id, lesson.decisionTree);
 
     // Guided exercises earn the same verification a problem does (B11, AD-7).
     for (const exercise of lesson.exercises) {

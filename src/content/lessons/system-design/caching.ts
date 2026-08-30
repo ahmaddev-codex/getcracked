@@ -75,6 +75,102 @@ request repopulate while the others serve the stale value.`,
     ],
   },
 
+  /**
+   * C4. The caching question people get wrong is not "which eviction policy" —
+   * it is "should this be cached at all", which is why that is the first
+   * question rather than a footnote.
+   */
+  decisionTree: {
+    title: 'Should this be cached, and where?',
+    prompt:
+      'A cache is a correctness risk you take on purpose. This walks the decision the way it is actually made — starting with whether to take it at all.',
+    root: {
+      kind: 'question',
+      ask: 'Is the read expensive enough, and repeated enough, to be worth stale data?',
+      why: 'Caching trades freshness for speed. If you are not buying much speed, you are paying the freshness for nothing — and every cache is a second copy of the truth that can disagree with the first.',
+      options: [
+        {
+          label: 'No — it is already fast, or almost never read twice',
+          note: 'The most common right answer, and the least popular one.',
+          next: {
+            kind: 'outcome',
+            recommend: 'Do not cache it',
+            because:
+              'A cache in front of a cheap query adds a failure mode, a staleness window and an eviction policy to reason about, in exchange for microseconds nobody notices. The correct number of caches is not "as many as possible".',
+            caveat:
+              'Measure before deciding it is cheap. "Fast in development" is one row and no contention, which is not the query you are worried about.',
+          },
+        },
+        {
+          label: 'Yes — the same expensive thing is read constantly',
+          next: {
+            kind: 'question',
+            ask: 'Who is the data for?',
+            why: 'This decides *where* the cache goes, and it is the question that turns a caching discussion into a design rather than a list of technologies.',
+            options: [
+              {
+                label: 'Everyone — the same bytes for every user',
+                note: 'Product images, article bodies, JS bundles.',
+                next: {
+                  kind: 'outcome',
+                  recommend: 'Push it to the edge — a CDN, with a long TTL and versioned URLs',
+                  because:
+                    'Identical bytes for every user is the one case where the cache can live nearest the user and furthest from you. Nothing you run has to be involved in the request at all.',
+                  caveat:
+                    'Invalidation at the edge is slow and often partial, which is why versioned URLs matter: change the name rather than trying to un-publish the old one.',
+                },
+              },
+              {
+                label: 'One user — their session, their feed, their permissions',
+                next: {
+                  kind: 'question',
+                  ask: 'What happens if a request reads a stale copy?',
+                  why: 'This is the question that decides whether the cache can be a convenience or has to be part of the write path.',
+                  options: [
+                    {
+                      label: 'Nothing much — a slightly old feed is fine',
+                      next: {
+                        kind: 'outcome',
+                        recommend: 'Cache-aside in a shared store, with a short TTL',
+                        because:
+                          'Read from the cache, fall through to the database on a miss, write what you found back. It is the simplest pattern, it survives the cache being empty, and a short TTL bounds how wrong it can be without any invalidation logic.',
+                        caveat:
+                          'Every miss on a hot key hits the database at once when the entry expires. That is the stampede, and it is what a short TTL makes more likely rather than less.',
+                      },
+                    },
+                    {
+                      label: 'Something bad — it decides access, or shows another user’s data',
+                      note: 'Permissions, balances, anything authorising a request.',
+                      next: {
+                        kind: 'outcome',
+                        recommend: 'Do not cache the decision. Cache the inputs, and invalidate on write',
+                        because:
+                          'A stale permission is a security bug with a TTL on it. Caching the underlying data and recomputing the decision keeps the answer current while still avoiding the expensive read.',
+                        caveat:
+                          'Invalidate-on-write means the write path now fails if the cache is down. Decide up front whether that is a failed write or a stale read — both are defensible, and not choosing is what produces the bug.',
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                label: 'One process — it recomputes the same thing in a loop',
+                next: {
+                  kind: 'outcome',
+                  recommend: 'An in-process cache, bounded by size',
+                  because:
+                    'No network hop, no serialisation, no second system. For a lookup table or a compiled regex this is the whole answer.',
+                  caveat:
+                    'Every instance has its own copy, so they will disagree, and the memory is your process\u2019s memory. Bounded means an eviction policy — which is the LRU cache you can build below.',
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  },
+
   patternCues: [
     'The same expensive result is requested many times.',
     'A read-heavy workload with a clear hot set — the top posts, the popular products.',

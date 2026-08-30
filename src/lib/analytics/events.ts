@@ -37,6 +37,10 @@ export const EVENT_NAMES = [
   // questions people actually arrive with.
   'search_opened',
   'search_result_opened',
+  // Trade-off decision trees (C4). One event per step, so the funnel can show
+  // whether people walk a tree to an outcome or abandon it partway — which is
+  // the only signal that says whether a tree asks the right first question.
+  'decision_step',
   // Anonymous -> account (A15/A16)
   'signed_out_notice_shown',
   'signed_out_notice_dismissed',
