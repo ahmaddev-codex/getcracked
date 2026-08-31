@@ -35,7 +35,8 @@ export function SignUpForm({ providers }: { providers: ReadonlyArray<{ id: OAuth
       <div className="flex flex-col gap-1">
         <h1 className="font-sans text-2xl font-semibold tracking-tight">Create an account</h1>
         <p className="text-sm opacity-70">
-          Everything is free. An account just keeps your progress.
+          Free to use right now. An account keeps your progress, streaks and activity —
+          without one they live in this browser and go when it does.
         </p>
       </div>
 

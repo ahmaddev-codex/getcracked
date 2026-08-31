@@ -17,6 +17,13 @@ import { useSession } from '@/lib/auth-client';
  * Deliberately not a blocker and not a modal. Everything works signed out
  * (§2.6); the account only adds durability, so this reads as an offer rather
  * than a demand.
+ *
+ * **Where this belongs, and where it does not.** Beside a persistent *count* —
+ * "13 / 20 solved", "2 of 4 done" — and nowhere else. The A16 banner already
+ * makes the general statement on every page, so a second copy next to every
+ * badge, card and catalogue is the same sentence four times over, which reads
+ * as nagging and gets dismissed rather than read. Two placements: the problem
+ * table and a build's step list.
  */
 export function SignInToTrack({ what = 'progress' }: { what?: string }) {
   const { data: session, isPending } = useSession();

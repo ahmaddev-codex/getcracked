@@ -52,6 +52,11 @@ function getServerSnapshot(): boolean {
  * something in return for the tracking, in the same sentence, rather than the
  * tracking being disclosed on a policy page nobody opens.
  *
+ * It names the *rotation*, not just the recording, because that is the part
+ * that makes anonymous measurement defensible — "we count you" and "we count
+ * you against an id that forgets you every month" are different claims, and
+ * only the second one is what the code does (analytics/device.ts).
+ *
  * Never blocks the page. Dismissal is remembered.
  */
 export function SignedOutNotice() {
@@ -92,12 +97,13 @@ export function SignedOutNotice() {
       className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-notice px-4 py-2 text-xs text-notice-foreground"
     >
       <span>
-        You&apos;re browsing signed out — your progress is saved on this device only, and
-        we record anonymous usage to see which lessons work.{' '}
+        You&apos;re browsing signed out — everything works, but your progress lives in this
+        browser only. We count anonymous usage against a random id that resets monthly, to
+        see which lessons work.{' '}
         <Link href="/sign-up" className="underline underline-offset-2">
           Sign in
         </Link>{' '}
-        to keep your progress across devices.
+        to keep your progress, streaks and activity across devices.
       </span>
       <button onClick={dismiss} className="underline underline-offset-2">
         Dismiss

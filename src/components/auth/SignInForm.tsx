@@ -48,7 +48,9 @@ export function SignInForm({ providers }: { providers: ReadonlyArray<{ id: OAuth
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <p className="text-sm">
-        No account? <Link href="/sign-up" className="text-link underline">Create one</Link> — everything works signed out, too.
+        No account? <Link href="/sign-up" className="text-link underline">Create one</Link> —
+        everything is readable and runnable signed out, but only an account keeps what you
+        did.
       </p>
     </main>
   );

@@ -212,18 +212,28 @@ export type DecisionTree = z.infer<typeof decisionTreeSchema>;
  * reasoning passes. So a lab is scored on judgement, and judgement is what its
  * steps ask for.
  */
-export const labDimensionSchema = z.enum([
+/**
+ * Reading order, and the order an interview asks them in.
+ *
+ * A plain literal, with the schema derived *from* it rather than the other way
+ * round. `z.enum([...]).options` reads better and does not survive the client
+ * boundary: it is a prototype getter, and a client component that imported the
+ * derived list got `undefined` at render while the same import worked in Node
+ * and in the test runner. The list is the thing being declared here; the schema
+ * is a check over it, so this direction is also the more honest one — and it
+ * removes any way for the two to disagree.
+ */
+export const LAB_DIMENSIONS = [
   'requirements',
   'estimation',
   'api',
   'data-model',
   'scaling',
   'bottleneck',
-]);
-export type LabDimension = z.infer<typeof labDimensionSchema>;
+] as const;
 
-/** Reading order, and the order an interview asks them in. */
-export const LAB_DIMENSIONS = labDimensionSchema.options;
+export const labDimensionSchema = z.enum(LAB_DIMENSIONS);
+export type LabDimension = (typeof LAB_DIMENSIONS)[number];
 
 export const LAB_DIMENSION_LABELS: Record<LabDimension, string> = {
   requirements: 'Requirements gathering',
