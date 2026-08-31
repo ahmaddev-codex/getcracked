@@ -18,6 +18,12 @@ import { validParentheses } from './problems/stacks-queues/valid-parentheses';
 import { maxDepth } from './problems/trees/max-depth';
 import { containerWater } from './problems/two-pointers/container-water';
 import { removeDuplicates } from './problems/two-pointers/remove-duplicates';
+import { singleNumber } from './problems/bit-manipulation/single-number';
+import { jumpGame } from './problems/greedy/jump-game';
+import { mergeIntervals } from './problems/intervals/merge-intervals';
+import { subarraySumK } from './problems/prefix-sums/subarray-sum-k';
+import { sortColors } from './problems/sorting/sort-colors';
+import { subsets } from './problems/backtracking/subsets';
 import { hashingLesson } from './lessons/hashing';
 import { arraysLesson } from './lessons/arrays';
 import { slidingWindowLesson } from './lessons/sliding-window';
@@ -89,6 +95,9 @@ import {
 export const RAW_PROBLEMS: readonly ProblemInput[] = [
   twoSum,
   maxSubarray, runningSum, binarySearch, searchInsert, climbStairs, coinChange, houseRobber, countComponents, firstUniqueChar, groupAnagrams, kthLargest, fibMemo, longestUniqueSubstring, maxSumSubarrayK, dailyTemperatures, validParentheses, maxDepth, containerWater, removeDuplicates,
+  // Six topics that had a lesson and an empty problem set — a path that handed
+  // off to nothing.
+  singleNumber, jumpGame, mergeIntervals, subarraySumK, sortColors, subsets,
 ];
 
 function parseProblem(input: ProblemInput): Problem {
