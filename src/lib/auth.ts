@@ -29,6 +29,49 @@ function resolveSecret(): string {
 }
 
 /**
+ * Where this deployment thinks it lives.
+ *
+ * **This used to fall back to `http://localhost:3000` unconditionally**, which
+ * meant a production deployment missing `BETTER_AUTH_URL` did not fail — it
+ * quietly built OAuth callback URLs pointing at the developer's own machine.
+ * Social sign-in then returned a 500 from `/api/auth/sign-in/social` with
+ * nothing in it to suggest the cause was a missing variable.
+ *
+ * The secret two functions up has always refused to guess in production. This
+ * now holds the same line, because a wrong base URL is not a milder failure than
+ * a missing secret — it is the one that produces a broken redirect a learner
+ * sees rather than an error a deploy log does.
+ *
+ * `VERCEL_*` are provided automatically, so a deployment that forgot the
+ * variable still gets its own origin rather than localhost. It is a fallback,
+ * not the recommendation: **OAuth providers match redirect URIs exactly**, so
+ * the URL has to be stable and registered with Google and GitHub. A per-deploy
+ * preview URL satisfies this function and will still be rejected by the
+ * provider, which is why `BETTER_AUTH_URL` should be set explicitly.
+ */
+export function resolveBaseUrl(env: NodeJS.ProcessEnv = process.env): string {
+  if (env.BETTER_AUTH_URL) return env.BETTER_AUTH_URL;
+
+  // The stable production domain, where Vercel knows one.
+  if (env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  // This deployment's own URL. Correct origin, but per-deploy on previews.
+  if (env.VERCEL_URL) return `https://${env.VERCEL_URL}`;
+
+  if (env.NODE_ENV === 'production') {
+    throw new Error(
+      'BETTER_AUTH_URL must be set in production. Without it, OAuth callback ' +
+        'URLs would point at localhost and social sign-in fails with a 500. ' +
+        'Set it to this deployment\'s origin and register ' +
+        '<BETTER_AUTH_URL>/api/auth/callback/{google,github} with each provider.',
+    );
+  }
+
+  return 'http://localhost:3000';
+}
+
+/**
  * Builds an auth instance against a given database.
  *
  * Takes the database as an argument rather than reaching for the singleton so
@@ -47,7 +90,7 @@ export function createAuth(db: Database) {
       usePlural: true,
     }),
     secret: resolveSecret(),
-    baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3000',
+    baseURL: resolveBaseUrl(),
     emailAndPassword: {
       enabled: true,
       // Verification is a Phase 1 concern; blocking sign-in on it now would

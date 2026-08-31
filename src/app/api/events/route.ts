@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/db/client';
 import { getSession } from '@/lib/session';
-import { recordEvent } from '@/lib/analytics/record';
+import { InvalidEventError, recordEvent } from '@/lib/analytics/record';
 import { checkRateLimit, clientIp, rateLimitKey } from '@/lib/rate-limit';
 
 /**
@@ -58,10 +58,22 @@ export async function POST(request: Request) {
       route: typeof route === 'string' ? route : null,
       props: props && typeof props === 'object' ? (props as Record<string, unknown>) : null,
     });
-  } catch {
-    // Rejected events are a client bug or an abuse attempt; neither deserves a
-    // detailed error, and analytics must never break the caller.
-    return NextResponse.json({ ok: false }, { status: 400 });
+  } catch (error) {
+    /**
+     * A bad payload is the client's problem; anything else is ours.
+     *
+     * This used to answer 400 for both, so a database outage reached the browser
+     * as "Bad Request" — which sends whoever is debugging to look at the
+     * request. The body stays deliberately thin either way, since this endpoint
+     * is public and an error message is a free probe; the detail goes to the
+     * server log, where it belongs.
+     */
+    if (error instanceof InvalidEventError) {
+      return NextResponse.json({ ok: false, error: 'Invalid event' }, { status: 400 });
+    }
+
+    console.error('[events] write failed', error);
+    return NextResponse.json({ ok: false, error: 'Event not recorded' }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

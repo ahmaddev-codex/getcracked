@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { createTestDb, type TestDb } from '../db/helpers';
 import { recordEvent, MAX_PROPS_BYTES } from '@/lib/analytics/record';
+import { InvalidEventError } from '@/lib/analytics/record';
 import { isKnownEvent } from '@/lib/analytics/events';
 import * as s from '@/db/schema';
 
@@ -104,5 +105,46 @@ describe('linking an anonymous funnel to an account (A15)', () => {
     const claimed = await db.select().from(s.events).where(eq(s.events.userId, userId));
     expect(claimed).toHaveLength(1);
     expect(claimed[0].deviceId).toBe('dev-a');
+  });
+});
+
+/**
+ * Rejections have to be attributable to the right party.
+ *
+ * The endpoint answered 400 for everything `recordEvent` threw, so a database
+ * outage reached the browser as "Bad Request" — which sends whoever is
+ * debugging to inspect the request instead of the server. The type is what lets
+ * the route tell them apart.
+ */
+describe('who a rejection blames', () => {
+  it('marks client mistakes as such', async () => {
+    const { recordEvent } = await import('@/lib/analytics/record');
+    // A database that would succeed, so only validation can reject.
+    const db = { insert: () => ({ values: async () => undefined }) } as never;
+
+    await expect(
+      recordEvent(db, { name: 'not_a_real_event', deviceId: 'd' }),
+    ).rejects.toBeInstanceOf(InvalidEventError);
+
+    await expect(
+      recordEvent(db, { name: 'page_view' }),
+    ).rejects.toBeInstanceOf(InvalidEventError);
+  });
+
+  it('does not dress a failed write up as one', async () => {
+    const { recordEvent } = await import('@/lib/analytics/record');
+    const db = {
+      insert: () => ({
+        values: async () => {
+          throw new Error('connection refused');
+        },
+      }),
+    } as never;
+
+    // A valid event that the database refused. If this were an
+    // InvalidEventError the route would answer 400 and blame the caller.
+    const failure = recordEvent(db, { name: 'page_view', deviceId: 'd' });
+    await expect(failure).rejects.toThrow(/connection refused/);
+    await expect(failure).rejects.not.toBeInstanceOf(InvalidEventError);
   });
 });

@@ -6,6 +6,17 @@ import { isKnownEvent } from './events';
 /** Props are client-supplied; an unbounded blob would be a free write primitive. */
 export const MAX_PROPS_BYTES = 4_096;
 
+/**
+ * The caller sent something invalid — as opposed to the write failing.
+ *
+ * The distinction exists because the endpoint could not previously make it: it
+ * caught every throw and answered 400, so a database outage was reported to the
+ * browser as "Bad Request". That is a lie in the most expensive direction —
+ * it blames the client, so nobody goes looking at the server, and the console
+ * fills with 400s while the real fault is elsewhere entirely.
+ */
+export class InvalidEventError extends Error {}
+
 export interface EventInput {
   name: string;
   userId?: string | null;
@@ -24,13 +35,13 @@ export interface EventInput {
  */
 export async function recordEvent(db: Database, input: EventInput): Promise<void> {
   if (!isKnownEvent(input.name)) {
-    throw new Error(`Unknown event: ${input.name}`);
+    throw new InvalidEventError(`Unknown event: ${input.name}`);
   }
   if (!input.userId && !input.deviceId) {
-    throw new Error('An event must be attributable to a user or a device.');
+    throw new InvalidEventError('An event must be attributable to a user or a device.');
   }
   if (input.props && JSON.stringify(input.props).length > MAX_PROPS_BYTES) {
-    throw new Error(`Event props exceed ${MAX_PROPS_BYTES} bytes.`);
+    throw new InvalidEventError(`Event props exceed ${MAX_PROPS_BYTES} bytes.`);
   }
 
   await db.insert(events).values({
