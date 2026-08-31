@@ -1,8 +1,8 @@
 // From `quickjs-emscripten-core`, never `quickjs-emscripten`. The latter's
-// index re-exports all four wasmfile variants, and each runs environment
-// detection at module evaluation — which throws
-// "Classic web workers are not supported" inside a bundler-emitted classic
-// worker. One import of the convenience package undoes the singlefile loader.
+// index re-exports every variant and each runs environment detection at module
+// evaluation, so one import of the convenience package drags in loaders we
+// deliberately do not use — including the single-file one, whose embedded
+// binary Turbopack's minifier corrupts (see lib/runtime/quickjs.ts).
 import { shouldInterruptAfterDeadline } from 'quickjs-emscripten-core';
 import { getQuickJS } from './quickjs';
 import { instrument } from './instrument';
