@@ -150,20 +150,33 @@ than to gate the curriculum. A paid tier is planned but not yet designed — see
 
 ## Deploying
 
-**Migrations are not run by the build.** `next build` does not touch the
-database, so a deployment can point at an empty one, build green, pass every
-check and serve pages — until the first sign-in, when Better Auth tries to write
-a row and gets `relation "verifications" does not exist`. That surfaces as a 500
-on `/api/auth/sign-in/social` with nothing to suggest a migration is the missing
-piece.
+**Migrations run as part of the build**, in `prebuild`, so a deployment cannot
+serve code against a schema it does not have. That failure is not hypothetical:
+before this existed, a deployment pointed at an un-migrated database built green,
+passed every check, served every page, and returned a 500 on the first sign-in
+with `relation "verifications" does not exist` and nothing to suggest a migration
+was missing.
 
-So after pointing a deployment at a new database, run them:
+It does **not** run on preview deployments by default. Vercel environment
+variables are commonly set for every environment at once, so a build that
+migrated whenever a `DATABASE_URL` was present would let any pull-request branch
+change production's schema. Set `MIGRATE_PREVIEW=1` on a preview that has a
+database of its own.
 
-```bash
-DATABASE_URL="<the deployment's database>" pnpm db:migrate
-```
+| Where | Migrates? |
+|---|---|
+| Vercel, production | yes |
+| Vercel, preview | only with `MIGRATE_PREVIEW=1` |
+| Local or CI | yes — disposable databases |
+| No `DATABASE_URL` | no, and the build still succeeds |
 
-and confirm with:
+**One caveat, because it is not solved.** Migrations apply before the new code
+serves traffic, so the currently-live version briefly runs against the new
+schema. Additive changes are fine; destructive ones are not — dropping a column
+the old code still selects takes the site down until the deployment finishes.
+Removing something safely takes two deploys: stop using it, then drop it.
+
+To check a database by hand:
 
 ```bash
 DATABASE_URL="<the deployment's database>" pnpm db:verify
