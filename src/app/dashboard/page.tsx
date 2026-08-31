@@ -5,7 +5,7 @@ import { Node } from '@/components/ui/Node';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Filters } from '@/components/dashboard/Filters';
 import { ProblemTable } from '@/components/problem/ProblemTable';
-import { DIFFICULTIES, catalogCounts, filterProblems } from '@/lib/catalog';
+import { DIFFICULTIES, catalogCounts, companyTags, filterProblems } from '@/lib/catalog';
 import { getTopics, getTrack } from '@/content/registry';
 import { conceptCount } from '@/content/concepts';
 import { Page } from '@/components/ui/Page';
@@ -23,7 +23,7 @@ export const metadata = {
 };
 
 interface DashboardProps {
-  searchParams: Promise<{ difficulty?: string; topic?: string }>;
+  searchParams: Promise<{ difficulty?: string; topic?: string; company?: string }>;
 }
 
 export default async function DashboardPage({ searchParams }: DashboardProps) {
@@ -109,7 +109,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
         <h2 className="text-sm font-semibold">All problems</h2>
 
         <Suspense fallback={<p className="text-sm text-foreground-muted">Loading filters…</p>}>
-          <Filters difficulties={DIFFICULTIES} topics={topics} />
+          <Filters difficulties={DIFFICULTIES} topics={topics} companies={companyTags()} />
         </Suspense>
 
         {problems.length === 0 ? (
