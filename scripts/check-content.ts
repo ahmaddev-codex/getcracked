@@ -344,6 +344,24 @@ function checkLab(id: string, lab: ScenarioLab) {
   }
 
   /**
+   * A term naming nothing renders nothing (C9).
+   *
+   * The lesson gate already makes this check; a lab that skipped it would fail
+   * silently — `ConceptLinks` drops an unknown slug rather than rendering a dead
+   * link, so the only symptom is a term quietly missing from the strip.
+   */
+  for (const step of lab.steps) {
+    for (const slug of step.concepts) {
+      if (!findConcept(slug)) {
+        fail(
+          `${id}/${step.slug}`,
+          `declares concept "${slug}", which is not in the concept reference.`,
+        );
+      }
+    }
+  }
+
+  /**
    * A lab must exercise more than one dimension.
    *
    * Six questions on scaling is a quiz about scaling; the rubric's whole claim

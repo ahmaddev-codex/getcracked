@@ -15,6 +15,9 @@ export const urlShortenerLab: ScenarioLabInput = {
   summary: 'The classic opener, and the one where the read/write ratio decides everything.',
   difficulty: 'easy',
   topics: ['caching', 'databases', 'consistent-hashing'],
+  // Six questions with reading between them. Short of the PRD's 35–45 for a
+  // full design round, because this scenario is deliberately the warm-up.
+  timeBudgetMinutes: 25,
 
   brief: `> "Design a service like bit.ly. A user gives us a long URL and we hand back a
 > short one. Anyone who visits the short one ends up at the original."
@@ -91,6 +94,7 @@ spend five minutes and learn nothing about the system.`,
       slug: 'write-volume',
       kind: 'estimate',
       dimension: 'estimation',
+      concepts: ['latency-vs-throughput'],
       prompt: 'Roughly how many writes per second does this need to sustain, on average?',
       unit: 'writes per second',
       answer: 38.6,
@@ -152,6 +156,7 @@ The redirect is where the interesting choice is.`,
       slug: 'data-model',
       kind: 'select',
       dimension: 'data-model',
+      concepts: ['sql-vs-nosql', 'indexing'],
       multiple: false,
       prompt: 'How would you generate and store the short code?',
       detail: `You need a code that is short, unique, and cheap to look up. At 100M links a
@@ -186,6 +191,7 @@ so the space is not the constraint — collisions and coordination are.`,
       slug: 'scaling',
       kind: 'select',
       dimension: 'scaling',
+      concepts: ['cache-aside', 'replication', 'cdn'],
       multiple: true,
       prompt: 'Given the read/write ratio, which of these earn their place?',
       detail: `You agreed roughly **100:1** reads to writes. That single number should be
@@ -226,6 +232,7 @@ doing most of the work in this answer.`,
       slug: 'bottleneck',
       kind: 'select',
       dimension: 'bottleneck',
+      concepts: ['cache-stampede', 'sharding'],
       multiple: false,
       prompt:
         'One link goes viral: a single code takes ten million hits an hour. What gives first?',

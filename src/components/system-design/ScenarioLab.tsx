@@ -5,6 +5,8 @@ import { Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Node } from '@/components/ui/Node';
 import { Scorecard } from './Scorecard';
+import { LabTimer } from './LabTimer';
+import { ConceptLinks } from './ConceptLinks';
 import { track } from '@/lib/analytics/track';
 import { correctOptions, estimateAccepted, gradeStep, scoreLab } from '@/lib/system-design/rubric';
 import type { LabAnswer, LabAnswers } from '@/lib/system-design/rubric';
@@ -32,6 +34,9 @@ export function ScenarioLab({ lab }: { lab: Lab }) {
   const [draft, setDraft] = useState<number[]>([]);
   const [estimateDraft, setEstimateDraft] = useState('');
   const [done, setDone] = useState(false);
+  /** Epoch ms when the clock started, or null for an untimed run (C7). */
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [elapsed, setElapsed] = useState(0);
 
   const step = lab.steps[index];
   const committed = answers[step?.slug ?? ''];
@@ -43,6 +48,8 @@ export function ScenarioLab({ lab }: { lab: Lab }) {
     setEstimateDraft('');
     setIndex(0);
     setDone(false);
+    setStartedAt(null);
+    setElapsed(0);
   }, []);
 
   const commit = useCallback(() => {
@@ -68,7 +75,14 @@ export function ScenarioLab({ lab }: { lab: Lab }) {
   }, [index, lab.steps.length, lab.slug]);
 
   if (done) {
-    return <Scorecard score={score} takeaway={lab.takeaway} onRetry={reset} />;
+    return (
+      <Scorecard
+        score={score}
+        takeaway={lab.takeaway}
+        onRetry={reset}
+        timing={startedAt === null ? null : { elapsed, budgetMinutes: lab.timeBudgetMinutes }}
+      />
+    );
   }
 
   if (!step) return null;
@@ -79,12 +93,34 @@ export function ScenarioLab({ lab }: { lab: Lab }) {
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-sm font-semibold">
           Step {index + 1} of {lab.steps.length}
         </h2>
-        <span className="text-xs text-foreground-muted">
-          {LAB_DIMENSION_LABELS[step.dimension]}
+        <span className="flex items-center gap-3">
+          <span className="text-xs text-foreground-muted">
+            {LAB_DIMENSION_LABELS[step.dimension]}
+          </span>
+          {/*
+            Offered on the first step only. Starting a clock halfway through
+            would measure a fraction of the work and report it as the whole
+            thing.
+          */}
+          {startedAt === null && index === 0 && Object.keys(answers).length === 0 ? (
+            <button
+              type="button"
+              onClick={() => setStartedAt(Date.now())}
+              className="node-surface node-pressable bg-surface px-2 py-1 text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+            >
+              Time me · {lab.timeBudgetMinutes} min
+            </button>
+          ) : (
+            <LabTimer
+              budgetMinutes={lab.timeBudgetMinutes}
+              startedAt={startedAt}
+              onElapsed={setElapsed}
+            />
+          )}
         </span>
       </div>
 
@@ -139,6 +175,8 @@ export function ScenarioLab({ lab }: { lab: Lab }) {
           answered={Boolean(committed)}
         />
       )}
+
+      {result && step.concepts.length > 0 && <ConceptLinks slugs={step.concepts} />}
 
       {result && (
         <Node tone={result.met ? 'strong' : 'muted'} className="p-3 text-sm">

@@ -267,6 +267,20 @@ const labStepBase = {
   prompt: z.string().min(1),
   /** Markdown context — the brief so far, the figures you were given. */
   detail: z.string().optional(),
+  /**
+   * Reference terms this step turns on (C9).
+   *
+   * **Authored, never matched against the prose.** Scanning a step for words
+   * that happen to be concept slugs would link "cache" wherever it appears —
+   * including in sentences arguing *against* caching — and would link the same
+   * term four times in one paragraph. The lesson schema already declares its
+   * concepts this way and the gate already checks they exist; this is the same
+   * relation, one tier down.
+   *
+   * Rendered only *after* the step is answered. A strip of links reading
+   * "cache · read replicas · CDN" above the scaling question is the answer key.
+   */
+  concepts: z.array(z.string().regex(/^[a-z0-9-]+$/)).default([]),
 };
 
 export const labStepSchema = z.discriminatedUnion('kind', [
@@ -326,6 +340,15 @@ export const scenarioLabSchema = z.object({
   /** Lessons this exercises, for the roadmap join and the "read this first" nudge. */
   topics: z.array(z.string().regex(/^[a-z0-9-]+$/)).default([]),
   steps: z.array(labStepSchema).min(1),
+  /**
+   * Minutes this would get in an interview (C7).
+   *
+   * Authored rather than fixed, because a six-step scenario and a twelve-step
+   * one do not deserve the same clock. The PRD's 35–45 is the range for a full
+   * design round; the bounds below are wider to allow a deliberately short
+   * warm-up without letting a typo produce a five-minute or five-hour budget.
+   */
+  timeBudgetMinutes: z.number().int().min(10).max(90).default(40),
   /**
    * What a strong answer sounds like, read after the scorecard.
    *

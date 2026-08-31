@@ -7,6 +7,8 @@ import {
   type LabAnswers,
 } from '@/lib/system-design/rubric';
 import { getLabs, findLab, RAW_LABS } from '@/content/registry';
+import { findConcept } from '@/content/concepts';
+import { formatDuration } from '@/components/system-design/LabTimer';
 import { scenarioLabSchema, type LabStep, type ScenarioLab } from '@/content/schema';
 
 /**
@@ -268,5 +270,75 @@ describe('the authored labs', () => {
   it('links the url-shortener lab to lessons that exist', () => {
     const lab = findLab('url-shortener')!;
     expect(lab.topics.length).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * The interview clock (C7) and the reference links (C9).
+ *
+ * Both are attached to the lab content, so both are checkable there — and both
+ * have a failure mode that renders perfectly: a budget nobody could meet, and a
+ * term strip that gives the answer away by appearing too early.
+ */
+describe('timed mode', () => {
+  it('gives every lab a budget in a range a person could work to', () => {
+    for (const lab of getLabs()) {
+      expect(lab.timeBudgetMinutes, lab.slug).toBeGreaterThanOrEqual(10);
+      expect(lab.timeBudgetMinutes, lab.slug).toBeLessThanOrEqual(90);
+    }
+  });
+
+  it('leaves at least a minute per question', () => {
+    // A six-step lab on a five-minute clock is not interview conditions, it is
+    // a typo — and it would read as the learner being slow.
+    for (const lab of getLabs()) {
+      expect(lab.timeBudgetMinutes, lab.slug).toBeGreaterThanOrEqual(lab.steps.length);
+    }
+  });
+
+  it('formats a countdown as minutes and seconds', () => {
+    expect(formatDuration(0)).toBe('0:00');
+    expect(formatDuration(9)).toBe('0:09');
+    expect(formatDuration(61)).toBe('1:01');
+    expect(formatDuration(1_500)).toBe('25:00');
+  });
+
+  it('never formats a negative time, since overrun is rendered separately', () => {
+    expect(formatDuration(-5)).toBe('0:00');
+  });
+});
+
+describe('concept links', () => {
+  it('name terms that exist in the reference', () => {
+    // ConceptLinks drops an unknown slug rather than rendering a dead link, so
+    // without this the only symptom is a term quietly missing from the strip.
+    for (const lab of getLabs()) {
+      for (const step of lab.steps) {
+        for (const slug of step.concepts) {
+          expect(findConcept(slug), `${lab.slug}/${step.slug}: ${slug}`).toBeDefined();
+        }
+      }
+    }
+  });
+
+  it('are attached to the steps whose answers turn on them', () => {
+    // Not every step needs them, but a lab with none anywhere has not wired C9
+    // up at all — which would look identical to one that had.
+    for (const lab of getLabs()) {
+      const withTerms = lab.steps.filter((s) => s.concepts.length > 0);
+      expect(withTerms.length, lab.slug).toBeGreaterThan(0);
+    }
+  });
+
+  it('do not repeat the same term across every step', () => {
+    // A strip that says "cache aside" on all six steps has stopped meaning
+    // "this step turns on it" and started meaning "this is a lab".
+    for (const lab of getLabs()) {
+      const stepsWithTerms = lab.steps.filter((s) => s.concepts.length > 0);
+      for (const slug of new Set(stepsWithTerms.flatMap((s) => s.concepts))) {
+        const uses = stepsWithTerms.filter((s) => s.concepts.includes(slug)).length;
+        expect(uses, `${lab.slug}: ${slug}`).toBeLessThan(stepsWithTerms.length);
+      }
+    }
   });
 });

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Node } from '@/components/ui/Node';
 import { LAB_DIMENSION_LABELS, type LabDimension } from '@/content/schema';
+import { formatDuration } from './LabTimer';
 import type { Scorecard as ScorecardData } from '@/lib/system-design/rubric';
 
 /**
@@ -30,10 +31,13 @@ export function Scorecard({
   score,
   takeaway,
   onRetry,
+  timing,
 }: {
   score: ScorecardData;
   takeaway: string;
   onRetry: () => void;
+  /** Null for an untimed run — most of them (C7). */
+  timing: { elapsed: number; budgetMinutes: number } | null;
 }) {
   return (
     <section className="flex flex-col gap-4">
@@ -43,6 +47,8 @@ export function Scorecard({
           {score.met} of {score.total} met
         </span>
       </div>
+
+      {timing && <Timing {...timing} />}
 
       <Node tone="surface" className="flex flex-col divide-y divide-border-subtle p-0">
         {score.dimensions.map((d) => {
@@ -125,5 +131,37 @@ export function Scorecard({
         </p>
       </div>
     </section>
+  );
+}
+
+/**
+ * What the clock is for (C7).
+ *
+ * Reported, never punished: going over does not change the score, because the
+ * six dimensions measure judgement and taking longer is not worse judgement. It
+ * is a separate fact about the same session, and stating it separately is what
+ * keeps both honest.
+ */
+function Timing({ elapsed, budgetMinutes }: { elapsed: number; budgetMinutes: number }) {
+  const budget = budgetMinutes * 60;
+  const over = elapsed > budget;
+
+  return (
+    <Node tone={over ? 'surface' : 'muted'} className="p-3 text-sm">
+      <span className="font-mono">{formatDuration(elapsed)}</span>{' '}
+      {over ? (
+        <>
+          — over the {budgetMinutes} minute budget by{' '}
+          <span className="font-mono">{formatDuration(elapsed - budget)}</span>. In a real
+          round you would have been moved on, so it is worth knowing which step took the
+          time.
+        </>
+      ) : (
+        <>
+          — inside the {budgetMinutes} minute budget, with{' '}
+          <span className="font-mono">{formatDuration(budget - elapsed)}</span> to spare.
+        </>
+      )}
+    </Node>
   );
 }
