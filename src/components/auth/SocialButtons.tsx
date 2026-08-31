@@ -82,7 +82,7 @@ export function SocialButtons({
                 setBusy(null);
               }
             }}
-            className="node-surface node-interactive flex w-full items-center justify-center gap-2 bg-surface px-3 py-2 text-sm font-medium text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link disabled:cursor-not-allowed disabled:opacity-60"
+            className="node-surface cursor-pointer node-interactive flex w-full items-center justify-center gap-2 bg-surface px-3 py-2 text-sm font-medium text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link disabled:cursor-not-allowed disabled:opacity-60"
           >
             {MARKS[provider.id]}
             {busy === provider.id ? 'Redirecting…' : `Continue with ${provider.label}`}

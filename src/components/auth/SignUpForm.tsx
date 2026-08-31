@@ -48,7 +48,7 @@ export function SignUpForm({ providers }: { providers: ReadonlyArray<{ id: OAuth
         <input name="name" placeholder="Name" required className="node-surface bg-surface px-3 py-2 text-left text-sm text-foreground" />
         <input name="email" type="email" placeholder="Email" required autoComplete="email" className="node-surface bg-surface px-3 py-2 text-left text-sm text-foreground" />
         <input name="password" type="password" placeholder="Password" required minLength={8} autoComplete="new-password" className="node-surface bg-surface px-3 py-2 text-left text-sm text-foreground" />
-        <Button type="submit" disabled={busy} className="w-full justify-center">
+        <Button type="submit" disabled={busy} className="w-full justify-center cursor-pointer">
           {busy ? 'Creating…' : 'Create account'}
         </Button>
       </form>

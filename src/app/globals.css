@@ -105,6 +105,7 @@
 
   /* ── Motion ───────────────────────────────────────────────────────────── */
   --duration-fast: 120ms;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -202,6 +203,7 @@
   --color-header-foreground: var(--header-foreground);
 
   --radius-node: var(--radius-node);
+  --ease: var(--ease);
 
   /*
    * Page rails (Module K).
@@ -466,6 +468,38 @@ body {
   .gc-panel[data-closing='true'],
   .gc-scrim,
   .gc-scrim[data-closing='true'] {
+    animation: none;
+  }
+}
+
+/* Loading progress bar animation */
+@keyframes bar-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+.gc-loading-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--surface-muted);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.gc-loading-bar-fill {
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-strong);
+  animation: bar-slide 1.4s var(--ease) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gc-loading-bar-fill {
     animation: none;
   }
 }

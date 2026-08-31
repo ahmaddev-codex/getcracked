@@ -5,6 +5,7 @@ import { Node } from '@/components/ui/Node';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Filters } from '@/components/dashboard/Filters';
 import { ProblemTable } from '@/components/problem/ProblemTable';
+import { LoadingBar } from '@/components/ui/LoadingBar';
 import { DIFFICULTIES, catalogCounts, companyTags, filterProblems } from '@/lib/catalog';
 import { getTopics, getTrack } from '@/content/registry';
 import { conceptCount } from '@/content/concepts';
@@ -108,7 +109,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
       <section className="flex flex-col gap-4">
         <h2 className="text-sm font-semibold">All problems</h2>
 
-        <Suspense fallback={<p className="text-sm text-foreground-muted">Loading filters…</p>}>
+        <Suspense fallback={<LoadingBar />}>
           <Filters difficulties={DIFFICULTIES} topics={topics} companies={companyTags()} />
         </Suspense>
 
