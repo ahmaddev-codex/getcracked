@@ -9,10 +9,19 @@ import { LOCAL_PROGRESS_KEY, readLocalProgress } from '@/lib/progress-local';
 import {
   DISCLOSURE_DISMISSED_KEY,
   PROMPT_SNOOZE_KEY,
-  noticeFor,
-  readNoticeInputs,
-  type NoticeState,
+  readNotice,
+  serverNotice,
 } from '@/lib/signed-out-prompt';
+
+/**
+ * Both snapshots return stable references — see the note in
+ * `lib/signed-out-prompt.ts`. A fresh object per call re-renders forever.
+ */
+const getSnapshot = () =>
+  readNotice(
+    () => readLocalProgress().filter((e) => e.state === 'complete').length,
+    LOCAL_PROGRESS_KEY,
+  );
 
 /**
  * Reads storage through `useSyncExternalStore` rather than an effect.
@@ -35,43 +44,6 @@ function subscribe(onChange: () => void) {
 }
 
 /**
- * Cached against the raw strings it derives from.
- *
- * `useSyncExternalStore` compares snapshots by identity, so returning a fresh
- * object each call would re-render forever. The two raw values are what
- * actually change.
- */
-let cachedKey: string | null = null;
-let cached: NoticeState = { kind: 'none', solved: 0 };
-
-function getSnapshot(): NoticeState {
-  let key: string;
-  try {
-    key = [
-      localStorage.getItem(LOCAL_PROGRESS_KEY),
-      localStorage.getItem(DISCLOSURE_DISMISSED_KEY),
-      localStorage.getItem(PROMPT_SNOOZE_KEY),
-    ].join('|');
-  } catch {
-    // Storage refused (private mode, blocked site data). Show the disclosure:
-    // failing towards more disclosure is the safe direction.
-    return { kind: 'disclosure', solved: 0 };
-  }
-
-  if (key === cachedKey) return cached;
-
-  const solved = readLocalProgress().filter((e) => e.state === 'complete').length;
-  cachedKey = key;
-  cached = noticeFor(readNoticeInputs(solved));
-  return cached;
-}
-
-/** On the server nothing is dismissed and nothing is solved. */
-function getServerSnapshot(): NoticeState {
-  return { kind: 'none', solved: 0 };
-}
-
-/**
  * The signed-out banner — disclosure first, then a prompt that is earned (A16,
  * A15).
  *
@@ -91,7 +63,7 @@ function getServerSnapshot(): NoticeState {
  */
 export function SignedOutNotice() {
   const { data: session, isPending } = useSession();
-  const notice = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const notice = useSyncExternalStore(subscribe, getSnapshot, serverNotice);
   const hydrated = useHydrated();
 
   /**

@@ -105,3 +105,69 @@ export function readNoticeInputs(solved: number): NoticeInputs {
 
   return { solved, disclosureDismissed, snoozedAt };
 }
+
+/**
+ * Stable snapshots for `useSyncExternalStore`.
+ *
+ * It compares snapshots by identity, so a function returning a fresh object
+ * literal each call re-renders forever — React catches it as "the result of
+ * getServerSnapshot should be cached to avoid an infinite loop". That is easy to
+ * get right for the main path and easy to forget on the two that return a
+ * constant, which is exactly what happened here: the cached path was handled and
+ * both the server snapshot and the storage-unavailable fallback were not.
+ *
+ * So the constants are module-level and the derivation is cached against the raw
+ * strings it reads. Nothing below allocates unless the underlying storage
+ * actually changed.
+ */
+export const NOTICE_NONE: NoticeState = Object.freeze({ kind: 'none', solved: 0 });
+export const NOTICE_DISCLOSURE_ONLY: NoticeState = Object.freeze({
+  kind: 'disclosure',
+  solved: 0,
+});
+
+let cachedKey: string | null = null;
+let cachedNotice: NoticeState = NOTICE_NONE;
+
+/**
+ * Reads storage and decides what to show, returning the *same object* until one
+ * of the three values it depends on changes.
+ *
+ * `countSolved` is injected rather than imported so this module stays free of
+ * the progress store — and so a test can drive it without writing progress.
+ */
+export function readNotice(
+  countSolved: () => number,
+  progressKey: string,
+): NoticeState {
+  let key: string;
+  try {
+    key = [
+      localStorage.getItem(progressKey),
+      localStorage.getItem(DISCLOSURE_DISMISSED_KEY),
+      localStorage.getItem(PROMPT_SNOOZE_KEY),
+    ].join('|');
+  } catch {
+    // Private mode or blocked site data. Failing towards *more* disclosure is
+    // the safe direction — and this returns the shared constant, because it is
+    // the path a private window takes on every single render.
+    return NOTICE_DISCLOSURE_ONLY;
+  }
+
+  if (key === cachedKey) return cachedNotice;
+
+  cachedKey = key;
+  cachedNotice = noticeFor(readNoticeInputs(countSolved()));
+  return cachedNotice;
+}
+
+/** The server sees no storage, so it never has anything to say. */
+export function serverNotice(): NoticeState {
+  return NOTICE_NONE;
+}
+
+/** Test seam: the cache is module state and would leak between cases. */
+export function resetNoticeCache(): void {
+  cachedKey = null;
+  cachedNotice = NOTICE_NONE;
+}

@@ -1,8 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  DISCLOSURE_DISMISSED_KEY,
   PROMPT_GROWTH,
   PROMPT_THRESHOLD,
   noticeFor,
+  readNotice,
+  resetNoticeCache,
+  serverNotice,
   type NoticeInputs,
 } from '@/lib/signed-out-prompt';
 
@@ -130,5 +134,72 @@ describe('the thresholds themselves', () => {
 
   it('require real growth before a snoozed prompt returns', () => {
     expect(PROMPT_GROWTH).toBeGreaterThanOrEqual(PROMPT_THRESHOLD);
+  });
+});
+
+/**
+ * Snapshot identity, which `useSyncExternalStore` requires and which is very
+ * easy to get wrong.
+ *
+ * It compares snapshots by reference, so a function returning a fresh object
+ * each call renders forever — React reports it as "the result of
+ * getServerSnapshot should be cached to avoid an infinite loop". This shipped
+ * twice in one file: the derived path was cached and the two paths that return a
+ * *constant* were not, which is the easier half to overlook precisely because
+ * they look too simple to need it.
+ */
+describe('snapshot identity', () => {
+  const PROGRESS_KEY = 'gc.progress';
+  const countSolved = () => 0;
+
+  beforeEach(() => {
+    localStorage.clear();
+    resetNoticeCache();
+    vi.restoreAllMocks();
+  });
+
+  it('returns the same object while storage is unchanged', () => {
+    expect(readNotice(countSolved, PROGRESS_KEY)).toBe(readNotice(countSolved, PROGRESS_KEY));
+  });
+
+  it('returns the same object on every server render', () => {
+    // The one that actually threw the warning.
+    expect(serverNotice()).toBe(serverNotice());
+  });
+
+  it('returns the same object when storage is unavailable', () => {
+    // A private window takes this path on *every* render, so a fresh object
+    // here is an infinite loop for exactly the people least able to report it.
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('SecurityError');
+    });
+
+    const first = readNotice(countSolved, PROGRESS_KEY);
+    expect(first).toBe(readNotice(countSolved, PROGRESS_KEY));
+    expect(first.kind).toBe('disclosure');
+  });
+
+  it('does return a new object once storage actually changes', () => {
+    // The cache must not be so stable that dismissing does nothing.
+    const before = readNotice(countSolved, PROGRESS_KEY);
+    localStorage.setItem(DISCLOSURE_DISMISSED_KEY, '1');
+    const after = readNotice(countSolved, PROGRESS_KEY);
+
+    expect(after).not.toBe(before);
+    expect(before.kind).toBe('disclosure');
+    expect(after.kind).toBe('none');
+  });
+
+  it('recomputes when the solved count changes', () => {
+    let solved = 0;
+    const counter = () => solved;
+
+    expect(readNotice(counter, PROGRESS_KEY).kind).toBe('disclosure');
+
+    solved = PROMPT_THRESHOLD;
+    // The count is read from the progress store, so the key has to move with it
+    // or a solve would not re-derive.
+    localStorage.setItem(PROGRESS_KEY, 'changed');
+    expect(readNotice(counter, PROGRESS_KEY).kind).toBe('keep-progress');
   });
 });
