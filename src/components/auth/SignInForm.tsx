@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { safeNext } from '@/lib/auth-redirect';
 import { Button } from '@/components/ui/Button';
 import { SocialButtons } from '@/components/auth/SocialButtons';
 import type { OAuthProviderId } from '@/lib/oauth';
@@ -10,7 +11,9 @@ import { signIn } from '@/lib/auth-client';
 
 export function SignInForm({ providers }: { providers: ReadonlyArray<{ id: OAuthProviderId; label: string }> }) {
   const router = useRouter();
-  const next = useSearchParams().get('next') ?? '/';
+  // Validated, not just defaulted — `next` reaches router.push() and the OAuth
+  // provider's callbackURL, so an unchecked value is an open redirect.
+  const next = safeNext(useSearchParams().get('next'));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 

@@ -11,9 +11,14 @@ import type { OAuthProviderId } from '@/lib/oauth';
  * the server — a button that cannot work is worse than a missing one, because
  * it fails only after the learner has committed to a redirect.
  *
- * `callbackURL` carries the page they came from. Sending everyone to the
- * dashboard after an OAuth round trip loses their place, and the reason to sign
- * in here is usually that they were already doing something.
+ * `callbackURL` carries the page they came from, falling back to the front of
+ * the curriculum. Sending everyone to one fixed page after an OAuth round trip
+ * loses their place, and the reason to sign in here is usually that they were
+ * already doing something.
+ *
+ * It is validated before it gets here (`lib/auth-redirect.ts`). This value
+ * leaves our origin — it is handed to the provider — so an unchecked one is an
+ * open redirect with an authentication step in front of it.
  */
 
 const MARKS: Record<OAuthProviderId, React.ReactNode> = {
