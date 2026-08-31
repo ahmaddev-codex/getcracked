@@ -25,7 +25,8 @@
     "predev": "pnpm quickjs:wasm",
     "chunks:check": "tsx scripts/check-chunks.ts",
     "postbuild": "pnpm chunks:check",
-    "sources:check": "tsx scripts/check-company-sources.ts"
+    "sources:check": "tsx scripts/check-company-sources.ts",
+    "db:verify": "tsx --env-file-if-exists=.env scripts/check-db.ts"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",

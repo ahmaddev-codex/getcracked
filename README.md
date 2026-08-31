@@ -148,6 +148,38 @@ than to gate the curriculum. A paid tier is planned but not yet designed — see
 
 ---
 
+## Deploying
+
+**Migrations are not run by the build.** `next build` does not touch the
+database, so a deployment can point at an empty one, build green, pass every
+check and serve pages — until the first sign-in, when Better Auth tries to write
+a row and gets `relation "verifications" does not exist`. That surfaces as a 500
+on `/api/auth/sign-in/social` with nothing to suggest a migration is the missing
+piece.
+
+So after pointing a deployment at a new database, run them:
+
+```bash
+DATABASE_URL="<the deployment's database>" pnpm db:migrate
+```
+
+and confirm with:
+
+```bash
+DATABASE_URL="<the deployment's database>" pnpm db:verify
+```
+
+`db:verify` reads the expected tables from `src/db/schema.ts` rather than a list,
+so it cannot drift, and it distinguishes a missing migration from a connection
+problem — which are the two things that look identical from a 500.
+
+Two variables have no safe default and will stop the app in production rather
+than guess: `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL`, which must match the
+redirect URI registered with each OAuth provider exactly
+(`<BETTER_AUTH_URL>/api/auth/callback/google` and `.../github`).
+
+---
+
 ## Measurement and privacy
 
 Three things measure this app, and they answer different questions.
