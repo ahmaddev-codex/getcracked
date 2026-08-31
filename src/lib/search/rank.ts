@@ -58,8 +58,9 @@ const KIND_ORDER: Record<SearchKind, number> = {
   problem: 1,
   challenge: 2,
   lab: 3,
-  pattern: 4,
-  concept: 5,
+  company: 4,
+  pattern: 5,
+  concept: 6,
 };
 
 export interface SearchHit {
@@ -111,6 +112,7 @@ export function countByKind(
     problem: 0,
     challenge: 0,
     lab: 0,
+    company: 0,
     pattern: 0,
     concept: 0,
   };

@@ -1,5 +1,6 @@
 import { getChallenges, getLabs, getLessons, getProblems } from '@/content/registry';
 import { getConceptCategories } from '@/content/concepts';
+import { getCompanies } from '@/content/companies';
 import { lessonBase } from '@/components/learn/difficulty';
 import { stepIds } from '@/content/challenge';
 
@@ -27,7 +28,14 @@ import { stepIds } from '@/content/challenge';
  * question about their titles.
  */
 
-export type SearchKind = 'lesson' | 'concept' | 'pattern' | 'problem' | 'challenge' | 'lab';
+export type SearchKind =
+  | 'lesson'
+  | 'concept'
+  | 'pattern'
+  | 'problem'
+  | 'challenge'
+  | 'lab'
+  | 'company';
 
 export interface SearchEntry {
   /** Stable across builds, so a result can be keyed and measured. */
@@ -218,6 +226,22 @@ export function buildSearchIndex(): SearchEntry[] {
         // with: "how many writes per second" is a real query and appears
         // nowhere in the title.
         ...lab.steps.map((s) => s.prompt),
+      ),
+    });
+  }
+
+  for (const company of getCompanies()) {
+    entries.push({
+      id: `company:${company.slug}`,
+      kind: 'company',
+      title: company.name,
+      href: `/companies/${company.slug}`,
+      detail: company.summary,
+      haystack: normalise(
+        company.name,
+        company.summary,
+        ...company.rounds.map((r) => `${r.name} ${r.assesses.text}`),
+        ...company.notes.map((n) => n.text),
       ),
     });
   }

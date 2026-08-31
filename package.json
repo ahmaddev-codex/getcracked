@@ -24,7 +24,8 @@
     "quickjs:wasm": "tsx scripts/copy-quickjs-wasm.ts",
     "predev": "pnpm quickjs:wasm",
     "chunks:check": "tsx scripts/check-chunks.ts",
-    "postbuild": "pnpm chunks:check"
+    "postbuild": "pnpm chunks:check",
+    "sources:check": "tsx scripts/check-company-sources.ts"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",

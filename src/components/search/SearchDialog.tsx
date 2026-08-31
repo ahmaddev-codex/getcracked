@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import {
   BookOpen,
+  Building2,
   ClipboardCheck,
   Hammer,
   Search,
@@ -50,6 +51,7 @@ const KIND_META: Record<SearchKind, { label: string; icon: typeof BookOpen }> = 
   problem: { label: 'Problems', icon: SquareCode },
   challenge: { label: 'Builds', icon: Hammer },
   lab: { label: 'Labs', icon: ClipboardCheck },
+  company: { label: 'Companies', icon: Building2 },
   pattern: { label: 'Patterns', icon: Shapes },
   concept: { label: 'Reference', icon: Terminal },
 };

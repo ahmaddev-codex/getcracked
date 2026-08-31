@@ -28,6 +28,7 @@ import {
 import { runTestSpec } from '../src/content/test-runner';
 import { walkthroughSpec } from '../src/content/walkthrough';
 import { findConcept } from '../src/content/concepts';
+import { getCompanies, sourcesOf } from '../src/content/companies';
 
 /**
  * Content validation gate (ADR 0001 §8, AD-3).
@@ -594,6 +595,40 @@ async function main() {
     }
 
     checkLab(id, lab);
+  }
+
+  /**
+   * Company guides (D7).
+   *
+   * Structure only — whether a URL still resolves is `pnpm sources:check`, which
+   * makes network requests and so cannot gate a build.
+   */
+  for (const company of getCompanies()) {
+    const id = `companies/${company.slug}`;
+
+    // A guide for a name no problem carries filters to an empty page, and the
+    // name is the D1 join key.
+    const tagged = RAW_PROBLEMS.some((p) =>
+      (p.companies ?? []).some((c) => c.toLowerCase() === company.name.toLowerCase()),
+    );
+    if (!tagged) {
+      fail(id, `No problem is tagged "${company.name}", so the guide links to an empty set.`);
+    }
+
+    for (const source of sourcesOf(company)) {
+      // Two sources for the same claim under one label with different URLs is
+      // the shape a copy-paste mistake takes.
+      if (!source.url.startsWith('https://')) {
+        fail(id, `source "${source.label}" is not https.`);
+      }
+    }
+
+    // A guide of nothing but hearsay is a rumour page with a company's name on
+    // it. At least one claim has to be sourced.
+    const confirmed = sourcesOf(company).length;
+    if (confirmed === 0) {
+      fail(id, 'No claim is confirmed by a first-party source — every one is hearsay.');
+    }
   }
 
   if (problems.length > 0) {
