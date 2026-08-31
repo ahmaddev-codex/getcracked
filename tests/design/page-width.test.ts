@@ -31,6 +31,10 @@ type PageWidth = 'canvas' | 'catalog' | 'reading';
  * - `reading` — one document, read top to bottom.
  */
 const EXPECTED: Record<string, PageWidth> = {
+  // Was exempt while it was a centred hero with two lines in it. It is a real
+  // page now, so it aligns with everything else it links to.
+  'src/app/page.tsx': 'catalog',
+
   'src/app/dashboard/page.tsx': 'catalog',
   'src/app/account/page.tsx': 'catalog',
 
@@ -75,7 +79,6 @@ const EXPECTED: Record<string, PageWidth> = {
  * whose content flows down a column.
  */
 const NO_RAIL: Record<string, string> = {
-  'src/app/page.tsx': 'Landing hero — centred in the viewport, so it has no column to align.',
   'src/app/(auth)/sign-in/page.tsx': 'Centred form card; the width is the form’s, not the page’s.',
   'src/app/(auth)/sign-up/page.tsx': 'Centred form card; the width is the form’s, not the page’s.',
   'src/app/(spike)/runtime/page.tsx':
