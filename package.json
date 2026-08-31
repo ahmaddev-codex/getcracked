@@ -19,13 +19,15 @@
     "services:reset": "docker compose down -v && docker compose up -d --wait",
     "db:setup": "pnpm services:up && pnpm db:migrate && pnpm db:seed",
     "content:check": "tsx scripts/check-content.ts",
-    "prebuild": "pnpm quickjs:wasm && pnpm content:check",
+    "prebuild": "pnpm db:deploy && pnpm quickjs:wasm && pnpm content:check",
     "groq:models": "tsx --env-file-if-exists=.env scripts/groq-models.ts",
     "quickjs:wasm": "tsx scripts/copy-quickjs-wasm.ts",
     "predev": "pnpm quickjs:wasm",
     "chunks:check": "tsx scripts/check-chunks.ts",
     "postbuild": "pnpm chunks:check",
-    "sources:check": "tsx scripts/check-company-sources.ts"
+    "sources:check": "tsx scripts/check-company-sources.ts",
+    "db:verify": "tsx --env-file-if-exists=.env scripts/check-db.ts",
+    "db:deploy": "tsx --env-file-if-exists=.env scripts/deploy-migrate.ts"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",

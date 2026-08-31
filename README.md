@@ -18,26 +18,6 @@ The arrows are **recommendations, not gates**. Nothing on the platform is locked
 
 ---
 
-## Status
-
-In progress. The core loop works end to end — read a topic, practise it, build the
-thing, and watch your own code animate while it runs.
-
-| | State |
-|---|---|
-| Foundations — app, CI, database, auth, analytics, design system | ✅ |
-| Execution in the browser — Python and JavaScript, sandboxed, no server | ✅ |
-| **Tier 1** — 31 lessons across data structures, algorithms, and system design | ✅ |
-| **Tier 2** — 20 practice problems, grouped by topic | ✅ |
-| **Tier 3** — 3 multi-step build challenges over a multi-file workspace | ✅ |
-| Animation — 9 structure-shaped renderers driven by real traces | ✅ |
-| Roadmaps — three node graphs with per-node progress | ✅ |
-| Catalog volume, System Design labs, company question bank, AI assistant | ⬜ |
-
-`/runtime` is a throwaway spike page and is not part of the product.
-
----
-
 ## Quick Start
 
 Requires Node 22+, [pnpm](https://pnpm.io), and Docker.
@@ -103,16 +83,6 @@ The decisions that actually determine whether this ships.
 
 ---
 
-## Testing
-
-Database tests run against **embedded Postgres (PGlite)**, not the Docker container and not mocks. They exercise the same migrations, constraints, and cascades that run against Neon, but need no running service — so they cannot silently stop running in CI, which is exactly when constraint regressions slip through.
-
-Runtime tests execute real Pyodide and real QuickJS. The cross-language trace equivalence that the whole visualizer depends on is asserted, not assumed.
-
-The Docker Postgres is for running the app. The suite does not need it.
-
----
-
 ## Project structure
 
 ```
@@ -145,37 +115,6 @@ Nothing combines runnable distributed-systems labs with an interview-simulation 
 Everything is free right now, and sign-in exists to keep your progress rather
 than to gate the curriculum. A paid tier is planned but not yet designed — see
 [Pricing](#pricing).
-
----
-
-## Measurement and privacy
-
-Three things measure this app, and they answer different questions.
-
-| | What it answers | Where it goes |
-|---|---|---|
-| **First-party events** (`/api/events`) | Which lesson, which hint, which test run — the product funnel | Our own database |
-| **Vercel Analytics** | How many people arrive, and from where | Vercel |
-| **Vercel Speed Insights** | What the site actually feels like on a real device | Vercel |
-
-Nothing here uses cookies. Signed-in activity is keyed to the account; signed-out
-activity is counted against a **random id that resets every month**, never a
-fingerprint and never anything derived from the person or their device. Vercel's
-two are cookieless as well, deriving a daily-rotating visitor hash server-side.
-
-The disclosure is a product surface rather than a policy page — a banner while
-you browse signed out, and a note at the moment you sign up. That is a better
-decision and a more fragile one, so `tests/analytics/disclosure.test.tsx` couples
-the copy to what the code actually does: the notice cannot claim signed-out
-visitors are untracked while the endpoint that tracks them accepts writes.
-
-**All three are blocked by common content blockers**, and that is respected
-rather than worked around — no renaming endpoints to slip past a filter list.
-The numbers under-report, which is a known cost.
-
-> **Deployment note.** Analytics and Speed Insights need to be enabled per
-> project in the Vercel dashboard. Until they are, `/_vercel/insights/*` returns
-> 404 and nothing is recorded — the app is unaffected either way.
 
 ---
 
