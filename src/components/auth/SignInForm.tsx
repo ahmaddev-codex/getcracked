@@ -32,7 +32,7 @@ export function SignInForm({ providers }: { providers: ReadonlyArray<{ id: OAuth
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 p-8 text-center">
       <div className="flex flex-col gap-1">
         <h1 className="font-sans text-2xl font-semibold tracking-tight">Sign in</h1>
         <p className="text-sm opacity-70">Pick up where you left off.</p>
@@ -41,8 +41,8 @@ export function SignInForm({ providers }: { providers: ReadonlyArray<{ id: OAuth
       <SocialButtons providers={providers} callbackURL={next} />
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <input name="email" type="email" placeholder="Email" required autoComplete="email" className="node-surface bg-surface px-3 py-2 text-sm text-foreground" />
-        <input name="password" type="password" placeholder="Password" required autoComplete="current-password" className="node-surface bg-surface px-3 py-2 text-sm text-foreground" />
+        <input name="email" type="email" placeholder="Email" required autoComplete="email" className="node-surface bg-surface px-3 py-2 text-left text-sm text-foreground" />
+        <input name="password" type="password" placeholder="Password" required autoComplete="current-password" className="node-surface bg-surface px-3 py-2 text-left text-sm text-foreground" />
         <Button type="submit" disabled={busy} className="w-full justify-center">
           {busy ? 'Signing in…' : 'Sign in'}
         </Button>

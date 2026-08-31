@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/Button';
 import { SocialButtons } from '@/components/auth/SocialButtons';
 import type { OAuthProviderId } from '@/lib/oauth';
 import { signUp } from '@/lib/auth-client';
-import { PrivacyNotice } from '@/app/(auth)/PrivacyNotice';
 
 export function SignUpForm({ providers }: { providers: ReadonlyArray<{ id: OAuthProviderId; label: string }> }) {
   const router = useRouter();
@@ -34,7 +33,7 @@ export function SignUpForm({ providers }: { providers: ReadonlyArray<{ id: OAuth
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 p-8 text-center">
       <div className="flex flex-col gap-1">
         <h1 className="font-sans text-2xl font-semibold tracking-tight">Create an account</h1>
         <p className="text-sm opacity-70">
@@ -46,17 +45,15 @@ export function SignUpForm({ providers }: { providers: ReadonlyArray<{ id: OAuth
       <SocialButtons providers={providers} callbackURL={next} />
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <input name="name" placeholder="Name" required className="node-surface bg-surface px-3 py-2 text-sm text-foreground" />
-        <input name="email" type="email" placeholder="Email" required autoComplete="email" className="node-surface bg-surface px-3 py-2 text-sm text-foreground" />
-        <input name="password" type="password" placeholder="Password" required minLength={8} autoComplete="new-password" className="node-surface bg-surface px-3 py-2 text-sm text-foreground" />
+        <input name="name" placeholder="Name" required className="node-surface bg-surface px-3 py-2 text-left text-sm text-foreground" />
+        <input name="email" type="email" placeholder="Email" required autoComplete="email" className="node-surface bg-surface px-3 py-2 text-left text-sm text-foreground" />
+        <input name="password" type="password" placeholder="Password" required minLength={8} autoComplete="new-password" className="node-surface bg-surface px-3 py-2 text-left text-sm text-foreground" />
         <Button type="submit" disabled={busy} className="w-full justify-center">
           {busy ? 'Creating…' : 'Create account'}
         </Button>
       </form>
 
       {error && <p className="text-sm text-danger">{error}</p>}
-
-      <PrivacyNotice />
 
       <p className="text-sm">
         Already have one? <Link href="/sign-in" className="text-link underline">Sign in</Link>
