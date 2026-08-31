@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { SignInForm } from '@/components/auth/SignInForm';
 import { availableProviders } from '@/lib/oauth';
+import { LoadingBar } from '@/components/ui/LoadingBar';
 
 /**
  * A server component, so it can read which OAuth providers this deployment
@@ -14,7 +15,7 @@ export default function SignInPage() {
   const providers = availableProviders();
 
   return (
-    <Suspense fallback={<main className="p-8 text-sm">Loading…</main>}>
+    <Suspense fallback={<LoadingBar />}>
       <SignInForm providers={providers} />
     </Suspense>
   );

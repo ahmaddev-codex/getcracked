@@ -43,7 +43,7 @@ export function SignInForm({ providers }: { providers: ReadonlyArray<{ id: OAuth
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
         <input name="email" type="email" placeholder="Email" required autoComplete="email" className="node-surface bg-surface px-3 py-2 text-left text-sm text-foreground" />
         <input name="password" type="password" placeholder="Password" required autoComplete="current-password" className="node-surface bg-surface px-3 py-2 text-left text-sm text-foreground" />
-        <Button type="submit" disabled={busy} className="w-full justify-center">
+        <Button type="submit" disabled={busy} className="w-full justify-center cursor-pointer">
           {busy ? 'Signing in…' : 'Sign in'}
         </Button>
       </form>

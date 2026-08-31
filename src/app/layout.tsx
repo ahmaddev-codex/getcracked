@@ -33,6 +33,9 @@ export const metadata: Metadata = {
   title: "GetCracked",
   description:
     "Build real systems. Step by step. In your browser. Interactive DSA, System Design labs, and company-wise interview prep.",
+  icons: {
+    icon: "/getcracked_favicon.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -42,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Applies the theme before first paint. A React effect runs after
             paint, which is one frame of the wrong theme on every load. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <link rel="icon" href="/getcracked_favicon.svg" type="image/svg+xml" />
       </head>
       <body className="min-h-full flex flex-col">
         <SignedOutNotice />

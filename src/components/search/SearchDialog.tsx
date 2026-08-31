@@ -16,6 +16,7 @@ import {
 import { track } from '@/lib/analytics/track';
 import { countByKind, searchEntries } from '@/lib/search/rank';
 import type { SearchEntry, SearchKind } from '@/lib/search';
+import { LoadingBar } from '@/components/ui/LoadingBar';
 
 /**
  * Search over everything, from anywhere (I6).
@@ -232,7 +233,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
 
         <div id={listId} className="min-h-0 flex-1 overflow-y-auto">
           {index.status === 'idle' && (
-            <p className="p-4 text-sm text-foreground-muted">Loading the catalogue…</p>
+            <LoadingBar />
           )}
 
           {index.status === 'failed' && (

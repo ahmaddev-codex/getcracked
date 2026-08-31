@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { AccountSlot } from '@/components/auth/AccountMenu';
 import { SearchTrigger } from '@/components/search/SearchTrigger';
 import { SiteNav } from '@/components/nav/SiteNav';
+import Image from 'next/image';
 
 /**
  * The site header (K1).
@@ -41,15 +42,7 @@ export function SiteHeader() {
           href="/"
           className="flex items-center gap-2 rounded-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
         >
-          {/* The mark carries the node treatment, so the identity is the same
-              shape language as everything the product draws. */}
-          <span
-            aria-hidden
-            className="grid h-7 w-7 place-items-center rounded-node border-2 border-accent-strong bg-accent-strong text-sm font-bold text-accent-foreground"
-          >
-            G
-          </span>
-          <span className="text-base font-semibold tracking-tight">GetCracked</span>
+          <Image src="/getcracked_logo_light.svg" alt="GetCracked" width={96} height={96} />
         </Link>
 
         <SiteNav />
