@@ -37,6 +37,11 @@ export const EVENT_NAMES = [
   // questions people actually arrive with.
   'search_opened',
   'search_result_opened',
+  // System Design labs (C2/C5). The step event is what says *where* people
+  // stop, which a completion count alone cannot — and a lab that loses everyone
+  // at the estimation step is a content problem, not a usage one.
+  'lab_step_answered',
+  'lab_completed',
   // Trade-off decision trees (C4). One event per step, so the funnel can show
   // whether people walk a tree to an outcome or abandon it partway — which is
   // the only signal that says whether a tree asks the right first question.

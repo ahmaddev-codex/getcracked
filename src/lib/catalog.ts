@@ -13,6 +13,14 @@ import type { Problem } from '@/content/schema';
 export interface CatalogFilter {
   difficulty?: string;
   topic?: string;
+  /**
+   * Company name, matched case-insensitively against a problem's tags (D1).
+   *
+   * Matched on the name rather than a slug because that is what the content
+   * carries — a problem lists "Amazon", not "amazon" — and normalising at the
+   * comparison keeps the tags readable in the files where they are authored.
+   */
+  company?: string;
 }
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
@@ -21,6 +29,12 @@ export function filterProblems(filter: CatalogFilter): readonly Problem[] {
   return getProblems().filter((p) => {
     if (filter.difficulty && p.difficulty !== filter.difficulty) return false;
     if (filter.topic && p.topic !== filter.topic) return false;
+    if (
+      filter.company &&
+      !p.companies.some((c) => c.toLowerCase() === filter.company!.toLowerCase())
+    ) {
+      return false;
+    }
     return true;
   });
 }
@@ -42,4 +56,26 @@ export function catalogCounts() {
      */
     challengeSteps: challenges.reduce((n, c) => n + c.steps.length, 0),
   };
+}
+
+/**
+ * Every company any problem is tagged with, with how many carry it (D1).
+ *
+ * Derived from the tags rather than from the authored guides, because the two
+ * are different sets on purpose: a tag can exist without a guide (most do), and
+ * the filter should offer everything that would actually return something.
+ */
+export function companyTags(): Array<{ name: string; count: number }> {
+  const counts = new Map<string, number>();
+  for (const problem of getProblems()) {
+    for (const company of problem.companies) {
+      counts.set(company, (counts.get(company) ?? 0) + 1);
+    }
+  }
+
+  return [...counts]
+    .map(([name, count]) => ({ name, count }))
+    // Most-tagged first: the long tail of single-mention companies is not what
+    // anyone is scanning for.
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 }

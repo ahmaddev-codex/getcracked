@@ -31,6 +31,10 @@ type PageWidth = 'canvas' | 'catalog' | 'reading';
  * - `reading` — one document, read top to bottom.
  */
 const EXPECTED: Record<string, PageWidth> = {
+  // Was exempt while it was a centred hero with two lines in it. It is a real
+  // page now, so it aligns with everything else it links to.
+  'src/app/page.tsx': 'catalog',
+
   'src/app/dashboard/page.tsx': 'catalog',
   'src/app/account/page.tsx': 'catalog',
 
@@ -39,11 +43,19 @@ const EXPECTED: Record<string, PageWidth> = {
   'src/app/learn/system-design/page.tsx': 'canvas',
   'src/app/learn/system-design/[topic]/page.tsx': 'reading',
   'src/app/learn/system-design/capacity/page.tsx': 'catalog',
+  'src/app/learn/system-design/labs/page.tsx': 'canvas',
+  // Reading, not catalog: a lab is one scenario worked top to bottom, and the
+  // options are prose that has to stay readable — the same call the problem and
+  // lesson pages make.
+  'src/app/learn/system-design/labs/[slug]/page.tsx': 'reading',
   'src/app/learn/design-patterns/page.tsx': 'canvas',
 
   'src/app/problems/page.tsx': 'catalog',
   'src/app/problems/[topic]/page.tsx': 'catalog',
   'src/app/problems/[topic]/[slug]/page.tsx': 'reading',
+
+  'src/app/companies/page.tsx': 'catalog',
+  'src/app/companies/[slug]/page.tsx': 'catalog',
 
   'src/app/challenges/page.tsx': 'catalog',
   'src/app/challenges/[slug]/page.tsx': 'catalog',
@@ -67,7 +79,6 @@ const EXPECTED: Record<string, PageWidth> = {
  * whose content flows down a column.
  */
 const NO_RAIL: Record<string, string> = {
-  'src/app/page.tsx': 'Landing hero — centred in the viewport, so it has no column to align.',
   'src/app/(auth)/sign-in/page.tsx': 'Centred form card; the width is the form’s, not the page’s.',
   'src/app/(auth)/sign-up/page.tsx': 'Centred form card; the width is the form’s, not the page’s.',
   'src/app/(spike)/runtime/page.tsx':

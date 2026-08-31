@@ -5,7 +5,7 @@ import { useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 
 /**
- * Difficulty and topic filters (A4).
+ * Difficulty, topic and company filters (A4, D1).
  *
  * State lives in the URL, not React, so a filtered view is shareable, survives
  * a reload, and works with the back button. Holding it in component state would
@@ -14,9 +14,17 @@ import { Button } from '@/components/ui/Button';
 export function Filters({
   difficulties,
   topics,
+  companies = [],
 }: {
   difficulties: readonly string[];
   topics: readonly string[];
+  /**
+   * Company tags, most-used first (D1).
+   *
+   * Optional because not every surface that filters has them — and a row
+   * labelled "company" with nothing under it is worse than no row.
+   */
+  companies?: ReadonlyArray<{ name: string; count: number }>;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -34,7 +42,8 @@ export function Filters({
   );
 
   const active = (key: string, value: string) => params.get(key) === value;
-  const hasFilters = params.has('difficulty') || params.has('topic');
+  const hasFilters =
+    params.has('difficulty') || params.has('topic') || params.has('company');
 
   return (
     <div className="flex flex-col gap-3">
@@ -65,6 +74,25 @@ export function Filters({
           </Button>
         ))}
       </div>
+
+      {companies.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-foreground-muted">company</span>
+          {companies.map((c) => (
+            <Button
+              key={c.name}
+              tone={active('company', c.name) ? 'strong' : 'surface'}
+              onClick={() => toggle('company', c.name)}
+              aria-pressed={active('company', c.name)}
+            >
+              {c.name}{' '}
+              {/* The count, because a tag that returns two problems and one
+                  that returns twenty look identical without it. */}
+              <span className="opacity-60">{c.count}</span>
+            </Button>
+          ))}
+        </div>
+      )}
 
       {hasFilters && (
         <div>

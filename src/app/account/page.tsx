@@ -148,8 +148,14 @@ export default async function AccountPage() {
         <h2 className="text-sm font-semibold">Your data</h2>
         <Node tone="muted" className="flex flex-col gap-2 p-4 text-sm">
           <p className="text-foreground-muted">
-            Progress is stored against this account so it follows you across devices. Everything
-            on GetCracked is readable without an account — signing in only adds the record.
+            Progress is stored against this account so it follows you across devices: what you
+            complete, which hints you open, how your test runs go, and when you were last
+            active. We read it to see which lessons actually work.
+          </p>
+          <p className="text-foreground-muted">
+            Everything on GetCracked is readable and runnable without an account — signing in
+            adds the record, not the access. Signed out, the same activity is counted against a
+            random id that resets every month.
           </p>
           <p className="text-foreground-muted">
             Want it gone? Email us and we will delete the account and everything attached to
