@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { KeyRound, Mail, ShieldCheck } from 'lucide-react';
+import { KeyRound, Mail } from 'lucide-react';
 import { Node } from '@/components/ui/Node';
+import { CompanyLogo } from '@/components/company/CompanyLogo';
 import { Avatar } from '@/components/account/Avatar';
 import { ActivityHeatmap } from '@/components/account/ActivityHeatmap';
 import { DifficultyBreakdown } from '@/components/account/DifficultyBreakdown';
@@ -120,9 +121,19 @@ export default async function AccountPage() {
             >
               <span className="flex items-center gap-2 text-sm font-medium">
                 {method.providerId === 'credential' ? (
-                  <KeyRound size={15} aria-hidden />
+                  <KeyRound size={16} aria-hidden />
                 ) : (
-                  <ShieldCheck size={15} aria-hidden />
+                  <CompanyLogo
+                    name={
+                      method.providerId === 'github'
+                        ? 'github.com'
+                        : method.providerId === 'google'
+                          ? 'google.com'
+                          : `${method.providerId}.com`
+                    }
+                    size={16}
+                    className="rounded-full"
+                  />
                 )}
                 {methodLabel(method.providerId)}
               </span>

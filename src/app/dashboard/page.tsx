@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Trophy } from 'lucide-react';
 import { Node } from '@/components/ui/Node';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Filters } from '@/components/dashboard/Filters';
@@ -63,25 +63,35 @@ export default async function DashboardPage(props: {
       title: 'Sandbox',
       detail: 'Your own code, your own input, animated — nothing graded',
     },
-    {
-      href: '/leaderboard',
-      title: 'Leaderboard',
-      detail: 'See who is cracking it — problems, streaks, and builds ranked',
-    },
   ];
 
   return (
     <Page width="catalog">
-      {/* The same masthead every other surface uses. This page previously had
-          its own smaller heading and card grid, which made the one page a
-          signed-in learner lands on the one that looked least like the
-          product. */}
-      <header className="node-surface flex flex-col gap-2 bg-surface p-6">
-        <h1 className="font-sans text-4xl font-bold tracking-tight sm:text-5xl">Dashboard</h1>
-        <p className="max-w-2xl text-sm text-foreground-muted">
-          Everything in one place. Read a topic, practise it, then build the thing itself —
-          in any order, having completed nothing.
-        </p>
+      {/* The same masthead every other surface uses, with distinct Leaderboard integration */}
+      <header className="node-surface flex flex-col gap-4 bg-surface p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="font-sans text-4xl font-bold tracking-tight sm:text-5xl">Dashboard</h1>
+          <p className="max-w-2xl text-sm text-foreground-muted">
+            Everything in one place. Read a topic, practise it, then build the thing itself —
+            in any order, having completed nothing.
+          </p>
+        </div>
+
+        <Link
+          href="/leaderboard"
+          className="node-surface node-interactive group flex shrink-0 items-center gap-3 bg-accent px-4 py-3 text-accent-foreground border border-border-strong rounded-node shadow-2xs hover:bg-accent-strong transition-all self-start sm:self-auto"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-xs bg-surface/30 border border-border-subtle shrink-0">
+            <Trophy size={20} className="text-accent-foreground" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold flex items-center gap-1.5">
+              Leaderboard
+              <ArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
+            </span>
+            <span className="text-3xs opacity-80">Rankings, streaks & top solvers</span>
+          </div>
+        </Link>
       </header>
 
       {/* Personalized Retention & Mock Hub (Module F) */}
