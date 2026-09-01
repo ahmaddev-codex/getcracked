@@ -63,6 +63,11 @@ export default async function DashboardPage(props: {
       title: 'Sandbox',
       detail: 'Your own code, your own input, animated — nothing graded',
     },
+    {
+      href: '/leaderboard',
+      title: 'Leaderboard',
+      detail: 'See who is cracking it — problems, streaks, and builds ranked',
+    },
   ];
 
   return (

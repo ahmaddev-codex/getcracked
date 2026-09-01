@@ -1,5 +1,19 @@
 import Link from 'next/link';
-import { ArrowRight, BookOpen, ClipboardCheck, Hammer, Play, SquareCode } from 'lucide-react';
+import {
+  ArrowRight,
+  BookOpen,
+  ClipboardCheck,
+  Hammer,
+  Play,
+  SquareCode,
+  MessageSquare,
+  Trophy,
+  Users,
+  Briefcase,
+  Flame,
+  Shield,
+  Brain,
+} from 'lucide-react';
 import { Node } from '@/components/ui/Node';
 import { Page } from '@/components/ui/Page';
 import { catalogCounts } from '@/lib/catalog';
@@ -153,7 +167,7 @@ export default function LandingPage() {
             The part that is actually different
           </h2>
           <p className="max-w-2xl text-sm text-foreground-muted">
-            Everything runs in your browser — Python and JavaScript both, on real
+            Everything runs in your browser — Python, JavaScript, and TypeScript, on real
             interpreters compiled to WebAssembly. Nothing is queued on a server, so nothing
             costs anything to run.
           </p>
@@ -189,6 +203,169 @@ export default function LandingPage() {
         </ul>
       </section>
 
+      {/* Mock Interviews Section */}
+      <section className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="font-sans text-2xl font-bold tracking-tight">
+            Mock interviews that feel real
+          </h2>
+          <p className="max-w-2xl text-sm text-foreground-muted">
+            Timed rounds with a Socratic AI interviewer that listens, pushes back, and
+            scores you — not a quiz, an actual conversation about your approach.
+          </p>
+        </div>
+
+        <ul className="grid gap-3 sm:grid-cols-3">
+          <li>
+            <Node tone="surface" className="flex h-full flex-col gap-2 p-5">
+              <span className="flex items-center gap-2 text-sm font-bold">
+                <Brain size={15} aria-hidden />
+                DSA Rounds
+              </span>
+              <p className="text-xs text-foreground-muted">
+                45-minute timed DSA interviews with live code editing, progressive
+                hints, and a detailed scorecard across communication, correctness,
+                and complexity analysis.
+              </p>
+            </Node>
+          </li>
+          <li>
+            <Node tone="surface" className="flex h-full flex-col gap-2 p-5">
+              <span className="flex items-center gap-2 text-sm font-bold">
+                <Shield size={15} aria-hidden />
+                System Design Rounds
+              </span>
+              <p className="text-xs text-foreground-muted">
+                Full system design sessions: requirements, API design, data modelling,
+                component architecture, and bottleneck analysis — scored across
+                the 10-dimensional architectural reference.
+              </p>
+            </Node>
+          </li>
+          <li>
+            <Node tone="surface" className="flex h-full flex-col gap-2 p-5">
+              <span className="flex items-center gap-2 text-sm font-bold">
+                <Flame size={15} aria-hidden />
+                Post-Round Debrief
+              </span>
+              <p className="text-xs text-foreground-muted">
+                After each round, a detailed scorecard shows what went well and
+                what to practise. Decision points are highlighted, and each section
+                maps back to the lesson that covers it.
+              </p>
+            </Node>
+          </li>
+        </ul>
+
+        <Link
+          href="/interviews"
+          className="node-surface node-interactive node-pressable inline-flex w-fit items-center gap-2 bg-surface px-4 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+        >
+          Try a mock interview
+          <ArrowRight size={15} aria-hidden />
+        </Link>
+      </section>
+
+      {/* Company Guides Section */}
+      <section className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="font-sans text-2xl font-bold tracking-tight">
+            {companies} company interview guides
+          </h2>
+          <p className="max-w-2xl text-sm text-foreground-muted">
+            Verified, first-party engineering interview guides for Amazon, Google, Meta,
+            Microsoft, Apple, Netflix, and Uber — sourced from official engineering blogs,
+            recruiter documentation, and public tech talks.
+          </p>
+        </div>
+
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { label: 'Interview Format', detail: 'Round structure, timing, what to expect' },
+            { label: 'Technical Focus', detail: 'Which topics each company favours most' },
+            { label: 'Leadership Principles', detail: 'Behavioral and culture fit dimensions' },
+            { label: 'Sourced & Verified', detail: 'Every claim links back to a public source' },
+          ].map((item) => (
+            <li key={item.label}>
+              <Node tone="surface" className="flex h-full flex-col gap-1 p-4">
+                <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <Briefcase size={12} aria-hidden />
+                  {item.label}
+                </span>
+                <p className="text-2xs text-foreground-muted">{item.detail}</p>
+              </Node>
+            </li>
+          ))}
+        </ul>
+
+        <Link
+          href="/companies"
+          className="node-surface node-interactive node-pressable inline-flex w-fit items-center gap-2 bg-surface px-4 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+        >
+          Browse company guides
+          <ArrowRight size={15} aria-hidden />
+        </Link>
+      </section>
+
+      {/* Community Layer Section */}
+      <section className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="font-sans text-2xl font-bold tracking-tight">Learn from the community</h2>
+          <p className="max-w-2xl text-sm text-foreground-muted">
+            After you solve a problem, see how others approached it. Share your own solution,
+            discuss edge cases, and compare complexity trade-offs — all within the workspace.
+          </p>
+        </div>
+
+        <ul className="grid gap-3 sm:grid-cols-3">
+          <li>
+            <Node tone="surface" className="flex h-full flex-col gap-2 p-5">
+              <span className="flex items-center gap-2 text-sm font-bold">
+                <Users size={15} aria-hidden />
+                Peer Solutions
+              </span>
+              <p className="text-xs text-foreground-muted">
+                A completion-gated gallery of community approaches — with Big-O tags,
+                language filters, upvoting, and spoiler protection. See the hash map
+                approach next to the two-pointer one.
+              </p>
+            </Node>
+          </li>
+          <li>
+            <Node tone="surface" className="flex h-full flex-col gap-2 p-5">
+              <span className="flex items-center gap-2 text-sm font-bold">
+                <MessageSquare size={15} aria-hidden />
+                Problem Discussions
+              </span>
+              <p className="text-xs text-foreground-muted">
+                Threaded Q&A on every problem. Edge-case callouts, optimization
+                follow-ups, and intuition discussions — tagged and filterable so
+                the signal stays high.
+              </p>
+            </Node>
+          </li>
+          <li>
+            <Node tone="surface" className="flex h-full flex-col gap-2 p-5">
+              <span className="flex items-center gap-2 text-sm font-bold">
+                <Trophy size={15} aria-hidden />
+                Leaderboard
+              </span>
+              <p className="text-xs text-foreground-muted">
+                Ranked by problems solved, streak length, challenges built, and total
+                submissions. See where you stand and what the pace looks like at
+                the top.
+              </p>
+              <Link
+                href="/leaderboard"
+                className="mt-auto pt-1 text-xs text-link underline underline-offset-2"
+              >
+                View leaderboard →
+              </Link>
+            </Node>
+          </li>
+        </ul>
+      </section>
+
       <section className="flex flex-col gap-3">
         <h2 className="font-sans text-2xl font-bold tracking-tight">What is in it</h2>
         {/*
@@ -214,6 +391,32 @@ export default function LandingPage() {
             </Link>
           ))}
         </Node>
+      </section>
+
+      {/* Final CTA */}
+      <section className="flex flex-col items-center gap-3 py-4 text-center">
+        <h2 className="font-sans text-2xl font-bold tracking-tight">
+          Ready to start cracking?
+        </h2>
+        <p className="max-w-lg text-sm text-foreground-muted">
+          No sign-up required. Pick a topic, write some code, and see it run.
+          Everything is free, and nothing is locked behind an account.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+          <Link
+            href="/learn/dsa"
+            className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-accent-strong px-5 py-2.5 text-sm font-bold text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+          >
+            Start learning
+            <ArrowRight size={15} aria-hidden />
+          </Link>
+          <Link
+            href="/dashboard"
+            className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-surface px-5 py-2.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+          >
+            Go to dashboard
+          </Link>
+        </div>
       </section>
     </Page>
   );
