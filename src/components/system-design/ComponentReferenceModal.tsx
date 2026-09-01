@@ -68,7 +68,7 @@ export function ComponentReferenceModal({
         aria-hidden="true"
       />
 
-      <div className="relative w-full max-w-3xl max-h-full my-auto bg-surface border-2 border-border-strong rounded-node shadow-2xl flex flex-col overflow-hidden z-10">
+      <div className="relative w-full max-w-3xl max-h-full my-auto bg-surface border-2 border-border-strong rounded-node shadow-2xl flex flex-col overflow-hidden z-10 gc-modal-enter">
         {/* Modal Header */}
         <header className="p-4 border-b border-border-subtle bg-surface-muted/50 flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1.5">
@@ -106,7 +106,7 @@ export function ComponentReferenceModal({
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-node border transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-node border transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-[0.98] ${
                     isActive
                       ? 'bg-accent text-accent-foreground border-border-strong shadow-xs'
                       : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface border-border-subtle'
@@ -128,7 +128,7 @@ export function ComponentReferenceModal({
               <p className="mt-2 text-xs text-foreground-muted/70">Why it matters: {concept.matters}</p>
             </div>
           ) : (
-            <>
+            <div key={activeTab} className="gc-tab-enter">
               {activeTab === 'progression' && (
                 <ProgressionTab dimensions={dimensions} />
               )}
@@ -141,7 +141,7 @@ export function ComponentReferenceModal({
               {activeTab === 'interview' && (
                 <InterviewTab dimensions={dimensions} />
               )}
-            </>
+            </div>
           )}
         </div>
 

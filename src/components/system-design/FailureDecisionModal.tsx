@@ -23,7 +23,7 @@ export function FailureDecisionModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs select-none">
-      <div className="w-full max-w-xl bg-surface border-2 border-border-strong rounded-node shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+      <div className="w-full max-w-xl bg-surface border-2 border-border-strong rounded-node shadow-2xl overflow-hidden flex flex-col gc-modal-enter">
         {/* Header */}
         <div className="flex items-center justify-between p-3.5 border-b border-border-subtle bg-surface-muted/50">
           <div className="flex items-center gap-2">

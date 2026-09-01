@@ -6,7 +6,6 @@ import {
   Flame,
   Gauge,
   RotateCcw,
-  Sparkles,
   Zap,
   CheckCircle2,
 } from 'lucide-react';
@@ -225,7 +224,7 @@ export function SimulationPanel({
               key={preset.value}
               type="button"
               onClick={() => onConfigChange({ ...config, globalQps: preset.value })}
-              className={`px-1.5 py-0.5 rounded text-3xs font-mono font-semibold border transition-all cursor-pointer ${
+              className={`px-1.5 py-0.5 rounded text-3xs font-mono font-semibold border transition-all duration-(--duration-fast) active:scale-[0.96] cursor-pointer ${
                 config.globalQps === preset.value
                   ? 'border-link bg-link text-white shadow-xs'
                   : 'border-border-subtle bg-surface hover:bg-surface-muted text-foreground-muted'
@@ -248,7 +247,7 @@ export function SimulationPanel({
               key={prof.id}
               type="button"
               onClick={() => onConfigChange({ ...config, profile: prof.id })}
-              className={`p-1.5 rounded-xs border text-left cursor-pointer transition-all ${
+              className={`p-1.5 rounded-xs border text-left cursor-pointer transition-all duration-(--duration-fast) active:scale-[0.98] ${
                 config.profile === prof.id
                   ? 'border-link bg-link/10 text-foreground font-semibold ring-1 ring-link'
                   : 'border-border-subtle bg-surface hover:bg-surface-muted text-foreground-muted'
@@ -276,7 +275,7 @@ export function SimulationPanel({
                 key={chaos.id}
                 type="button"
                 onClick={() => toggleChaos(chaos.id)}
-                className={`p-1.5 rounded-xs border text-left cursor-pointer transition-all flex flex-col justify-between ${
+                className={`p-1.5 rounded-xs border text-left cursor-pointer transition-all duration-(--duration-fast) active:scale-[0.98] flex flex-col justify-between ${
                   isActive
                     ? 'border-danger bg-danger/10 text-danger font-bold ring-1 ring-danger shadow-xs'
                     : 'border-border-subtle bg-surface hover:bg-surface-muted text-foreground-muted'
@@ -295,7 +294,7 @@ export function SimulationPanel({
 
       {/* Bottlenecks / Remediation Prompt Trigger */}
       {report.remediationPrompts.length > 0 && (
-        <div className="p-2.5 rounded-node border border-danger/40 bg-danger/10 flex flex-col gap-2">
+        <div className="p-2.5 rounded-node border border-danger/40 bg-danger/10 flex flex-col gap-2 animate-in fade-in duration-200">
           <div className="flex items-center gap-1.5 text-danger font-bold text-xs">
             <AlertTriangle size={14} className="shrink-0" />
             <span>Bottleneck Detected ({report.remediationPrompts.length})</span>
@@ -307,10 +306,10 @@ export function SimulationPanel({
             <button
               type="button"
               onClick={onOpenRemediation}
-              className="px-2.5 py-1 rounded-xs bg-danger text-white text-xs font-semibold hover:bg-danger/90 cursor-pointer transition-colors shadow-xs flex items-center justify-center gap-1.5"
+              className="px-2.5 py-1 rounded-xs bg-danger text-white text-xs font-semibold hover:bg-danger/90 cursor-pointer transition-all duration-(--duration-fast) active:scale-[0.98] shadow-xs flex items-center justify-center gap-1.5"
             >
-              <Sparkles size={12} />
-              <span>Solve Bottleneck (&ldquo;What Breaks Next?&rdquo;)</span>
+              <Flame size={12} className="shrink-0" />
+              <span>Fix with Socratic Guidance</span>
             </button>
           )}
         </div>
