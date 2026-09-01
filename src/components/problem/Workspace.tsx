@@ -17,7 +17,8 @@ import { supportedLanguages } from '@/content/test-runner';
 import { useAssistant } from '@/components/assistant';
 import { SolutionShareModal } from '@/components/community/SolutionShareModal';
 import { CommunitySolutionGallery } from '@/components/community/CommunitySolutionGallery';
-import { Sparkles, Share2 } from 'lucide-react';
+import { ProblemDiscussions } from '@/components/community/ProblemDiscussions';
+import { Sparkles, Share2, MessageSquare } from 'lucide-react';
 import type { Language, TestSpec, Tier } from '@/content/schema';
 import type { SpecResult } from '@/content/test-runner';
 
@@ -91,7 +92,7 @@ export function Workspace({
   const [submitted, setSubmitted] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareCode, setShareCode] = useState('');
-  const [bottomTab, setBottomTab] = useState<'tests' | 'solutions'>('tests');
+  const [bottomTab, setBottomTab] = useState<'tests' | 'solutions' | 'discussions'>('tests');
 
   /** The problem's own first visible case — what a learner is trying to satisfy. */
   const defaultWatchArgs = (spec.cases.find((c) => !c.hidden) ?? spec.cases[0])?.args ?? [];
@@ -438,7 +439,7 @@ export function Workspace({
         </Node>
       )}
 
-      {/* Bottom section tabs: Test cases vs Community Solutions */}
+      {/* Bottom section tabs: Test cases vs Community Solutions vs Discussions */}
       <div className="flex items-center gap-2 border-b border-border-subtle pt-2">
         <button
           type="button"
@@ -463,6 +464,18 @@ export function Workspace({
           <Sparkles size={12} className="text-accent" />
           <span>Community Solutions</span>
         </button>
+        <button
+          type="button"
+          onClick={() => setBottomTab('discussions')}
+          className={`px-3 py-1.5 text-xs font-semibold rounded-t-node border-t border-x transition-all cursor-pointer flex items-center gap-1.5 ${
+            bottomTab === 'discussions'
+              ? 'bg-surface text-foreground font-bold border-border-strong -mb-px'
+              : 'text-foreground-muted hover:text-foreground border-transparent'
+          }`}
+        >
+          <MessageSquare size={12} className="text-accent" />
+          <span>Discussions</span>
+        </button>
       </div>
 
       {bottomTab === 'tests' ? (
@@ -476,7 +489,7 @@ export function Workspace({
             />
           )}
         </>
-      ) : (
+      ) : bottomTab === 'solutions' ? (
         <CommunitySolutionGallery
           exerciseId={exerciseId}
           isSolved={result?.passed ?? false}
@@ -485,6 +498,8 @@ export function Workspace({
             setIsShareModalOpen(true);
           }}
         />
+      ) : (
+        <ProblemDiscussions exerciseId={exerciseId} />
       )}
 
       {isShareModalOpen && (
