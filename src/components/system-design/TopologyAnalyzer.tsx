@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { AlertTriangle, CheckCircle, Info, ShieldAlert, XCircle, Zap } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info, ShieldAlert, X, XCircle } from 'lucide-react';
 import type { CanvasEdge, CanvasNode, TopologyReport } from '@/lib/system-design/canvas-types';
 import { analyzeTopology } from '@/lib/system-design/topology';
 
@@ -10,9 +10,16 @@ export interface TopologyAnalyzerProps {
   edges?: CanvasEdge[];
   report?: TopologyReport;
   onSelectNodes?: (nodeIds: string[]) => void;
+  onClose?: () => void;
 }
 
-export function TopologyAnalyzer({ nodes = [], edges = [], report, onSelectNodes }: TopologyAnalyzerProps) {
+export function TopologyAnalyzer({
+  nodes = [],
+  edges = [],
+  report,
+  onSelectNodes,
+  onClose,
+}: TopologyAnalyzerProps) {
   const computedReport = useMemo(
     () => report ?? analyzeTopology(nodes, edges),
     [report, nodes, edges],
@@ -21,60 +28,60 @@ export function TopologyAnalyzer({ nodes = [], edges = [], report, onSelectNodes
   const severityIcon = (level: 'error' | 'warning' | 'info' | 'success') => {
     switch (level) {
       case 'error':
-        return <XCircle className="text-danger shrink-0" size={16} />;
+        return <XCircle className="text-danger shrink-0" size={14} />;
       case 'warning':
-        return <AlertTriangle className="text-accent-strong shrink-0" size={16} />;
+        return <AlertTriangle className="text-warning shrink-0" size={14} />;
       case 'info':
-        return <Info className="text-link shrink-0" size={16} />;
+        return <Info className="text-link shrink-0" size={14} />;
       case 'success':
-        return <CheckCircle className="text-success shrink-0" size={16} />;
+        return <CheckCircle className="text-success shrink-0" size={14} />;
     }
   };
 
   const spofCount = computedReport.stats.singlePointsOfFailure;
+  const isClean = computedReport.diagnostics.length === 0;
 
   return (
     <aside
       aria-label="Topology and reliability analysis"
-      className="node-surface flex flex-col h-full bg-surface"
+      className="flex flex-col h-full bg-surface border-l border-border-strong w-72 shrink-0 select-none z-10"
     >
-      <div className="flex items-center justify-between p-3 border-b border-border-strong bg-surface-muted/50">
-        <div className="flex items-center gap-2">
-          <ShieldAlert size={16} />
-          <h3 className="text-xs font-semibold uppercase tracking-wider">Topology Analyzer</h3>
+      {/* Top Header */}
+      <div className="px-3 py-2.5 border-b border-border-strong flex items-center justify-between bg-surface-muted/40 shrink-0">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <ShieldAlert size={14} className="text-link shrink-0" />
+          <h3 className="text-xs font-semibold text-foreground truncate">Topology Check</h3>
         </div>
-        <span
-          className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-            spofCount === 0 ? 'bg-success text-success-foreground' : 'bg-danger text-danger-foreground'
-          }`}
-        >
-          {spofCount === 0 ? 'Resilient' : `${spofCount} SPOF`}
-        </span>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 p-3 border-b border-border-strong text-xs">
-        <div className="flex flex-col gap-0.5 p-2 rounded-xs bg-surface-muted/40 border border-border-strong/40">
-          <span className="text-2xs uppercase tracking-wider text-foreground-muted">SPOF</span>
+        <div className="flex items-center gap-1.5 shrink-0">
           <span
-            className={`font-mono text-sm font-bold ${spofCount > 0 ? 'text-danger' : 'text-success'}`}
+            className={`px-2 py-0.5 rounded-full text-xs font-medium border flex items-center gap-1 ${
+              spofCount === 0
+                ? 'bg-success-soft text-success border-success/30'
+                : 'bg-danger-soft text-danger border-danger/30'
+            }`}
           >
-            {spofCount} found
+            {spofCount === 0 ? '✓ Resilient' : `${spofCount} SPOF`}
           </span>
-        </div>
-        <div className="flex flex-col gap-0.5 p-2 rounded-xs bg-surface-muted/40 border border-border-strong/40">
-          <span className="text-2xs uppercase tracking-wider text-foreground-muted">P99 Latency</span>
-          <span className="font-mono text-sm font-bold flex items-center gap-1">
-            <Zap size={12} className="text-accent-strong" />
-            {computedReport.stats.estimatedP99LatencyMs}ms
-          </span>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Hide Topology Analyzer"
+              className="p-1 rounded-xs hover:bg-surface text-foreground-muted hover:text-foreground cursor-pointer transition-colors"
+            >
+              <X size={13} />
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2.5">
-        {computedReport.diagnostics.length === 0 ? (
-          <div className="p-4 rounded-xs border border-success/40 bg-success/10 flex items-center gap-2 text-xs text-foreground">
-            <CheckCircle size={16} className="text-success shrink-0" />
-            <span>Architecture is resilient! No critical SPOF or coupling bottlenecks found.</span>
+      {/* Main Diagnostics List (Scrollable Area) */}
+      <div className="flex-1 overflow-y-auto p-2.5 flex flex-col gap-2">
+        {isClean ? (
+          <div className="p-2.5 rounded-xs border border-success/30 bg-success-soft/20 flex items-center gap-2 text-xs text-foreground">
+            <CheckCircle size={14} className="text-success shrink-0" />
+            <span className="font-semibold text-success">Resilient</span>
+            <span className="text-foreground-muted">• No SPOF detected</span>
           </div>
         ) : (
           computedReport.diagnostics.map((diag, index) => (
@@ -86,30 +93,48 @@ export function TopologyAnalyzer({ nodes = [], edges = [], report, onSelectNodes
                   onSelectNodes(diag.nodeIds);
                 }
               }}
-              className={`p-2.5 rounded-xs border text-left text-xs flex flex-col gap-1 transition-colors ${
+              className={`p-2.5 rounded-xs border text-left text-xs flex flex-col gap-1 transition-colors cursor-pointer ${
                 diag.level === 'error'
-                  ? 'border-danger/40 bg-danger/5 hover:bg-danger/10'
+                  ? 'border-danger/30 bg-danger-soft/20 hover:bg-danger-soft/40'
                   : diag.level === 'warning'
-                    ? 'border-accent-strong/40 bg-accent-strong/5 hover:bg-accent-strong/10'
-                    : 'border-border-strong/40 bg-surface-muted/30 hover:bg-surface-muted/50'
+                    ? 'border-warning/30 bg-warning-soft/20 hover:bg-warning-soft/40'
+                    : 'border-border-subtle bg-surface-muted/30 hover:bg-surface-muted/50'
               }`}
             >
-              <div className="flex items-center gap-1.5 font-semibold text-xs">
+              <div className="flex items-center gap-1.5 font-semibold text-xs text-foreground">
                 {severityIcon(diag.level)}
-                <span>{diag.title}</span>
+                <span className="truncate">{diag.title}</span>
               </div>
               <p className="text-foreground-muted leading-relaxed text-2xs pl-5">
                 {diag.message}
               </p>
               {diag.recommendation && (
-                <div className="mt-1 pt-1 border-t border-border-strong/30 text-2xs text-foreground/80 pl-5">
-                  <span className="font-semibold text-accent-strong">Recommendation: </span>
+                <div className="mt-0.5 pt-1 border-t border-border-subtle text-2xs text-foreground/90 pl-5">
+                  <span className="font-semibold text-warning">Fix: </span>
                   {diag.recommendation}
                 </div>
               )}
             </button>
           ))
         )}
+      </div>
+
+      {/* Bottom Metrics Strip (Pinned to the Bottom) */}
+      <div className="grid grid-cols-2 gap-1.5 p-2 border-t border-border-strong bg-surface-muted/30 text-xs shrink-0">
+        <div className="flex items-center justify-between px-2 py-1 rounded-xs bg-surface border border-border-subtle shadow-xs">
+          <span className="text-foreground-muted text-2xs uppercase tracking-wider font-medium">SPOF</span>
+          <span
+            className={`font-mono text-xs font-bold ${spofCount > 0 ? 'text-danger' : 'text-success'}`}
+          >
+            {spofCount}
+          </span>
+        </div>
+        <div className="flex items-center justify-between px-2 py-1 rounded-xs bg-surface border border-border-subtle shadow-xs">
+          <span className="text-foreground-muted text-2xs uppercase tracking-wider font-medium">P99 Latency</span>
+          <span className="font-mono text-xs font-bold text-foreground">
+            {computedReport.stats.estimatedP99LatencyMs}ms
+          </span>
+        </div>
       </div>
     </aside>
   );

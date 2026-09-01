@@ -238,6 +238,21 @@
 
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
+
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 0.875rem;
+  --text-3xs: 0.5625rem;
+  --text-3xs--line-height: 0.75rem;
+}
+
+@utility text-2xs {
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
+}
+
+@utility text-3xs {
+  font-size: 0.5625rem;
+  line-height: 0.75rem;
 }
 
 body {
@@ -290,6 +305,7 @@ body {
    Here rather than as `active:translate-x-[2px]` at the call site, because the
    distance is tied to `--shadow-node` and the two must move together. */
 @utility node-pressable {
+  cursor: pointer;
   &:active {
     transform: translate(var(--press-offset), var(--press-offset));
     box-shadow: none;
