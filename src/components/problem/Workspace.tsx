@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Node } from '@/components/ui/Node';
+import { LanguageIcon } from '@/components/ui/LanguageIcon';
 import { Editor } from './Editor';
 import { TestCases } from './TestCases';
 import { Complexity } from './Complexity';
@@ -325,7 +326,7 @@ export function Workspace({
                   key={l}
                   tone={l === language ? 'strong' : 'surface'}
                   aria-pressed={l === language}
-                  className="px-2 py-0.5 text-xs"
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs"
                   onClick={() => {
                     // Drafts are keyed per language, so switching preserves
                     // whatever was written in the language being left.
@@ -335,7 +336,8 @@ export function Workspace({
                     setResetCount((n) => n + 1);
                   }}
                 >
-                  {LANGUAGE_LABELS[l] ?? l}
+                  <LanguageIcon language={l} size={13} />
+                  <span>{LANGUAGE_LABELS[l] ?? l}</span>
                 </Button>
               ))}
             </div>

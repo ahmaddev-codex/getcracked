@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Node } from '@/components/ui/Node';
+import { LanguageIcon } from '@/components/ui/LanguageIcon';
 import { Visualizer } from '@/components/visualizer/Visualizer';
 import { RuntimeClient } from '@/lib/runtime/client';
 import { supportedLanguages } from '@/content/test-runner';
@@ -159,9 +160,10 @@ export function Walkthrough({
             aria-pressed={l === language}
             onClick={() => switchTo(l)}
             disabled={running}
-            className="px-2 py-0.5 text-xs"
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs"
           >
-            {LANGUAGE_LABELS[l] ?? l}
+            <LanguageIcon language={l} size={13} />
+            <span>{LANGUAGE_LABELS[l] ?? l}</span>
           </Button>
         ))}
       </div>
@@ -191,8 +193,13 @@ export function Walkthrough({
         {switcher}
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <Button onClick={() => run(language)} disabled={running || !source}>
-          {running ? 'Preparing…' : `Run ${LANGUAGE_LABELS[language] ?? language} walkthrough`}
+        <Button
+          onClick={() => run(language)}
+          disabled={running || !source}
+          className="inline-flex items-center gap-1.5"
+        >
+          <LanguageIcon language={language} size={13} />
+          <span>{running ? 'Preparing…' : `Run ${LANGUAGE_LABELS[language] ?? language} walkthrough`}</span>
         </Button>
         {failure && (
           <span className="text-xs text-danger">{failure}</span>

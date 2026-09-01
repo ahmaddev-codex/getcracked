@@ -35,6 +35,7 @@ import {
   SUPPORTED_CODE_LANGUAGES,
   type AlgorithmicLanguage,
 } from '@/lib/visualizer/code-snippets';
+import { LanguageIcon } from '@/components/ui/LanguageIcon';
 
 export function DataStructureWorkbench() {
   const [selectedType, setSelectedType] = useState<DataStructureType>('array');
@@ -156,6 +157,14 @@ export function DataStructureWorkbench() {
   }, [isPlaying, steps.length, speed]);
 
   const currentStep = steps[safeStepIdx] || steps[0];
+  const motionClass =
+    speed >= 3000
+      ? 'duration-1000'
+      : speed >= 1800
+        ? 'duration-700'
+        : speed >= 1000
+          ? 'duration-500'
+          : 'duration-300';
   const activeCodeSnippet =
     getCodeSnippet(selectedType, selectedOp, codeLang) ||
     currentMeta.codeSnippets[selectedOp] ||
@@ -393,7 +402,7 @@ export function DataStructureWorkbench() {
                         <div key={idx} className="flex flex-col items-center gap-1.5">
                           <span className="text-3xs font-mono text-foreground-muted">[{idx}]</span>
                           <div
-                            className={`flex h-14 w-14 items-center justify-center rounded-md border-2 font-mono text-sm font-bold transition-all duration-500 ease-out ${
+                            className={`flex h-14 w-14 items-center justify-center rounded-md border-2 font-mono text-sm font-bold transition-all ${motionClass} ease-out ${
                               isLifted
                                 ? '-translate-y-6 shadow-xl border-link bg-accent-strong text-accent-foreground scale-110'
                                 : isHighlighted
@@ -437,7 +446,7 @@ export function DataStructureWorkbench() {
                   return (
                     <div key={node.id} className="flex items-center gap-2">
                       <div
-                        className={`flex flex-col items-center rounded-md border-2 px-3.5 py-2 font-mono transition-all duration-400 ${
+                        className={`flex flex-col items-center rounded-md border-2 px-3.5 py-2 font-mono transition-all ${motionClass} ${
                           isHighlighted
                             ? 'border-link bg-accent-strong text-accent-foreground scale-105 shadow-md -translate-y-1'
                             : 'border-border-strong bg-surface text-foreground'
@@ -483,7 +492,7 @@ export function DataStructureWorkbench() {
                       return (
                         <div
                           key={idx}
-                          className={`flex w-full items-center justify-between px-3 py-2 rounded border-2 font-mono text-xs font-bold transition-all duration-500 ease-out ${
+                          className={`flex w-full items-center justify-between px-3 py-2 rounded border-2 font-mono text-xs font-bold transition-all ${motionClass} ease-out ${
                             isLifted
                               ? '-translate-y-8 opacity-75 border-link bg-accent-strong text-accent-foreground'
                               : isHighlighted
@@ -514,7 +523,7 @@ export function DataStructureWorkbench() {
                       return (
                         <div
                           key={idx}
-                          className={`flex h-12 w-12 items-center justify-center rounded border-2 font-mono text-xs font-bold transition-all duration-400 ${
+                          className={`flex h-12 w-12 items-center justify-center rounded border-2 font-mono text-xs font-bold transition-all ${motionClass} ${
                             isHighlighted
                               ? 'border-link bg-accent-strong text-accent-foreground scale-105 shadow-md'
                               : 'border-border-strong bg-surface text-foreground'
@@ -579,11 +588,11 @@ export function DataStructureWorkbench() {
                       <g
                         key={node.id}
                         transform={`translate(${node.x}, ${node.y})`}
-                        className="transition-transform duration-500"
+                        className={`transition-transform ${motionClass}`}
                       >
                         <circle
                           r="6.5"
-                          className={`transition-colors duration-400 ${
+                          className={`transition-colors ${motionClass} ${
                             isHighlighted
                               ? 'fill-accent-strong stroke-link stroke-2'
                               : 'fill-surface stroke-border-strong stroke-1.5'
@@ -619,7 +628,7 @@ export function DataStructureWorkbench() {
                         <div key={idx} className="flex flex-col items-center gap-1">
                           <span className="text-3xs font-mono text-foreground-muted">[{idx}]</span>
                           <div
-                            className={`flex h-12 w-12 items-center justify-center rounded border-2 font-mono text-xs font-bold transition-all duration-400 ${
+                            className={`flex h-12 w-12 items-center justify-center rounded border-2 font-mono text-xs font-bold transition-all ${motionClass} ${
                               isHighlighted
                                 ? 'border-link bg-accent-strong text-accent-foreground scale-105 shadow-md -translate-y-1'
                                 : 'border-border-strong bg-surface text-foreground'
@@ -748,11 +757,11 @@ export function DataStructureWorkbench() {
                       <g
                         key={v.id}
                         transform={`translate(${v.x}, ${v.y})`}
-                        className="transition-transform duration-400"
+                        className={`transition-transform ${motionClass}`}
                       >
                         <circle
                           r="7"
-                          className={`transition-colors duration-400 ${
+                          className={`transition-colors ${motionClass} ${
                             isHighlighted
                               ? 'fill-accent-strong stroke-link stroke-2'
                               : 'fill-surface stroke-border-strong stroke-1.5'
@@ -846,11 +855,13 @@ export function DataStructureWorkbench() {
                 value={speed}
                 onChange={(e) => setSpeed(Number(e.target.value))}
                 aria-label="Animation speed"
-                className="rounded border border-border-strong bg-background px-2 py-1 text-xs text-foreground"
+                className="rounded border border-border-strong bg-background px-2 py-1 text-xs text-foreground font-medium"
               >
-                <option value={1500}>0.5x (Slow)</option>
-                <option value={900}>1.0x (Normal)</option>
-                <option value={450}>2.0x (Fast)</option>
+                <option value={4500}>0.1x (Ultra Slow · 4.5s)</option>
+                <option value={3000}>0.25x (Very Slow · 3.0s)</option>
+                <option value={1800}>0.5x (Slow · 1.8s)</option>
+                <option value={1000}>1.0x (Normal · 1.0s)</option>
+                <option value={500}>2.0x (Fast · 0.5s)</option>
               </select>
             </div>
           </div>
@@ -879,9 +890,10 @@ export function DataStructureWorkbench() {
                   key={l.id}
                   tone={codeLang === l.id ? 'strong' : 'surface'}
                   onClick={() => setCodeLang(l.id)}
-                  className="px-2 py-0.5 text-3xs font-mono"
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 text-3xs font-mono"
                 >
-                  {l.label}
+                  <LanguageIcon language={l.id} size={12} />
+                  <span>{l.label}</span>
                 </Button>
               ))}
             </div>
