@@ -11,7 +11,7 @@ export const metadata = {
 
 export default function VisualizerPage() {
   return (
-    <Page width="catalog">
+    <Page width="canvas">
       <header className="node-surface flex flex-col gap-2 bg-surface p-6">
         <h1 className="font-sans text-4xl font-bold tracking-tight sm:text-5xl">
           Data Structure Visualizer

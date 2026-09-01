@@ -17,6 +17,15 @@ import type { VisualKind } from '@/lib/visualizer/registry';
  * Runs a reference implementation through the *same* runtime and the same trace
  * protocol a learner's own code uses, rather than replaying a recording.
  */
+const LANGUAGE_LABELS: Record<string, string> = {
+  javascript: 'JS',
+  typescript: 'TS',
+  python: 'Python',
+  java: 'Java',
+  cpp: 'C++',
+  go: 'Go',
+};
+
 function callSignature(entry: string, args: unknown[]): string {
   return `${entry}(${args.map((a) => JSON.stringify(a)).join(', ')})`;
 }
@@ -150,9 +159,9 @@ export function Walkthrough({
             aria-pressed={l === language}
             onClick={() => switchTo(l)}
             disabled={running}
-            className="px-2 py-1 text-xs"
+            className="px-2 py-0.5 text-xs"
           >
-            {l}
+            {LANGUAGE_LABELS[l] ?? l}
           </Button>
         ))}
       </div>
@@ -183,7 +192,7 @@ export function Walkthrough({
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <Button onClick={() => run(language)} disabled={running || !source}>
-          {running ? 'Preparing…' : `Run the ${language} walkthrough`}
+          {running ? 'Preparing…' : `Run ${LANGUAGE_LABELS[language] ?? language} walkthrough`}
         </Button>
         {failure && (
           <span className="text-xs text-danger">{failure}</span>

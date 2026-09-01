@@ -3,8 +3,8 @@ import type { DataStructureType } from './data-structures';
 export type AlgorithmicLanguage = 'typescript' | 'javascript' | 'python' | 'java' | 'cpp' | 'go';
 
 export const SUPPORTED_CODE_LANGUAGES: { id: AlgorithmicLanguage; label: string }[] = [
-  { id: 'typescript', label: 'TypeScript' },
-  { id: 'javascript', label: 'JavaScript' },
+  { id: 'typescript', label: 'TS' },
+  { id: 'javascript', label: 'JS' },
   { id: 'python', label: 'Python' },
   { id: 'java', label: 'Java' },
   { id: 'cpp', label: 'C++' },

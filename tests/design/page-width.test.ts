@@ -50,7 +50,7 @@ const EXPECTED: Record<string, PageWidth> = {
   // lesson pages make.
   'src/app/learn/system-design/labs/[slug]/page.tsx': 'reading',
   'src/app/learn/design-patterns/page.tsx': 'canvas',
-  'src/app/learn/visualizer/page.tsx': 'catalog',
+  'src/app/learn/visualizer/page.tsx': 'canvas',
 
   'src/app/problems/page.tsx': 'catalog',
   'src/app/problems/[topic]/page.tsx': 'catalog',

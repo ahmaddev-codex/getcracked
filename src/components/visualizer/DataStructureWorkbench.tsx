@@ -352,10 +352,10 @@ export function DataStructureWorkbench() {
 
       {/* 3. Side-by-Side Main Canvas & Code Execution Stage */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Visualizer Canvas (8 cols on lg) */}
+        {/* Visualizer Canvas (6 cols on lg) */}
         <Node
           tone="surface"
-          className="flex flex-col gap-4 p-5 min-h-80 justify-between lg:col-span-7 xl:col-span-8"
+          className="flex flex-col gap-4 p-5 min-h-80 justify-between lg:col-span-6 xl:col-span-6"
         >
           {/* Canvas Header & Big-O Badge */}
           <div className="flex items-center justify-between border-b border-border-subtle pb-3">
@@ -798,7 +798,7 @@ export function DataStructureWorkbench() {
                 onClick={() => setCurrentStepIdx((p) => Math.max(0, p - 1))}
                 disabled={safeStepIdx === 0}
                 aria-label="Previous step"
-                className="p-1.5"
+                className="inline-flex items-center justify-center p-1.5"
               >
                 <SkipBack size={14} aria-hidden />
               </Button>
@@ -807,14 +807,14 @@ export function DataStructureWorkbench() {
                 tone="strong"
                 onClick={() => setIsPlaying((p) => !p)}
                 aria-label={isPlaying ? 'Pause' : 'Play'}
-                className="px-3 py-1.5 text-xs font-bold"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold"
               >
                 {isPlaying ? (
                   <Pause size={13} fill="currentColor" aria-hidden />
                 ) : (
                   <Play size={13} fill="currentColor" aria-hidden />
                 )}
-                <span className="ml-1">{isPlaying ? 'Pause' : 'Play'}</span>
+                <span>{isPlaying ? 'Pause' : 'Play'}</span>
               </Button>
 
               <Button
@@ -822,7 +822,7 @@ export function DataStructureWorkbench() {
                 onClick={() => setCurrentStepIdx((p) => Math.min(steps.length - 1, p + 1))}
                 disabled={safeStepIdx >= steps.length - 1}
                 aria-label="Next step"
-                className="p-1.5"
+                className="inline-flex items-center justify-center p-1.5"
               >
                 <SkipForward size={14} aria-hidden />
               </Button>
@@ -834,7 +834,7 @@ export function DataStructureWorkbench() {
                   setCurrentStepIdx(0);
                 }}
                 aria-label="Reset simulation"
-                className="p-1.5"
+                className="inline-flex items-center justify-center p-1.5"
               >
                 <RotateCcw size={14} aria-hidden />
               </Button>
@@ -856,10 +856,10 @@ export function DataStructureWorkbench() {
           </div>
         </Node>
 
-        {/* Synchronized Side-by-Side Code Panel (4-5 cols on lg) */}
+        {/* Synchronized Side-by-Side Code Panel (6 cols on lg) */}
         <Node
           tone="surface"
-          className="flex flex-col gap-3 p-4 min-h-80 justify-between lg:col-span-5 xl:col-span-4"
+          className="flex flex-col gap-3 p-4 min-h-80 justify-between lg:col-span-6 xl:col-span-6"
         >
           <div className="flex flex-col gap-2 border-b border-border-subtle pb-2.5">
             <div className="flex items-center justify-between">

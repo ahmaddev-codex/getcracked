@@ -25,6 +25,15 @@ import { entryFor, type Language, type RunnableLanguage, type TestSpec, type Tie
 import type { SpecResult } from '@/content/test-runner';
 import { convertJsToTypeScript } from '@/lib/runtime/type-inference';
 
+const LANGUAGE_LABELS: Record<RunnableLanguage, string> = {
+  javascript: 'JS',
+  typescript: 'TS',
+  python: 'Python',
+  java: 'Java',
+  cpp: 'C++',
+  go: 'Go',
+};
+
 function defaultStarterFor(
   lang: RunnableLanguage,
   entry: string,
@@ -310,12 +319,13 @@ export function Workspace({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold">Your solution</h2>
           {available.length > 1 ? (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {available.map((l) => (
                 <Button
                   key={l}
                   tone={l === language ? 'strong' : 'surface'}
                   aria-pressed={l === language}
+                  className="px-2 py-0.5 text-xs"
                   onClick={() => {
                     // Drafts are keyed per language, so switching preserves
                     // whatever was written in the language being left.
@@ -325,7 +335,7 @@ export function Workspace({
                     setResetCount((n) => n + 1);
                   }}
                 >
-                  {l}
+                  {LANGUAGE_LABELS[l] ?? l}
                 </Button>
               ))}
             </div>
