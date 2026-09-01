@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, Flame, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Node } from '@/components/ui/Node';
 import { Scorecard } from './Scorecard';
@@ -12,6 +12,7 @@ import { ARCHITECTURE_PRESETS } from '@/lib/system-design/canvas-presets';
 import { track } from '@/lib/analytics/track';
 import { correctOptions, gradeStep, scoreLab } from '@/lib/system-design/rubric';
 import type { LabAnswer, LabAnswers } from '@/lib/system-design/rubric';
+import type { SimulationConfig } from '@/lib/system-design/simulation';
 import { LAB_DIMENSION_LABELS, type LabStep, type ScenarioLab as Lab } from '@/content/schema';
 
 /**
@@ -37,6 +38,8 @@ export function ScenarioLab({ lab }: { lab: Lab }) {
   const [estimateDraft, setEstimateDraft] = useState('');
   const [done, setDone] = useState(false);
   const [showCanvas, setShowCanvas] = useState(false);
+  const [remediationConfig, setRemediationConfig] = useState<SimulationConfig | null>(null);
+  const [showRemediationCanvas, setShowRemediationCanvas] = useState(false);
   /** Epoch ms when the clock started, or null for an untimed run (C7). */
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -44,6 +47,7 @@ export function ScenarioLab({ lab }: { lab: Lab }) {
   const step = lab.steps[index];
   const committed = answers[step?.slug ?? ''];
   const score = useMemo(() => scoreLab(lab, answers), [lab, answers]);
+  const initialArch = ARCHITECTURE_PRESETS[lab.slug] ?? ARCHITECTURE_PRESETS['url-shortener'];
 
   const reset = useCallback(() => {
     setAnswers({});
@@ -53,6 +57,8 @@ export function ScenarioLab({ lab }: { lab: Lab }) {
     setDone(false);
     setStartedAt(null);
     setElapsed(0);
+    setRemediationConfig(null);
+    setShowRemediationCanvas(false);
   }, []);
 
   const commit = useCallback(() => {
@@ -79,12 +85,48 @@ export function ScenarioLab({ lab }: { lab: Lab }) {
 
   if (done) {
     return (
-      <Scorecard
-        score={score}
-        takeaway={lab.takeaway}
-        onRetry={reset}
-        timing={startedAt === null ? null : { elapsed, budgetMinutes: lab.timeBudgetMinutes }}
-      />
+      <div className="flex flex-col gap-6">
+        <Scorecard
+          lab={lab}
+          score={score}
+          takeaway={lab.takeaway}
+          onRetry={reset}
+          timing={startedAt === null ? null : { elapsed, budgetMinutes: lab.timeBudgetMinutes }}
+          onLaunchRemediation={(cfg) => {
+            setRemediationConfig(cfg);
+            setShowRemediationCanvas(true);
+          }}
+        />
+
+        {showRemediationCanvas && (
+          <section className="flex flex-col gap-3 p-4 rounded-node border-2 border-accent/40 bg-surface shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="p-1 rounded-xs bg-accent/20 text-accent">
+                  <Flame size={15} />
+                </span>
+                <h3 className="text-sm font-bold text-foreground">
+                  Interactive Remediation Whiteboard ({lab.title})
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowRemediationCanvas(false)}
+                className="text-xs text-foreground-muted hover:text-foreground cursor-pointer px-2 py-1 rounded-xs bg-surface-muted"
+              >
+                Hide Whiteboard
+              </button>
+            </div>
+            <ArchitectureCanvas
+              key={`remediation-${lab.slug}-${remediationConfig?.globalQps ?? 0}`}
+              initialArchitecture={initialArch}
+              initialMode="simulate"
+              initialSimConfig={remediationConfig ?? undefined}
+              compact
+            />
+          </section>
+        )}
+      </div>
     );
   }
 
@@ -93,8 +135,6 @@ export function ScenarioLab({ lab }: { lab: Lab }) {
   const result = committed ? gradeStep(step, committed) : null;
   const canCommit =
     step.kind === 'estimate' ? estimateDraft.trim() !== '' : draft.length > 0;
-
-  const initialArch = ARCHITECTURE_PRESETS[lab.slug] ?? ARCHITECTURE_PRESETS['url-shortener'];
 
   return (
     <section className="flex flex-col gap-4">

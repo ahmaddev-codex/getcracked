@@ -50,12 +50,16 @@ interface ArchitectureCanvasProps {
   initialArchitecture?: CanvasArchitecture;
   compact?: boolean;
   className?: string;
+  initialMode?: 'design' | 'simulate';
+  initialSimConfig?: SimulationConfig;
 }
 
 export function ArchitectureCanvas({
   initialArchitecture,
   compact = false,
   className = '',
+  initialMode,
+  initialSimConfig,
 }: ArchitectureCanvasProps) {
   const [nodes, setNodes] = useState<CanvasNode[]>(
     initialArchitecture?.nodes ?? ARCHITECTURE_PRESETS['url-shortener'].nodes,
@@ -99,14 +103,18 @@ export function ArchitectureCanvas({
   }, [isFullscreen]);
 
   // Canvas Mode: Design vs Simulate
-  const [canvasMode, setCanvasMode] = useState<'design' | 'simulate'>('design');
+  const [canvasMode, setCanvasMode] = useState<'design' | 'simulate'>(
+    initialMode ?? 'design',
+  );
 
   // Simulation Config & State
-  const [simConfig, setSimConfig] = useState<SimulationConfig>({
-    globalQps: 25000,
-    profile: 'steady',
-    activeChaos: [],
-  });
+  const [simConfig, setSimConfig] = useState<SimulationConfig>(
+    initialSimConfig ?? {
+      globalQps: 25000,
+      profile: 'steady',
+      activeChaos: [],
+    },
+  );
   const [activeRemediationPrompt, setActiveRemediationPrompt] = useState<RemediationPrompt | null>(null);
   const [referenceModalConcept, setReferenceModalConcept] = useState<Concept | null>(null);
 

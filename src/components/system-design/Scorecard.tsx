@@ -1,10 +1,16 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { Flame, Sparkles, ArrowRight, ShieldAlert } from 'lucide-react';
 import { Node } from '@/components/ui/Node';
-import { LAB_DIMENSION_LABELS, type LabDimension } from '@/content/schema';
+import { LAB_DIMENSION_LABELS, type LabDimension, type ScenarioLab } from '@/content/schema';
 import { formatDuration } from './LabTimer';
 import type { Scorecard as ScorecardData } from '@/lib/system-design/rubric';
+import { findConcept, type Concept } from '@/content/concepts';
+import { ComponentReferenceModal } from './ComponentReferenceModal';
+import { generateScorecardRemediations } from '@/lib/system-design/remediation';
+import type { SimulationConfig } from '@/lib/system-design/simulation';
 
 /**
  * The design-review rubric (C5).
@@ -28,17 +34,27 @@ const DIMENSION_LESSON: Partial<Record<LabDimension, { slug: string; title: stri
 };
 
 export function Scorecard({
+  lab,
   score,
   takeaway,
   onRetry,
   timing,
+  onLaunchRemediation,
 }: {
+  lab?: ScenarioLab;
   score: ScorecardData;
   takeaway: string;
   onRetry: () => void;
   /** Null for an untimed run — most of them (C7). */
   timing: { elapsed: number; budgetMinutes: number } | null;
+  onLaunchRemediation?: (simConfig: SimulationConfig) => void;
 }) {
+  const [activeModalConcept, setActiveModalConcept] = useState<Concept | null>(null);
+
+  const remediations = useMemo(
+    () => (lab ? generateScorecardRemediations(lab, score) : []),
+    [lab, score],
+  );
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -103,6 +119,85 @@ export function Scorecard({
         </Node>
       )}
 
+      {remediations.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <span className="p-1 rounded-xs bg-accent/20 text-accent">
+              <Sparkles size={14} />
+            </span>
+            <h3 className="text-sm font-bold text-foreground">
+              Targeted Remediation Plan (Track 5)
+            </h3>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {remediations.map((rem) => (
+              <Node key={rem.id} tone="surface" className="flex flex-col gap-3 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wider bg-accent/15 text-accent border border-accent/30">
+                      {LAB_DIMENSION_LABELS[rem.dimension]}
+                    </span>
+                    <h4 className="text-sm font-semibold text-foreground">{rem.title}</h4>
+                  </div>
+
+                  {onLaunchRemediation && (
+                    <button
+                      type="button"
+                      onClick={() => onLaunchRemediation(rem.suggestedSimConfig)}
+                      className="px-3 py-1.5 bg-accent text-accent-foreground rounded-xs text-xs font-semibold hover:bg-accent-strong transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <Flame size={13} />
+                      <span>Simulate & Fix on Whiteboard</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  <div className="p-2.5 rounded-xs bg-surface-muted/40 border border-border-subtle flex flex-col gap-1">
+                    <span className="font-semibold text-rose-500 flex items-center gap-1">
+                      <ShieldAlert size={12} />
+                      Diagnostic
+                    </span>
+                    <p className="text-foreground-muted leading-relaxed">{rem.diagnostic}</p>
+                  </div>
+
+                  <div className="p-2.5 rounded-xs bg-surface-muted/40 border border-border-subtle flex flex-col gap-1">
+                    <span className="font-semibold text-amber-500 flex items-center gap-1">
+                      <ArrowRight size={12} />
+                      Prescribed Architectural Fix
+                    </span>
+                    <p className="text-foreground-muted leading-relaxed">{rem.actionAdvice}</p>
+                  </div>
+                </div>
+
+                {/* 10D Component Chips */}
+                {rem.conceptSlugs.length > 0 && (
+                  <div className="pt-2 border-t border-border-subtle flex flex-wrap items-center gap-2">
+                    <span className="text-2xs text-foreground-muted">Study 10D Component Spec:</span>
+                    {rem.conceptSlugs.map((slug) => {
+                      const concept = findConcept(slug);
+                      if (!concept) return null;
+                      return (
+                        <button
+                          key={slug}
+                          type="button"
+                          onClick={() => setActiveModalConcept(concept)}
+                          className="px-2 py-1 rounded-xs text-xs font-semibold bg-surface border border-border-strong text-foreground hover:bg-accent/10 hover:border-accent/40 hover:text-accent transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <Sparkles size={11} className="text-accent" />
+                          <span>{concept.term}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </Node>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="flex flex-col gap-2">
         <h3 className="text-sm font-semibold">What a strong answer sounds like</h3>
         {/*
@@ -130,6 +225,14 @@ export function Scorecard({
           reasoning or remembered the answers.
         </p>
       </div>
+
+      {activeModalConcept && (
+        <ComponentReferenceModal
+          concept={activeModalConcept}
+          isOpen={Boolean(activeModalConcept)}
+          onClose={() => setActiveModalConcept(null)}
+        />
+      )}
     </section>
   );
 }
