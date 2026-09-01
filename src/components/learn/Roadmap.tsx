@@ -135,7 +135,7 @@ function Spine() {
   return (
     <span
       aria-hidden
-      className="absolute left-1/2 top-11 bottom-0 hidden spine-line -translate-x-1/2 bg-connector md:block"
+      className="absolute left-1/2 top-16 bottom-0 hidden spine-line -translate-x-1/2 bg-connector md:block"
     />
   );
 }
