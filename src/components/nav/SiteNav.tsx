@@ -67,16 +67,26 @@ const GROUPS: NavGroup[] = [
         label: 'Data structure visualizer',
         detail: 'Stepwise operations across all data structures with live animation',
       },
+      {
+        href: '/learn/system-design/capacity',
+        label: 'Capacity estimator',
+        detail: 'Interactive back-of-the-envelope calculations for QPS, storage, and throughput',
+      },
     ],
   },
   {
     label: 'Practice',
-    prefixes: ['/problems', '/challenges', '/sandbox', '/learn/system-design/labs', '/learn/system-design/canvas'],
+    prefixes: ['/problems', '/challenges', '/sandbox', '/learn/system-design/labs', '/learn/system-design/canvas', '/interviews'],
     items: [
       {
         href: '/problems',
         label: 'Problems',
         detail: 'Single functions, interview-style, grouped by topic',
+      },
+      {
+        href: '/interviews',
+        label: 'Mock interviews',
+        detail: 'Timed FAANG-style coding rounds and system design simulations',
       },
       {
         href: '/challenges',
@@ -107,6 +117,11 @@ const FLAT: NavItem[] = [
     href: '/companies',
     label: 'Companies',
     detail: 'What each loop assesses, with a source on every claim',
+  },
+  {
+    href: '/leaderboard',
+    label: 'Leaderboard',
+    detail: 'Global rankings, streaks, and community solve stats',
   },
 ];
 

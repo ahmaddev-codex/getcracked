@@ -7,6 +7,7 @@ import {
   simulateBST,
   simulateHeap,
   simulateHashMap,
+  simulateGraph,
   DATA_STRUCTURE_REGISTRY,
 } from '@/lib/visualizer/data-structures';
 
@@ -101,6 +102,25 @@ describe('Data Structure Simulation Engine', () => {
       const buckets = last.state.buckets as Array<Array<{ key: string }>>;
       const hasKey = buckets.some((b) => b.some((e) => e.key === 'hello'));
       expect(hasKey).toBe(true);
+    });
+  });
+
+  describe('Graph simulation', () => {
+    it('simulates BFS traversal wavefront', () => {
+      const bfsSteps = simulateGraph('Breadth-First Search (BFS)', { startVertex: 'A' });
+      expect(bfsSteps.length).toBeGreaterThan(3);
+      const last = bfsSteps[bfsSteps.length - 1];
+      expect(last.actionType).toBe('done');
+      expect(last.highlightNodeIds).toContain('A');
+      expect(last.highlightNodeIds).toContain('E');
+    });
+
+    it('simulates DFS recursive dive and backtrack', () => {
+      const dfsSteps = simulateGraph('Depth-First Search (DFS)', { startVertex: 'A' });
+      expect(dfsSteps.length).toBeGreaterThan(3);
+      const last = dfsSteps[dfsSteps.length - 1];
+      expect(last.actionType).toBe('done');
+      expect(last.highlightNodeIds).toContain('A');
     });
   });
 });

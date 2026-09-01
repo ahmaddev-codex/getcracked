@@ -21,8 +21,22 @@ import { ProblemDiscussions } from '@/components/community/ProblemDiscussions';
 import Link from 'next/link';
 import { useSession } from '@/lib/auth-client';
 import { Sparkles, Share2, MessageSquare } from 'lucide-react';
-import type { Language, RunnableLanguage, TestSpec, Tier } from '@/content/schema';
+import { entryFor, type Language, type RunnableLanguage, type TestSpec, type Tier } from '@/content/schema';
 import type { SpecResult } from '@/content/test-runner';
+
+function defaultStarterFor(lang: RunnableLanguage, entry: string, jsStarter: string): string {
+  if (lang === 'typescript') return jsStarter;
+  if (lang === 'java') {
+    return `class Solution {\n    public Object ${entry}() {\n        // Write your Java solution here\n        return 0;\n    }\n}`;
+  }
+  if (lang === 'cpp') {
+    return `#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    auto ${entry}() {\n        // Write your C++ solution here\n        return 0;\n    }\n};`;
+  }
+  if (lang === 'go') {
+    return `package main\n\nfunc ${entry}() any {\n    // Write your Go solution here\n    return 0\n}`;
+  }
+  return jsStarter;
+}
 
 /**
  * The solve surface: editor, run, results (A6, A7).
@@ -60,26 +74,13 @@ export function Workspace({
   /** Fires when a run passes, so a lesson can advance its own state. */
   onSolved?: () => void;
 }) {
-  /**
-   * The switcher only offers languages this exercise actually has code for.
-   * Listing a language with no starter would hand a learner an empty editor.
-   */
-  const availableLanguages = new Set<RunnableLanguage>(
-    starterByLanguage
-      ? (Object.keys(starterByLanguage) as RunnableLanguage[]).filter((l) => starterByLanguage[l])
-      : [initialLanguage],
-  );
-  if (availableLanguages.has('javascript')) {
-    availableLanguages.add('typescript');
-  }
-  const available = supportedLanguages().filter((l) => availableLanguages.has(l));
+  const available = supportedLanguages();
 
   const { data: session } = useSession();
   const [language, setLanguage] = useState<RunnableLanguage>(initialLanguage);
   const starter =
     starterByLanguage?.[language] ??
-    (language === 'typescript' ? starterByLanguage?.javascript : undefined) ??
-    starterCode;
+    defaultStarterFor(language, entryFor(spec, language), starterCode);
 
   const [result, setResult] = useState<SpecResult | null>(null);
   /**

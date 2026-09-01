@@ -8,33 +8,14 @@ import { RuntimeClient } from '@/lib/runtime/client';
 import { supportedLanguages } from '@/content/test-runner';
 import { walkthroughSpec } from '@/content/walkthrough';
 import type { Trace } from '@/lib/trace/protocol';
-import type { Language } from '@/content/schema';
+import type { RunnableLanguage } from '@/content/schema';
 import type { VisualKind } from '@/lib/visualizer/registry';
 
 /**
  * The animated walkthrough slot (B10b), filled by T2.8.
  *
  * Runs a reference implementation through the *same* runtime and the same trace
- * protocol a learner's own code uses, rather than replaying a recording. That is
- * the difference the PRD's G1 rests on: what a learner sees in the lesson is the
- * same machinery that will animate their own attempt a minute later.
- *
- * Run on demand rather than on mount — it costs a sandboxed execution, and a
- * lesson page should not pay for one nobody watches.
- *
- * **Both launch languages, switchable mid-walkthrough.** A learner reading the
- * lesson in Python should not have to translate a JavaScript animation in their
- * head to follow it. Switching re-runs rather than re-rendering, because the
- * trace is the output of an execution: the Python trace comes from CPython's
- * `sys.settrace` and the JavaScript one from instrumented QuickJS, so they are
- * genuinely different runs of genuinely different code, not one recording
- * relabelled.
- */
-/**
- * The call being animated, written the way a learner would type it.
- *
- * Answers "what problem is being solved" concretely: `running_sum([3, 1, 4])`
- * says more about what is about to happen than any prose summary of it.
+ * protocol a learner's own code uses, rather than replaying a recording.
  */
 function callSignature(entry: string, args: unknown[]): string {
   return `${entry}(${args.map((a) => JSON.stringify(a)).join(', ')})`;
@@ -55,9 +36,9 @@ export function Walkthrough({
    * without it a Python run is asked for the JavaScript name and dies with a
    * `KeyError` after loading the whole interpreter.
    */
-  entryByLanguage?: Partial<Record<Language, string>>;
+  entryByLanguage?: Partial<Record<RunnableLanguage, string>>;
   /** Reference implementation per language. Only these are offered. */
-  sourceByLanguage: Partial<Record<Language, string>>;
+  sourceByLanguage: Partial<Record<RunnableLanguage, string>>;
   args: unknown[];
   caption?: string;
   /** What this walkthrough is solving, shown above the animation. */
@@ -67,20 +48,25 @@ export function Walkthrough({
 }) {
   /**
    * Only languages this walkthrough actually has code for, intersected with the
-   * ones the runtime can execute. Offering a language and then failing to run it
-   * is worse than not offering it.
+   * ones the runtime can execute.
    */
-  const available = (Object.keys(sourceByLanguage) as Language[])
-    .filter((l) => sourceByLanguage[l])
-    .filter((l) => supportedLanguages().includes(l));
+  const availableSet = new Set<RunnableLanguage>(
+    (Object.keys(sourceByLanguage) as RunnableLanguage[]).filter((l) => sourceByLanguage[l]),
+  );
+  if (availableSet.has('javascript')) {
+    availableSet.add('typescript');
+  }
+  const available = supportedLanguages().filter((l) => availableSet.has(l));
 
-  const [language, setLanguage] = useState<Language>(available[0] ?? 'javascript');
+  const [language, setLanguage] = useState<RunnableLanguage>(available[0] ?? 'javascript');
   const [trace, setTrace] = useState<Trace | null>(null);
   const [running, setRunning] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const runtime = useRef<RuntimeClient | null>(null);
 
-  const source = sourceByLanguage[language];
+  const source =
+    sourceByLanguage[language] ??
+    (language === 'typescript' ? sourceByLanguage.javascript : undefined);
 
   useEffect(() => {
     const client = new RuntimeClient();
@@ -92,8 +78,10 @@ export function Walkthrough({
   }, []);
 
   const run = useCallback(
-    async (target: Language) => {
-      const code = sourceByLanguage[target];
+    async (target: RunnableLanguage) => {
+      const code =
+        sourceByLanguage[target] ??
+        (target === 'typescript' ? sourceByLanguage.javascript : undefined);
       if (!runtime.current || !code) return;
       setRunning(true);
       setFailure(null);
@@ -115,9 +103,6 @@ export function Walkthrough({
         }
         setTrace(result.trace);
       } catch (e) {
-        // The reason is shown rather than swallowed. A generic "try again" hides
-        // exactly the information needed to tell a transient download failure
-        // from code that cannot run here at all.
         setFailure(e instanceof Error ? e.message : String(e));
       } finally {
         setRunning(false);
@@ -132,7 +117,7 @@ export function Walkthrough({
    * the start screen they already dismissed.
    */
   const switchTo = useCallback(
-    (next: Language) => {
+    (next: RunnableLanguage) => {
       if (next === language) return;
       setLanguage(next);
       if (trace || failure) {

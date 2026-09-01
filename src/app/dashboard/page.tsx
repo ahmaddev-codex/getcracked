@@ -44,9 +44,14 @@ export default async function DashboardPage(props: {
       detail: `${counts.lessons} lessons across ${getTopics().length} topics`,
     },
     {
-      href: '/concepts',
-      title: `Reference (${conceptCount()})`,
-      detail: 'Named solutions to problems that keep recurring',
+      href: '/learn/visualizer',
+      title: 'Visualizer',
+      detail: 'Stepwise operations across all 8 data structures with live animation',
+    },
+    {
+      href: '/interviews',
+      title: 'Mock Interviews',
+      detail: 'Timed technical coding loops & architecture rounds',
     },
     {
       href: '/problems',
@@ -59,9 +64,9 @@ export default async function DashboardPage(props: {
       detail: `${counts.challenges} multi-step builds, ${counts.challengeSteps} steps in all`,
     },
     {
-      href: '/interviews',
-      title: 'Mock Interviews',
-      detail: 'Timed DSA & System Design rounds with Socratic AI interviewer',
+      href: '/concepts',
+      title: `Reference (${conceptCount()})`,
+      detail: 'Named solutions to problems that keep recurring',
     },
     {
       href: '/sandbox',
