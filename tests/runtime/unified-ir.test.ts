@@ -7,7 +7,6 @@ import {
   parseTraceIR,
 } from '@/lib/trace/unified-ir';
 import {
-  LANGUAGE_PROFILES,
   getLanguageProfile,
   getAllLanguageProfiles,
   createMockExecutionTrace,
