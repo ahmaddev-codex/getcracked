@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertCircle, ChevronRight, HelpCircle, ShieldCheck, Sparkles, X } from 'lucide-react';
 import type { RemediationOption, RemediationPrompt } from '@/lib/system-design/simulation';
+import { useFocusTrap } from '@/lib/use-focus-trap';
 
 interface FailureDecisionModalProps {
   prompt: RemediationPrompt;
@@ -18,12 +19,33 @@ export function FailureDecisionModal({
   const [selectedOptionId, setSelectedOptionId] = useState<string>(
     prompt.options[0]?.id ?? '',
   );
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useFocusTrap(modalRef, true);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const selectedOption = prompt.options.find((o) => o.id === selectedOptionId);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs select-none">
-      <div className="w-full max-w-xl bg-surface border-2 border-border-strong rounded-node shadow-2xl overflow-hidden flex flex-col gc-modal-enter">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="failure-dialog-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-background/80 backdrop-blur-xs select-none"
+    >
+      <div
+        ref={modalRef}
+        className="w-full max-w-xl bg-surface border-2 border-border-strong rounded-node shadow-2xl overflow-hidden flex flex-col gc-modal-enter"
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-3.5 border-b border-border-subtle bg-surface-muted/50">
           <div className="flex items-center gap-2">
@@ -31,7 +53,7 @@ export function FailureDecisionModal({
               <AlertCircle size={16} />
             </div>
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
+              <h3 id="failure-dialog-title" className="text-xs font-bold uppercase tracking-wider text-foreground">
                 Incident Response: What Breaks Next?
               </h3>
               <p className="text-2xs text-danger font-medium">{prompt.triggerReason}</p>

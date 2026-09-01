@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import {
@@ -16,6 +16,7 @@ import {
 import type { CandidateScorecard } from '@/lib/interviews/types';
 import { findConcept, type Concept } from '@/content/concepts';
 import { ComponentReferenceModal } from '@/components/system-design/ComponentReferenceModal';
+import { useFocusTrap } from '@/lib/use-focus-trap';
 
 interface MockScorecardModalProps {
   scorecard: CandidateScorecard;
@@ -31,6 +32,21 @@ export function MockScorecardModal({
   onRetry,
 }: MockScorecardModalProps) {
   const [activeModalConcept, setActiveModalConcept] = useState<Concept | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useFocusTrap(modalRef, isOpen);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -59,11 +75,14 @@ export function MockScorecardModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="scorecard-title"
-      className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 z-70 flex items-center justify-center p-2.5 sm:p-4 bg-background/80 backdrop-blur-xs animate-in fade-in duration-150"
     >
       <div className="fixed inset-0 cursor-default" onClick={onClose} aria-hidden="true" />
 
-      <div className="relative w-full max-w-2xl max-h-full my-auto bg-surface border-2 border-border-strong rounded-node shadow-2xl flex flex-col overflow-hidden z-10 gc-modal-enter">
+      <div
+        ref={modalRef}
+        className="relative w-full max-w-2xl max-h-full my-auto bg-surface border-2 border-border-strong rounded-node shadow-2xl flex flex-col overflow-hidden z-10 gc-modal-enter"
+      >
         {/* Header */}
         <header className="p-5 border-b border-border-subtle bg-surface-muted/50 flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1.5">

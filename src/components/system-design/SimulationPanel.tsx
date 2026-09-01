@@ -294,7 +294,11 @@ export function SimulationPanel({
 
       {/* Bottlenecks / Remediation Prompt Trigger */}
       {report.remediationPrompts.length > 0 && (
-        <div className="p-2.5 rounded-node border border-danger/40 bg-danger/10 flex flex-col gap-2 animate-in fade-in duration-200">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="p-2.5 rounded-node border border-danger/40 bg-danger/10 flex flex-col gap-2 animate-in fade-in duration-200"
+        >
           <div className="flex items-center gap-1.5 text-danger font-bold text-xs">
             <AlertTriangle size={14} className="shrink-0" />
             <span>Bottleneck Detected ({report.remediationPrompts.length})</span>

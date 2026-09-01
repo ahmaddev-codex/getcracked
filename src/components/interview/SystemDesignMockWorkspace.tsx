@@ -27,6 +27,7 @@ interface SystemDesignMockWorkspaceProps {
 export function SystemDesignMockWorkspace({ track, lab }: SystemDesignMockWorkspaceProps) {
   const [currentStageIdx, setCurrentStageIdx] = useState(0);
   const [leftTab, setLeftTab] = useState<'brief' | 'interviewer'>('brief');
+  const [mobilePane, setMobilePane] = useState<'brief' | 'canvas'>('brief');
   const [messages, setMessages] = useState(() => [getInitialGreeting(track)]);
   const [hintsCount, setHintsCount] = useState(0);
   const [scorecard, setScorecard] = useState<ReturnType<typeof generateCandidateScorecard> | null>(null);
@@ -57,6 +58,9 @@ export function SystemDesignMockWorkspace({ track, lab }: SystemDesignMockWorksp
     if (currentStageIdx < track.stages.length - 1) {
       const nextIdx = currentStageIdx + 1;
       setCurrentStageIdx(nextIdx);
+      if (nextIdx === 1) {
+        setMobilePane('canvas');
+      }
       const nextStage = track.stages[nextIdx];
       if (nextStage) {
         const transitionMsg = getStageTransitionMessage(nextStage);
@@ -132,10 +136,40 @@ export function SystemDesignMockWorkspace({ track, lab }: SystemDesignMockWorksp
         />
       </div>
 
+      {/* Mobile pane selector (hidden on desktop lg:hidden) */}
+      <div className="flex lg:hidden items-center justify-around border-b border-border-subtle bg-surface px-3 py-1.5 gap-2 shrink-0">
+        <button
+          type="button"
+          onClick={() => setMobilePane('brief')}
+          className={`flex-1 py-1.5 text-xs font-semibold rounded-node border transition-all text-center cursor-pointer ${
+            mobilePane === 'brief'
+              ? 'bg-accent text-accent-foreground border-border-strong shadow-2xs font-bold'
+              : 'bg-surface text-foreground-muted hover:text-foreground border-border-subtle'
+          }`}
+        >
+          Scenario Brief & Bot
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobilePane('canvas')}
+          className={`flex-1 py-1.5 text-xs font-semibold rounded-node border transition-all text-center cursor-pointer ${
+            mobilePane === 'canvas'
+              ? 'bg-accent text-accent-foreground border-border-strong shadow-2xs font-bold'
+              : 'bg-surface text-foreground-muted hover:text-foreground border-border-subtle'
+          }`}
+        >
+          Whiteboard & Simulation
+        </button>
+      </div>
+
       {/* Main Workspace Split */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden">
         {/* Left Column: Requirements Brief or Socratic Interviewer */}
-        <div className="lg:col-span-4 border-r border-border-strong flex flex-col h-full bg-surface overflow-hidden">
+        <div
+          className={`flex-col h-full bg-surface overflow-hidden border-r border-border-strong lg:col-span-4 ${
+            mobilePane === 'brief' ? 'flex' : 'hidden lg:flex'
+          }`}
+        >
           {/* Sub-tab navigation */}
           <div className="flex items-center border-b border-border-subtle bg-surface-muted/30 px-3 py-1.5 gap-2 shrink-0">
             <button
@@ -188,7 +222,11 @@ export function SystemDesignMockWorkspace({ track, lab }: SystemDesignMockWorksp
         </div>
 
         {/* Right Column: Architecture Canvas & Live Simulation HUD */}
-        <div className="lg:col-span-8 flex flex-col h-full bg-background overflow-hidden p-2">
+        <div
+          className={`flex-col h-full bg-background overflow-hidden p-2 lg:col-span-8 ${
+            mobilePane === 'canvas' ? 'flex' : 'hidden lg:flex'
+          }`}
+        >
           <ArchitectureCanvas
             initialArchitecture={initialArch}
             initialMode="simulate"

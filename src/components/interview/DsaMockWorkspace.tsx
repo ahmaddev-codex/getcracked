@@ -28,6 +28,7 @@ export function DsaMockWorkspace({ track, problems }: DsaMockWorkspaceProps) {
   const [activeProblemIdx, setActiveProblemIdx] = useState(0);
   const [currentStageIdx, setCurrentStageIdx] = useState(0);
   const [leftTab, setLeftTab] = useState<'problem' | 'interviewer'>('problem');
+  const [mobilePane, setMobilePane] = useState<'dialogue' | 'code'>('dialogue');
   const [messages, setMessages] = useState(() => [getInitialGreeting(track)]);
   const [hintsCount, setHintsCount] = useState(0);
   const [solvedMap, setSolvedMap] = useState<Record<string, boolean>>({});
@@ -59,6 +60,9 @@ export function DsaMockWorkspace({ track, problems }: DsaMockWorkspaceProps) {
     if (currentStageIdx < track.stages.length - 1) {
       const nextIdx = currentStageIdx + 1;
       setCurrentStageIdx(nextIdx);
+      if (nextIdx === 1) {
+        setMobilePane('code');
+      }
       const nextStage = track.stages[nextIdx];
       if (nextStage) {
         const transitionMsg = getStageTransitionMessage(nextStage);
@@ -166,10 +170,40 @@ export function DsaMockWorkspace({ track, problems }: DsaMockWorkspaceProps) {
         />
       </div>
 
+      {/* Mobile pane selector (hidden on desktop lg:hidden) */}
+      <div className="flex lg:hidden items-center justify-around border-b border-border-subtle bg-surface px-3 py-1.5 gap-2 shrink-0">
+        <button
+          type="button"
+          onClick={() => setMobilePane('dialogue')}
+          className={`flex-1 py-1.5 text-xs font-semibold rounded-node border transition-all text-center cursor-pointer ${
+            mobilePane === 'dialogue'
+              ? 'bg-accent text-accent-foreground border-border-strong shadow-2xs font-bold'
+              : 'bg-surface text-foreground-muted hover:text-foreground border-border-subtle'
+          }`}
+        >
+          Brief & Interviewer
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobilePane('code')}
+          className={`flex-1 py-1.5 text-xs font-semibold rounded-node border transition-all text-center cursor-pointer ${
+            mobilePane === 'code'
+              ? 'bg-accent text-accent-foreground border-border-strong shadow-2xs font-bold'
+              : 'bg-surface text-foreground-muted hover:text-foreground border-border-subtle'
+          }`}
+        >
+          Code Editor & Tests
+        </button>
+      </div>
+
       {/* Main Workspace Split */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden">
         {/* Left Column: Problem Prompt or Socratic Interviewer */}
-        <div className="lg:col-span-5 border-r border-border-strong flex flex-col h-full bg-surface overflow-hidden">
+        <div
+          className={`flex-col h-full bg-surface overflow-hidden border-r border-border-strong lg:col-span-5 ${
+            mobilePane === 'dialogue' ? 'flex' : 'hidden lg:flex'
+          }`}
+        >
           {/* Sub-tab navigation */}
           <div className="flex items-center border-b border-border-subtle bg-surface-muted/30 px-3 py-1.5 gap-2 shrink-0">
             <button
@@ -222,7 +256,11 @@ export function DsaMockWorkspace({ track, problems }: DsaMockWorkspaceProps) {
         </div>
 
         {/* Right Column: Code Editor Workspace */}
-        <div className="lg:col-span-7 flex flex-col h-full bg-background overflow-hidden">
+        <div
+          className={`flex-col h-full bg-background overflow-hidden lg:col-span-7 ${
+            mobilePane === 'code' ? 'flex' : 'hidden lg:flex'
+          }`}
+        >
           {activeProblem && (
             <Workspace
               key={activeProblem.slug}

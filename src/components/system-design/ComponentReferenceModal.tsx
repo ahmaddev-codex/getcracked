@@ -16,6 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import type { Concept, TenDimensions } from '@/content/concepts';
+import { useFocusTrap } from '@/lib/use-focus-trap';
 
 interface ComponentReferenceModalProps {
   concept: Concept;
@@ -39,7 +40,10 @@ export function ComponentReferenceModal({
 }: ComponentReferenceModalProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('progression');
   const bodyRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
   const dimensions = concept.dimensions;
+
+  useFocusTrap(modalRef, isOpen);
 
   useEffect(() => {
     if (bodyRef.current) {
@@ -66,7 +70,7 @@ export function ComponentReferenceModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="reference-modal-title"
-      className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 z-70 flex items-center justify-center p-2.5 sm:p-4 bg-background/80 backdrop-blur-xs animate-in fade-in duration-150"
     >
       {/* Click outside to close */}
       <div
@@ -75,7 +79,10 @@ export function ComponentReferenceModal({
         aria-hidden="true"
       />
 
-      <div className="relative w-full max-w-3xl max-h-full my-auto bg-surface border-2 border-border-strong rounded-node shadow-2xl flex flex-col overflow-hidden z-10 gc-modal-enter">
+      <div
+        ref={modalRef}
+        className="relative w-full max-w-3xl max-h-full my-auto bg-surface border-2 border-border-strong rounded-node shadow-2xl flex flex-col overflow-hidden z-10 gc-modal-enter"
+      >
         {/* Modal Header */}
         <header className="p-4 border-b border-border-subtle bg-surface-muted/50 flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1.5">

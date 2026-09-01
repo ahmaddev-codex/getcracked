@@ -43,22 +43,43 @@ export function StageTimer({
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  // Accessible announcement for milestones
+  let announcement = '';
+  if (isOverTime && elapsedSeconds === totalBudgetSeconds + 1) {
+    announcement = 'Total interview time budget reached.';
+  } else if (isStageOverTime && elapsedSeconds === cumulativeStageBudgetSeconds + 1) {
+    announcement = `Stage budget reached for ${currentStage?.name}.`;
+  }
+
   return (
-    <div className="flex flex-col gap-2 p-3 bg-surface border border-border-strong rounded-node shadow-xs">
+    <div
+      role="region"
+      aria-label="Interview Progress and Stage Timer"
+      className="flex flex-col gap-2 p-3 bg-surface border border-border-strong rounded-node shadow-xs"
+    >
+      {/* Screen reader polite milestone announcer */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {announcement}
+      </div>
+
       <div className="flex items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2">
-          <Clock size={14} className={isOverTime ? 'text-danger animate-pulse' : 'text-foreground-muted'} />
+          <Clock size={14} className={isOverTime ? 'text-danger animate-pulse' : 'text-foreground-muted'} aria-hidden="true" />
           <span className="font-semibold text-foreground">
             Stage {currentStageIndex + 1} of {stages.length}: {currentStage?.name}
           </span>
         </div>
 
-        <div className="flex items-center gap-3 font-mono text-xs">
+        <div
+          role="timer"
+          aria-label={`Elapsed time: ${formatTime(elapsedSeconds)} out of ${totalDurationMinutes} minutes`}
+          className="flex items-center gap-3 font-mono text-xs"
+        >
           <span className={isStageOverTime ? 'text-danger font-bold flex items-center gap-1' : 'text-foreground-muted'}>
-            {isStageOverTime && <AlertCircle size={12} />}
+            {isStageOverTime && <AlertCircle size={12} aria-hidden="true" />}
             Stage: {formatTime(elapsedSeconds)} / {currentStage?.budgetMinutes}:00
           </span>
-          <span className="text-border-subtle">|</span>
+          <span className="text-border-subtle" aria-hidden="true">|</span>
           <span className={`font-bold ${isOverTime ? 'text-danger' : 'text-foreground'}`}>
             Total: {formatTime(elapsedSeconds)} / {totalDurationMinutes}:00
           </span>
