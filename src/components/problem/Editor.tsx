@@ -25,7 +25,7 @@ import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { editorTheme, syntaxExtension } from './editor-theme';
 import { applyHighlight, highlightField } from './line-highlight';
 import { languageExtension } from './language-support';
-import type { Language } from '@/content/schema';
+import type { Language, RunnableLanguage } from '@/content/schema';
 
 /**
  * Code editor (A6).
@@ -61,7 +61,7 @@ export function Editor({
    */
   docRef?: React.MutableRefObject<string>;
   /** Drives syntax highlighting. The editor is remounted per language anyway. */
-  language?: Language;
+  language?: Language | RunnableLanguage | string;
   /**
    * Source line the visualizer is currently executing, highlighted in place.
    *

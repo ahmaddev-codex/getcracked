@@ -12,13 +12,15 @@ import { CompanyLogo } from '@/components/company/CompanyLogo';
  * a reload, and works with the back button. Holding it in component state would
  * make all three quietly fail.
  */
+export type TopicFilterItem = string | { name: string; count: number };
+
 export function Filters({
   difficulties,
   topics,
   companies = [],
 }: {
   difficulties: readonly string[];
-  topics: readonly string[];
+  topics: ReadonlyArray<TopicFilterItem>;
   /**
    * Company tags, most-used first (D1).
    *
@@ -64,16 +66,23 @@ export function Filters({
 
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-foreground-muted">topic</span>
-        {topics.map((t) => (
-          <Button
-            key={t}
-            tone={active('topic', t) ? 'strong' : 'surface'}
-            onClick={() => toggle('topic', t)}
-            aria-pressed={active('topic', t)}
-          >
-            {t}
-          </Button>
-        ))}
+        {topics.map((t) => {
+          const name = typeof t === 'string' ? t : t.name;
+          const count = typeof t === 'string' ? undefined : t.count;
+          const isPressed = active('topic', name);
+          return (
+            <Button
+              key={name}
+              tone={isPressed ? 'strong' : 'surface'}
+              onClick={() => toggle('topic', name)}
+              aria-pressed={isPressed}
+              className={count !== undefined ? 'inline-flex items-center gap-1.5' : undefined}
+            >
+              <span>{name}</span>
+              {count !== undefined && <span className="opacity-60">{count}</span>}
+            </Button>
+          );
+        })}
       </div>
 
       {companies.length > 0 && (

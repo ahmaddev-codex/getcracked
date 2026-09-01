@@ -1,4 +1,4 @@
-import type { Language, TestSpec } from '@/content/schema';
+import type { RunnableLanguage, TestSpec } from '@/content/schema';
 import type { SpecResult } from '@/content/test-runner';
 
 /**
@@ -12,7 +12,7 @@ export interface RunRequest {
   id: string;
   spec: TestSpec;
   source: string;
-  language: Language;
+  language: RunnableLanguage;
   trace?: boolean;
   timeoutMs?: number;
   measure?: boolean;

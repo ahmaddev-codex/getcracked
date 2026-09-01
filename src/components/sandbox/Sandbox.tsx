@@ -12,7 +12,6 @@ import { humanizeError, TIMEOUT_MESSAGE } from '@/lib/runtime/errors';
 import { entryPoints, resolveEntry } from '@/lib/runtime/entry-points';
 import { clearDraft, readDraft, subscribeToDrafts, writeDraft } from '@/lib/drafts';
 import { track } from '@/lib/analytics/track';
-import { supportedLanguages } from '@/content/test-runner';
 import { DEFAULT_PRESET, SANDBOX_PRESETS } from '@/lib/sandbox-presets';
 import { decodeRun, encodeRun, MAX_LINK_LENGTH } from '@/lib/share-link';
 import type { Language } from '@/content/schema';
@@ -40,7 +39,7 @@ import type { SpecResult } from '@/content/test-runner';
 const DRAFT_ID = 'sandbox';
 
 export function Sandbox() {
-  const available = supportedLanguages();
+  const available: Language[] = ['javascript', 'python'];
 
   /**
    * A run someone shared, read from the fragment once at mount.

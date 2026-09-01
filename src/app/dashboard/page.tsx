@@ -6,7 +6,13 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Filters } from '@/components/dashboard/Filters';
 import { ProblemTable } from '@/components/problem/ProblemTable';
 import { LoadingBar } from '@/components/ui/LoadingBar';
-import { DIFFICULTIES, catalogCounts, companyTags, filterProblems } from '@/lib/catalog';
+import {
+  DIFFICULTIES,
+  catalogCounts,
+  companyTags,
+  filterProblems,
+  topicTags,
+} from '@/lib/catalog';
 import { getTopics } from '@/content/registry';
 import { conceptCount } from '@/content/concepts';
 import { Page } from '@/components/ui/Page';
@@ -30,7 +36,6 @@ export default async function DashboardPage(props: {
   const counts = catalogCounts();
   const searchParams = await props.searchParams;
   const problems = filterProblems(searchParams);
-  const topics = getTopics();
 
   const tracks = [
     {
@@ -127,7 +132,7 @@ export default async function DashboardPage(props: {
         <h2 className="text-sm font-semibold">All problems</h2>
 
         <Suspense fallback={<LoadingBar />}>
-          <Filters difficulties={DIFFICULTIES} topics={topics} companies={companyTags()} />
+          <Filters difficulties={DIFFICULTIES} topics={topicTags()} companies={companyTags()} />
         </Suspense>
 
         {problems.length === 0 ? (

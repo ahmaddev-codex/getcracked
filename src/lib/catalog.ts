@@ -1,4 +1,4 @@
-import { getChallenges, getLessons, getProblems } from '@/content/registry';
+import { getChallenges, getLessons, getProblems, getTopics } from '@/content/registry';
 import type { Problem } from '@/content/schema';
 
 /**
@@ -78,4 +78,19 @@ export function companyTags(): Array<{ name: string; count: number }> {
     // Most-tagged first: the long tail of single-mention companies is not what
     // anyone is scanning for.
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+}
+
+/**
+  * Every topic in curriculum order with its available problem count.
+  */
+export function topicTags(): Array<{ name: string; count: number }> {
+  const counts = new Map<string, number>();
+  for (const problem of getProblems()) {
+    counts.set(problem.topic, (counts.get(problem.topic) ?? 0) + 1);
+  }
+
+  return getTopics().map((name) => ({
+    name,
+    count: counts.get(name) ?? 0,
+  }));
 }

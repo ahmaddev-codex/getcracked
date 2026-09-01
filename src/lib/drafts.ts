@@ -1,6 +1,6 @@
 'use client';
 
-import type { Language } from '@/content/schema';
+import type { RunnableLanguage } from '@/content/schema';
 
 /**
  * Draft code, kept per exercise and language.
@@ -40,7 +40,7 @@ const memory = new Map<string, string>();
  * back the starter code at every step and quietly discard the build they had
  * been working on. Progress is keyed per step; drafts are keyed per challenge.
  */
-export function draftKey(exerciseId: string, language: Language, file?: string): string {
+export function draftKey(exerciseId: string, language: RunnableLanguage | string, file?: string): string {
   return file
     ? `gc.draft.${exerciseId}.${file}.${language}`
     : `gc.draft.${exerciseId}.${language}`;
@@ -57,7 +57,7 @@ export function subscribeToDrafts(onChange: () => void): () => void {
 
 export function readDraft(
   exerciseId: string,
-  language: Language,
+  language: RunnableLanguage | string,
   file?: string,
 ): string | null {
   const key = draftKey(exerciseId, language, file);
@@ -73,7 +73,7 @@ export function readDraft(
 
 export function writeDraft(
   exerciseId: string,
-  language: Language,
+  language: RunnableLanguage | string,
   code: string,
   file?: string,
 ): void {
@@ -82,11 +82,13 @@ export function writeDraft(
   try {
     localStorage.setItem(key, code);
   } catch {
-    // Draft persistence is a convenience, never a blocker.
+    // Private mode, quota exceeded, or cookies disabled. The write still
+    // succeeded in `memory`, so the current session sees it.
   }
+  listeners.forEach((l) => l());
 }
 
-export function clearDraft(exerciseId: string, language: Language, file?: string): void {
+export function clearDraft(exerciseId: string, language: RunnableLanguage | string, file?: string): void {
   const key = draftKey(exerciseId, language, file);
   memory.delete(key);
   try {

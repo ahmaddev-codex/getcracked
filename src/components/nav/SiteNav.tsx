@@ -62,6 +62,11 @@ const GROUPS: NavGroup[] = [
         label: 'Design patterns',
         detail: 'Named solutions to problems that keep recurring',
       },
+      {
+        href: '/learn/visualizer',
+        label: 'Data structure visualizer',
+        detail: 'Stepwise operations across all data structures with live animation',
+      },
     ],
   },
   {

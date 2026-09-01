@@ -155,7 +155,9 @@ describe('a third language needs only an adapter', () => {
 
 describe('the registry is the single point of extension', () => {
   it('reports exactly the languages that have adapters', () => {
-    expect(supportedLanguages().sort()).toEqual(['javascript', 'python']);
+    expect(supportedLanguages().sort()).toEqual(
+      ['javascript', 'python', 'typescript', 'java', 'cpp', 'go'].sort(),
+    );
   });
 
   it('refuses a language with no adapter rather than failing obscurely', async () => {
@@ -163,8 +165,7 @@ describe('the registry is the single point of extension', () => {
       runTestSpec({
         spec: { entry: 'f', cases: [{ args: [], expected: 1, hidden: false }] },
         source: 'x',
-        // Java is suspended (H1); asking for it should say so plainly.
-        language: 'java' as never,
+        language: 'rust' as never,
       }),
     ).rejects.toThrow(/no runtime adapter/i);
   });

@@ -21,7 +21,7 @@ import { ProblemDiscussions } from '@/components/community/ProblemDiscussions';
 import Link from 'next/link';
 import { useSession } from '@/lib/auth-client';
 import { Sparkles, Share2, MessageSquare } from 'lucide-react';
-import type { Language, TestSpec, Tier } from '@/content/schema';
+import type { Language, RunnableLanguage, TestSpec, Tier } from '@/content/schema';
 import type { SpecResult } from '@/content/test-runner';
 
 /**
@@ -42,9 +42,9 @@ export function Workspace({
   starterByLanguage,
 }: {
   exerciseId: string;
-  language: Language;
+  language: RunnableLanguage;
   /** Starter code per language, so switching swaps the scaffold (A6). */
-  starterByLanguage?: Partial<Record<Language, string>>;
+  starterByLanguage?: Partial<Record<RunnableLanguage, string>>;
   starterCode: string;
   spec: TestSpec;
   complexity?: { time: string; space: string; note?: string };
@@ -64,15 +64,22 @@ export function Workspace({
    * The switcher only offers languages this exercise actually has code for.
    * Listing a language with no starter would hand a learner an empty editor.
    */
-  const available = (
+  const availableLanguages = new Set<RunnableLanguage>(
     starterByLanguage
-      ? (Object.keys(starterByLanguage) as Language[]).filter((l) => starterByLanguage[l])
-      : [initialLanguage]
-  ).filter((l) => supportedLanguages().includes(l));
+      ? (Object.keys(starterByLanguage) as RunnableLanguage[]).filter((l) => starterByLanguage[l])
+      : [initialLanguage],
+  );
+  if (availableLanguages.has('javascript')) {
+    availableLanguages.add('typescript');
+  }
+  const available = supportedLanguages().filter((l) => availableLanguages.has(l));
 
   const { data: session } = useSession();
-  const [language, setLanguage] = useState<Language>(initialLanguage);
-  const starter = starterByLanguage?.[language] ?? starterCode;
+  const [language, setLanguage] = useState<RunnableLanguage>(initialLanguage);
+  const starter =
+    starterByLanguage?.[language] ??
+    (language === 'typescript' ? starterByLanguage?.javascript : undefined) ??
+    starterCode;
 
   const [result, setResult] = useState<SpecResult | null>(null);
   /**
@@ -209,10 +216,11 @@ export function Workspace({
         track('exercise_solved', { exerciseId, language });
         onSolvedRef.current?.();
       }
+      const dbLang: Language = language === 'python' ? 'python' : 'javascript';
       void persistAttempt({
         exerciseId,
         tier,
-        language,
+        language: dbLang,
         code: codeRef.current,
         passed: outcome.passed,
       });
@@ -287,7 +295,7 @@ export function Workspace({
     setWatchTrace(null);
     setTracedLine(null);
     setError(null);
-  }, [exerciseId, language, starter]);
+  }, [exerciseId, language, starter, setTracedLine]);
 
   return (
     <section className="flex flex-col gap-4">
