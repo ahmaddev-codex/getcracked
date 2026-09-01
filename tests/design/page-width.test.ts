@@ -68,6 +68,8 @@ const EXPECTED: Record<string, PageWidth> = {
   // One column of editor, controls and animation — no second column, no graph.
   'src/app/sandbox/page.tsx': 'reading',
 
+  'src/app/interviews/page.tsx': 'catalog',
+
   'src/app/(dev)/components/page.tsx': 'catalog',
 };
 
@@ -84,6 +86,10 @@ const NO_RAIL: Record<string, string> = {
   'src/app/(auth)/sign-up/page.tsx': 'Centred form card; the width is the form’s, not the page’s.',
   'src/app/(spike)/runtime/page.tsx':
     'Throwaway prototype that predates the design system — exempted in eslint.config.mjs for the same reason.',
+  'src/app/interviews/dsa/[trackSlug]/page.tsx':
+    'Full-viewport timed mock coding IDE and chat workspace without document rails.',
+  'src/app/interviews/system-design/[trackSlug]/page.tsx':
+    'Full-viewport system design architecture canvas and simulation workspace without document rails.',
 };
 
 /** Every route file, found rather than listed — an unlisted page must fail. */

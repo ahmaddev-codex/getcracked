@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   AlertTriangle,
@@ -38,7 +38,14 @@ export function ComponentReferenceModal({
   onClose,
 }: ComponentReferenceModalProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('progression');
+  const bodyRef = useRef<HTMLDivElement>(null);
   const dimensions = concept.dimensions;
+
+  useEffect(() => {
+    if (bodyRef.current) {
+      bodyRef.current.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -121,7 +128,7 @@ export function ComponentReferenceModal({
         )}
 
         {/* Modal Body */}
-        <div className="p-5 overflow-y-auto flex-1 text-sm space-y-5">
+        <div ref={bodyRef} className="p-5 overflow-y-auto flex-1 text-sm space-y-5">
           {!dimensions ? (
             <div className="p-6 text-center text-foreground-muted">
               <p>Standardized 10-dimension architectural spec is currently being curated for this component.</p>

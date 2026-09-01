@@ -7,9 +7,10 @@ import { Filters } from '@/components/dashboard/Filters';
 import { ProblemTable } from '@/components/problem/ProblemTable';
 import { LoadingBar } from '@/components/ui/LoadingBar';
 import { DIFFICULTIES, catalogCounts, companyTags, filterProblems } from '@/lib/catalog';
-import { getTopics, getTrack } from '@/content/registry';
+import { getTopics } from '@/content/registry';
 import { conceptCount } from '@/content/concepts';
 import { Page } from '@/components/ui/Page';
+import { PersonalizedDashboard } from '@/components/dashboard/PersonalizedDashboard';
 
 /**
  * The dashboard (A3, A4) — navigation across the three tiers (§2.1a).
@@ -23,30 +24,23 @@ export const metadata = {
   description: 'Learn, practise, and build. Free and open, no account needed.',
 };
 
-interface DashboardProps {
-  searchParams: Promise<{ difficulty?: string; topic?: string; company?: string }>;
-}
-
-export default async function DashboardPage({ searchParams }: DashboardProps) {
-  const filter = await searchParams;
-  const problems = filterProblems(filter);
+export default async function DashboardPage(props: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const counts = catalogCounts();
+  const searchParams = await props.searchParams;
+  const problems = filterProblems(searchParams);
   const topics = getTopics();
 
   const tracks = [
     {
-      href: '/learn/dsa',
-      title: 'Data Structures & Algorithms',
-      detail: `${getTrack('data-structures').length + getTrack('algorithms').length} lessons, each with a walkthrough you can run`,
+      href: '/learn',
+      title: 'Foundations',
+      detail: `${counts.lessons} lessons across ${getTopics().length} topics`,
     },
     {
-      href: '/learn/system-design',
-      title: 'System Design',
-      detail: `${getTrack('system-design').length} topics and ${conceptCount()} reference terms`,
-    },
-    {
-      href: '/learn/design-patterns',
-      title: 'Design Patterns',
+      href: '/concepts',
+      title: `Reference (${conceptCount()})`,
       detail: 'Named solutions to problems that keep recurring',
     },
     {
@@ -58,6 +52,11 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
       href: '/challenges',
       title: 'Build it',
       detail: `${counts.challenges} multi-step builds, ${counts.challengeSteps} steps in all`,
+    },
+    {
+      href: '/interviews',
+      title: 'Mock Interviews',
+      detail: 'Timed DSA & System Design rounds with Socratic AI interviewer',
     },
     {
       href: '/sandbox',
@@ -79,6 +78,9 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
           in any order, having completed nothing.
         </p>
       </header>
+
+      {/* Personalized Retention & Mock Hub (Module F) */}
+      <PersonalizedDashboard />
 
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-semibold">Where to go</h2>
