@@ -362,6 +362,57 @@ const RAW_COMPANIES: readonly CompanyInput[] = [
       },
     ],
   },
+  {
+    slug: 'stripe',
+    name: 'Stripe',
+    summary:
+      'Known for pragmatic, work-sample interviews: debugging real codebases, integration tasks, and resilient financial system design.',
+    reviewed: '2026-09-01',
+    rounds: [
+      {
+        name: 'Work-sample & Practical Coding',
+        assesses: {
+          status: 'confirmed',
+          text: 'Stripe assesses candidates through practical, work-sample coding exercises that mirror day-to-day engineering: writing API clients, handling pagination and retries, and navigating existing code in your own local development environment.',
+          sources: [
+            {
+              label: 'Stripe — Jobs & Engineering Culture',
+              url: 'https://stripe.com/jobs',
+              openable: true,
+              firstParty: true,
+              published: null,
+            },
+          ],
+        },
+        practice: { label: 'Practice problems', href: '/problems' },
+      },
+      {
+        name: 'Bug Squashing / Codebase Investigation',
+        assesses: {
+          status: 'commonly-reported',
+          text: 'Given an unfamiliar codebase with failing unit tests, candidates must navigate the multi-file project, diagnose root causes, and submit clean fixes.',
+          caveat: 'Focuses on reading real code, navigating log traces, and writing regression tests.',
+        },
+        practice: { label: 'Build challenges', href: '/challenges' },
+      },
+      {
+        name: 'System Design',
+        assesses: {
+          status: 'commonly-reported',
+          text: 'Designing mission-critical distributed payment systems, focusing on idempotency, transactional consistency, webhook retries, and high availability.',
+          caveat: 'Emphasizes exactness over hand-waving: double-spending prevention and auditability matter above all.',
+        },
+        practice: { label: 'System Design labs', href: '/learn/system-design/labs' },
+      },
+    ],
+    notes: [
+      {
+        status: 'commonly-reported',
+        text: 'Stripe values communication, modular code design, thorough unit testing, and pragmatic trade-offs over whiteboard trivia.',
+        caveat: 'Synthesized from candidate interview reports and Stripe engineering publications.',
+      },
+    ],
+  },
 ];
 
 let cache: readonly Company[] | undefined;

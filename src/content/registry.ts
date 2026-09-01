@@ -36,6 +36,10 @@ import { sortColors } from './problems/sorting/sort-colors';
 import { subsets } from './problems/backtracking/subsets';
 import { wordSearch } from './problems/backtracking/word-search';
 import { reverseLinkedList } from './problems/linked-lists/reverse-linked-list';
+import { threeSum } from './problems/two-pointers/three-sum';
+import { productExceptSelf } from './problems/arrays/product-except-self';
+import { levelOrder } from './problems/trees/level-order';
+import { longestCommonSubsequence } from './problems/dynamic-programming/longest-common-subsequence';
 import { hashingLesson } from './lessons/hashing';
 import { arraysLesson } from './lessons/arrays';
 import { slidingWindowLesson } from './lessons/sliding-window';
@@ -72,6 +76,7 @@ import { rateLimiterLab } from './labs/rate-limiter';
 import { distributedCacheLab } from './labs/distributed-cache';
 import { videoStreamingLab } from './labs/video-streaming';
 import { realTimeChatLab } from './labs/real-time-chat';
+import { notificationServiceLab } from './labs/notification-service';
 import { lruCacheChallenge } from './challenges/dsa/lru-cache';
 import { hashMapChallenge } from './challenges/dsa/hash-map';
 import { minHeapChallenge } from './challenges/dsa/min-heap';
@@ -152,6 +157,10 @@ export const RAW_PROBLEMS: readonly ProblemInput[] = [
   subsets,
   wordSearch,
   reverseLinkedList,
+  threeSum,
+  productExceptSelf,
+  levelOrder,
+  longestCommonSubsequence,
 ];
 
 function parseProblem(input: ProblemInput): Problem {
@@ -404,6 +413,7 @@ export const RAW_LABS: readonly ScenarioLabInput[] = [
   distributedCacheLab,
   videoStreamingLab,
   realTimeChatLab,
+  notificationServiceLab,
 ];
 
 let labCache: readonly ScenarioLab[] | undefined;
