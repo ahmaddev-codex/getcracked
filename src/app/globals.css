@@ -564,3 +564,34 @@ body {
   }
 }
 
+/* ── Physical Swap Motion Classes ────────────────────────────────────────── */
+/* Lift and arc to the right */
+.gc-swap-arc-right-1 { transform: translateY(-2rem) translateX(4.125rem) scale(1.1); z-index: 20; }
+.gc-swap-arc-right-2 { transform: translateY(-2.25rem) translateX(8.25rem) scale(1.1); z-index: 20; }
+.gc-swap-arc-right-3 { transform: translateY(-2.5rem) translateX(12.375rem) scale(1.1); z-index: 20; }
+.gc-swap-arc-right-4 { transform: translateY(-2.75rem) translateX(16.5rem) scale(1.1); z-index: 20; }
+.gc-swap-arc-right-5 { transform: translateY(-3rem) translateX(20.625rem) scale(1.1); z-index: 20; }
+.gc-swap-arc-right-6 { transform: translateY(-3rem) translateX(24.75rem) scale(1.1); z-index: 20; }
+
+/* Lower and arc to the left */
+.gc-swap-arc-left-1 { transform: translateY(1.75rem) translateX(-4.125rem) scale(0.95); z-index: 10; }
+.gc-swap-arc-left-2 { transform: translateY(2rem) translateX(-8.25rem) scale(0.95); z-index: 10; }
+.gc-swap-arc-left-3 { transform: translateY(2.25rem) translateX(-12.375rem) scale(0.95); z-index: 10; }
+.gc-swap-arc-left-4 { transform: translateY(2.5rem) translateX(-16.5rem) scale(0.95); z-index: 10; }
+.gc-swap-arc-left-5 { transform: translateY(2.75rem) translateX(-20.625rem) scale(0.95); z-index: 10; }
+.gc-swap-arc-left-6 { transform: translateY(2.75rem) translateX(-24.75rem) scale(0.95); z-index: 10; }
+
+/* Heap Array Swap Motion (56px stride = 3.5rem) */
+.gc-heap-swap-right-1 { transform: translateY(-1.75rem) translateX(3.5rem) scale(1.1); z-index: 20; }
+.gc-heap-swap-right-2 { transform: translateY(-2rem) translateX(7rem) scale(1.1); z-index: 20; }
+.gc-heap-swap-right-3 { transform: translateY(-2.25rem) translateX(10.5rem) scale(1.1); z-index: 20; }
+.gc-heap-swap-right-4 { transform: translateY(-2.5rem) translateX(14rem) scale(1.1); z-index: 20; }
+.gc-heap-swap-right-5 { transform: translateY(-2.75rem) translateX(17.5rem) scale(1.1); z-index: 20; }
+
+.gc-heap-swap-left-1 { transform: translateY(1.5rem) translateX(-3.5rem) scale(0.95); z-index: 10; }
+.gc-heap-swap-left-2 { transform: translateY(1.75rem) translateX(-7rem) scale(0.95); z-index: 10; }
+.gc-heap-swap-left-3 { transform: translateY(2rem) translateX(-10.5rem) scale(0.95); z-index: 10; }
+.gc-heap-swap-left-4 { transform: translateY(2.25rem) translateX(-14rem) scale(0.95); z-index: 10; }
+.gc-heap-swap-left-5 { transform: translateY(2.5rem) translateX(-17.5rem) scale(0.95); z-index: 10; }
+
+

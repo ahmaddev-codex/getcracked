@@ -317,10 +317,31 @@ export function simulateArray(
     let right = arr.length - 1;
     pushStep('Position Pointers', `Left pointer at index 0 (${arr[left]}), Right pointer at index ${right} (${arr[right]}).`, 'read', 'O(n)', 'let left = 0, right = arr.length - 1;', 2, [left, right], { left, right }, { type: 'pointer_move', fromIndex: left, toIndex: right });
     while (left < right) {
-      pushStep('Swap Across Buffer', `Swapping arr[${left}] (${arr[left]}) and arr[${right}] (${arr[right]}). Elements lift, cross over, and drop.`, 'swap', 'O(n)', `[arr[${left}], arr[${right}]] = [arr[${right}], arr[${left}]];`, 4, [left, right], { left, right }, { type: 'swap', fromIndex: left, toIndex: right });
+      pushStep(
+        'Lift & Cross Over',
+        `Swapping arr[${left}] (${arr[left]}) and arr[${right}] (${arr[right]}). Both elements lift into the air and travel along opposite arcs to each other's slot.`,
+        'swap',
+        'O(n)',
+        `[arr[${left}], arr[${right}]] = [arr[${right}], arr[${left}]];`,
+        4,
+        [left, right],
+        { left, right },
+        { type: 'swap', fromIndex: left, toIndex: right },
+      );
       const temp = arr[left];
       arr[left] = arr[right];
       arr[right] = temp;
+      pushStep(
+        'Landed in Swapped Slots',
+        `Completed swap: arr[${left}] is now ${arr[left]}, and arr[${right}] is now ${arr[right]}.`,
+        'write',
+        'O(1)',
+        `// Landed: arr[${left}]=${arr[left]}, arr[${right}]=${arr[right]}`,
+        4,
+        [left, right],
+        { left, right },
+        { type: 'drop', toIndex: left },
+      );
       left++;
       right--;
       pushStep('Advance Pointers Inward', `Moved left to ${left} and right to ${right}.`, 'read', 'O(n)', 'left++; right--;', 5, left <= right ? [left, right] : [], { left, right });
@@ -823,10 +844,31 @@ export function simulateHeap(
       pushStep('Compare with Parent', `Comparing child at index ${idx} (${heap[idx]}) with parent at index ${parentIdx} (${heap[parentIdx]}).`, 'compare', 'O(log n)', `if (heap[${idx}] < heap[${parentIdx}]) swap();`, 5, [idx, parentIdx], { child: idx, parent: parentIdx });
 
       if (heap[idx] < heap[parentIdx]) {
+        pushStep(
+          'Bubble-Up Crossover Swap',
+          `Child ${heap[idx]} is smaller than parent ${heap[parentIdx]}. Both elements lift into the air and cross over to swap positions.`,
+          'swap',
+          'O(log n)',
+          `[heap[${idx}], heap[${parentIdx}]] = [heap[${parentIdx}], heap[${idx}]];`,
+          6,
+          [idx, parentIdx],
+          { child: idx, parent: parentIdx },
+          { type: 'swap', fromIndex: idx, toIndex: parentIdx },
+        );
         const temp = heap[idx];
         heap[idx] = heap[parentIdx];
         heap[parentIdx] = temp;
-        pushStep('Bubble-Up Swap', `Swapped ${temp} with parent ${heap[idx]} along branch vector to restore min-heap invariant.`, 'swap', 'O(log n)', `[heap[${idx}], heap[${parentIdx}]] = [heap[${parentIdx}], heap[${idx}]];`, 6, [idx, parentIdx], { child: idx, parent: parentIdx }, { type: 'swap', fromIndex: idx, toIndex: parentIdx });
+        pushStep(
+          'Landed in Heap Positions',
+          `Swap confirmed: child elevated to parent position (${heap[parentIdx]}).`,
+          'write',
+          'O(1)',
+          `// Landed in heap: index ${parentIdx} holds ${heap[parentIdx]}`,
+          6,
+          [idx, parentIdx],
+          { child: idx, parent: parentIdx },
+          { type: 'drop', toIndex: parentIdx },
+        );
         idx = parentIdx;
       } else {
         pushStep('Invariant Restored', `Child ${heap[idx]} >= parent ${heap[parentIdx]}. Bubble-up complete.`, 'done', 'O(log n)', '// Invariant satisfied', 8, [idx]);
@@ -855,10 +897,31 @@ export function simulateHeap(
           if (right < heap.length && heap[right] < heap[smallest]) smallest = right;
 
           if (smallest !== idx) {
-            pushStep('Sift-Down Swap', `Parent (${heap[idx]}) is larger than smaller child (${heap[smallest]}). Swapping along vector.`, 'swap', 'O(log n)', `swap(${idx}, ${smallest});`, 9, [idx, smallest], { parent: idx, child: smallest }, { type: 'swap', fromIndex: idx, toIndex: smallest });
+            pushStep(
+              'Sift-Down Crossover Swap',
+              `Parent (${heap[idx]}) is larger than smaller child (${heap[smallest]}). Both elements lift and cross paths to swap.`,
+              'swap',
+              'O(log n)',
+              `swap(${idx}, ${smallest});`,
+              9,
+              [idx, smallest],
+              { parent: idx, child: smallest },
+              { type: 'swap', fromIndex: idx, toIndex: smallest },
+            );
             const temp = heap[idx];
             heap[idx] = heap[smallest];
             heap[smallest] = temp;
+            pushStep(
+              'Landed in Sifted Positions',
+              `Sift-down swap landed: parent descended, smaller child elevated to root/parent.`,
+              'write',
+              'O(1)',
+              `// Landed: index ${idx} holds ${heap[idx]}`,
+              9,
+              [idx, smallest],
+              { parent: idx, child: smallest },
+              { type: 'drop', toIndex: idx },
+            );
             idx = smallest;
           } else {
             pushStep('Sift-Down Complete', 'Parent is smaller than both children. Heap property fully restored.', 'done', 'O(log n)', 'return min;', 13, [idx]);

@@ -81,7 +81,12 @@ const eslintConfig = defineConfig([
    * throwaway prototype UI that predates the design system.
    */
   {
-    files: ["src/app/(dev)/**/*.tsx", "src/app/(spike)/**/*.tsx"],
+    files: [
+      "src/app/(dev)/**/*.tsx",
+      "src/app/(spike)/**/*.tsx",
+      "src/app/opengraph-image.tsx",
+      "src/app/twitter-image.tsx",
+    ],
     rules: { "no-restricted-syntax": "off" },
   },
 ]);

@@ -393,18 +393,37 @@ export function DataStructureWorkbench() {
                   {((currentStep?.state?.array as number[] | undefined) ?? arrayState).map(
                     (val: number, idx: number) => {
                       const isHighlighted = currentStep?.highlightIndices?.includes(idx);
-                      const isLifted =
-                        isHighlighted &&
-                        (currentStep?.motion?.type === 'lift' ||
-                          currentStep?.motion?.type === 'swap');
+                      let motionEffectClass = '';
+
+                      if (currentStep?.motion?.type === 'swap') {
+                        const from = currentStep.motion.fromIndex ?? -1;
+                        const to = currentStep.motion.toIndex ?? -1;
+                        if (idx === from && to !== -1) {
+                          const delta = to - from;
+                          const step = Math.min(6, Math.max(1, Math.abs(delta)));
+                          motionEffectClass = delta > 0 ? `gc-swap-arc-right-${step}` : `gc-swap-arc-left-${step}`;
+                        } else if (idx === to && from !== -1) {
+                          const delta = from - to;
+                          const step = Math.min(6, Math.max(1, Math.abs(delta)));
+                          motionEffectClass = delta > 0 ? `gc-swap-arc-right-${step}` : `gc-swap-arc-left-${step}`;
+                        }
+                      } else if (currentStep?.motion?.type === 'shift') {
+                        const from = currentStep.motion.fromIndex ?? -1;
+                        const to = currentStep.motion.toIndex ?? -1;
+                        if (idx === from && to !== -1) {
+                          motionEffectClass = to > from ? 'gc-swap-arc-right-1' : 'gc-swap-arc-left-1';
+                        }
+                      } else if (currentStep?.motion?.type === 'lift' && isHighlighted) {
+                        motionEffectClass = '-translate-y-8 shadow-2xl scale-110';
+                      }
 
                       return (
                         <div key={idx} className="flex flex-col items-center gap-1.5">
                           <span className="text-3xs font-mono text-foreground-muted">[{idx}]</span>
                           <div
                             className={`flex h-14 w-14 items-center justify-center rounded-md border-2 font-mono text-sm font-bold transition-all ${motionClass} ease-out ${
-                              isLifted
-                                ? '-translate-y-6 shadow-xl border-link bg-accent-strong text-accent-foreground scale-110'
+                              motionEffectClass
+                                ? `${motionEffectClass} border-link bg-accent-strong text-accent-foreground shadow-2xl`
                                 : isHighlighted
                                   ? 'border-link bg-accent-strong text-accent-foreground scale-105 shadow-md'
                                   : 'border-border-strong bg-surface text-foreground'
@@ -624,14 +643,34 @@ export function DataStructureWorkbench() {
                   {((currentStep?.state?.heap as number[] | undefined) ?? heapState).map(
                     (val: number, idx: number) => {
                       const isHighlighted = currentStep?.highlightIndices?.includes(idx);
+                      let heapMotionClass = '';
+
+                      if (currentStep?.motion?.type === 'swap') {
+                        const from = currentStep.motion.fromIndex ?? -1;
+                        const to = currentStep.motion.toIndex ?? -1;
+                        if (idx === from && to !== -1) {
+                          const delta = to - from;
+                          const step = Math.min(5, Math.max(1, Math.abs(delta)));
+                          heapMotionClass = delta > 0 ? `gc-heap-swap-right-${step}` : `gc-heap-swap-left-${step}`;
+                        } else if (idx === to && from !== -1) {
+                          const delta = from - to;
+                          const step = Math.min(5, Math.max(1, Math.abs(delta)));
+                          heapMotionClass = delta > 0 ? `gc-heap-swap-right-${step}` : `gc-heap-swap-left-${step}`;
+                        }
+                      } else if (currentStep?.motion?.type === 'lift' && isHighlighted) {
+                        heapMotionClass = '-translate-y-6 shadow-xl scale-110';
+                      }
+
                       return (
                         <div key={idx} className="flex flex-col items-center gap-1">
                           <span className="text-3xs font-mono text-foreground-muted">[{idx}]</span>
                           <div
                             className={`flex h-12 w-12 items-center justify-center rounded border-2 font-mono text-xs font-bold transition-all ${motionClass} ${
-                              isHighlighted
-                                ? 'border-link bg-accent-strong text-accent-foreground scale-105 shadow-md -translate-y-1'
-                                : 'border-border-strong bg-surface text-foreground'
+                              heapMotionClass
+                                ? `${heapMotionClass} border-link bg-accent-strong text-accent-foreground shadow-2xl`
+                                : isHighlighted
+                                  ? 'border-link bg-accent-strong text-accent-foreground scale-105 shadow-md -translate-y-1'
+                                  : 'border-border-strong bg-surface text-foreground'
                             }`}
                           >
                             {val}
