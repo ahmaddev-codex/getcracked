@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { Node } from '@/components/ui/Node';
 import { Page } from '@/components/ui/Page';
 import { Claim } from '@/components/company/Claim';
+import { CompanyLogo } from '@/components/company/CompanyLogo';
 import { ProblemTable } from '@/components/problem/ProblemTable';
 import { findCompany, getCompanies, sourcesOf } from '@/content/companies';
 import { filterProblems } from '@/lib/catalog';
@@ -53,9 +54,12 @@ export default async function CompanyPage(props: CompanyRouteProps) {
             ← Companies
           </Link>
         </p>
-        <h1 className="font-sans text-4xl font-bold tracking-tight sm:text-5xl">
-          {company.name}
-        </h1>
+        <div className="flex items-center gap-3">
+          <CompanyLogo name={company.name} size={40} className="rounded-xs" />
+          <h1 className="font-sans text-4xl font-bold tracking-tight sm:text-5xl">
+            {company.name}
+          </h1>
+        </div>
         <p className="max-w-2xl text-sm text-foreground-muted">{company.summary}</p>
       </header>
 

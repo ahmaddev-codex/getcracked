@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { safeNext } from '@/lib/auth-redirect';
 import { Button } from '@/components/ui/Button';
@@ -33,7 +34,17 @@ export function SignInForm({ providers }: { providers: ReadonlyArray<{ id: OAuth
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 p-8 text-center">
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col items-center gap-2">
+        <Link href="/" className="inline-flex justify-center transition-transform hover:scale-105">
+          <Image
+            src="/getcracked.png"
+            alt="GetCracked"
+            width={72}
+            height={59}
+            className="rounded-node object-contain drop-shadow-xs"
+            priority
+          />
+        </Link>
         <h1 className="font-sans text-2xl font-semibold tracking-tight">Sign in</h1>
         <p className="text-sm opacity-70">Pick up where you left off.</p>
       </div>

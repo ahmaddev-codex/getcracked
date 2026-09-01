@@ -20,6 +20,7 @@ import { catalogCounts } from '@/lib/catalog';
 import { conceptCount } from '@/content/concepts';
 import { getLabs, getTopics, getTrack } from '@/content/registry';
 import { getCompanies } from '@/content/companies';
+import { CompanyLogo } from '@/components/company/CompanyLogo';
 
 /**
  * The landing page.
@@ -272,6 +273,20 @@ export default function LandingPage() {
             Microsoft, Apple, Netflix, and Uber — sourced from official engineering blogs,
             recruiter documentation, and public tech talks.
           </p>
+        </div>
+
+        {/* Company Logos Grid from logo.dev */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {['Amazon', 'Google', 'Meta', 'Microsoft', 'Apple', 'Netflix', 'Uber'].map((name) => (
+            <Link
+              key={name}
+              href={`/companies/${name.toLowerCase()}`}
+              className="node-surface node-interactive flex items-center gap-2 px-3 py-1.5 bg-surface text-xs font-semibold hover:border-border-strong transition-all"
+            >
+              <CompanyLogo name={name} size={18} className="rounded-xs" />
+              <span>{name}</span>
+            </Link>
+          ))}
         </div>
 
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

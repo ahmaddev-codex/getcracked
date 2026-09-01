@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
+import { CompanyLogo } from '@/components/company/CompanyLogo';
 
 /**
  * Difficulty, topic and company filters (A4, D1).
@@ -84,8 +85,10 @@ export function Filters({
               tone={active('company', c.name) ? 'strong' : 'surface'}
               onClick={() => toggle('company', c.name)}
               aria-pressed={active('company', c.name)}
+              className="inline-flex items-center gap-1.5"
             >
-              {c.name}{' '}
+              <CompanyLogo name={c.name} size={14} className="rounded-xs" />
+              <span>{c.name}</span>{' '}
               {/* The count, because a tag that returns two problems and one
                   that returns twenty look identical without it. */}
               <span className="opacity-60">{c.count}</span>

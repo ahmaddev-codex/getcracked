@@ -13,7 +13,14 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
+      { protocol: 'https', hostname: 'img.logo.dev' },
     ],
+  },
+  env: {
+    NEXT_PUBLIC_LOGO_PUBLISHABLE_KEY:
+      process.env.LOGO_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_LOGO_PUBLISHABLE_KEY ||
+      '',
   },
   async redirects() {
     return [
