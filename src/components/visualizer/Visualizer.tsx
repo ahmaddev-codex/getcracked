@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Node } from '@/components/ui/Node';
+import { RotateCcw, Sparkles } from 'lucide-react';
 import { stateAtStep, type Scalar, type Trace } from '@/lib/trace/protocol';
 import { describeStep } from '@/lib/visualizer/array-renderer';
 import { selectRenderer, type VisualKind } from '@/lib/visualizer/registry';
@@ -512,13 +513,15 @@ export function Visualizer({
           }}
           disabled={step === 0 && !playing}
         >
-          ↺ Start over
+          <RotateCcw size={13} className="inline mr-1" aria-hidden />
+          Start over
         </Button>
         <Button tone="surface" onClick={jumpToDivergence}>
           Jump to end
         </Button>
         <Button tone="surface" onClick={handleExplainState} title="Ask AI assistant to explain this animation state">
-          ✨ Explain state
+          <Sparkles size={13} className="inline mr-1 text-accent-strong" aria-hidden />
+          Explain state
         </Button>
 
         <div className="flex items-center gap-1">

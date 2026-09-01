@@ -402,9 +402,10 @@ export function Workspace({
             });
           }}
           disabled={running}
-          className="text-xs"
+          className="text-xs flex items-center gap-1.5"
         >
-          {result?.passed ? '✨ Review my code' : '✨ Ask Assistant'}
+          <Sparkles size={13} className="text-accent-strong shrink-0" aria-hidden />
+          <span>{result?.passed ? 'Review my code' : 'Ask Assistant'}</span>
         </Button>
 
         {result?.passed && (

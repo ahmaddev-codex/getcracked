@@ -4,10 +4,11 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAssistant } from './AssistantContext';
-import { Lightbulb, Bug, Clock, Code, Zap } from 'lucide-react';
+import { Lightbulb, Bug, Clock, Code, Zap, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Node } from '@/components/ui/Node';
 import { Markdown } from '@/components/Markdown';
+import { cleanAssistantText } from '@/lib/assistant/sanitize';
 
 export function AssistantPanel() {
   const {
@@ -115,7 +116,7 @@ export function AssistantPanel() {
         aria-labelledby="assistant-title"
         tabIndex={-1}
         data-closing={closing}
-        className="gc-panel relative flex h-full w-full flex-col border-l-2 border-border-strong bg-surface shadow-2xl sm:max-w-md md:max-w-lg outline-none"
+        className="gc-panel relative flex h-full w-full max-w-xl flex-col border-l-2 border-border-strong bg-surface shadow-2xl outline-none font-node"
       >
         {/* Header */}
         <header className="flex items-center justify-between border-b-2 border-border-strong bg-surface p-4">
@@ -134,7 +135,7 @@ export function AssistantPanel() {
           <div className="flex items-center gap-2">
             {quota.signedIn ? (
               <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 font-mono text-xs border border-border-strong rounded-sm ${quota.remaining > 3
+                className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs border border-border-strong rounded-sm font-semibold ${quota.remaining > 3
                     ? 'bg-success/15 text-success'
                     : quota.remaining > 0
                       ? 'bg-warning/15 text-warning'
@@ -170,7 +171,7 @@ export function AssistantPanel() {
               className="flex h-7 w-7 items-center justify-center rounded-sm border-2 border-border-strong bg-surface text-sm font-bold hover:bg-surface-muted"
               aria-label="Close assistant panel"
             >
-              ✕
+              <X size={15} aria-hidden />
             </button>
           </div>
         </header>
@@ -239,34 +240,34 @@ export function AssistantPanel() {
           {messages.map((msg, idx) => (
             <div
               key={idx}
-              className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'
+              className={`flex flex-col w-full ${msg.role === 'user' ? 'items-end' : 'items-start'
                 }`}
             >
-              <div className="mb-1 text-xs font-mono uppercase text-foreground-muted">
+              <div className="mb-1 text-xs font-bold uppercase tracking-wider text-foreground-muted">
                 {msg.role === 'user' ? 'You' : 'Assistant'}
               </div>
               <div
-                className={`max-w-xl rounded-md border-2 border-border-strong p-3 text-sm leading-relaxed ${msg.role === 'user'
-                    ? 'bg-accent font-medium text-accent-foreground shadow-(--shadow-node)'
+                className={`w-full max-w-full rounded-md border-2 border-border-strong p-3.5 text-sm leading-relaxed overflow-x-auto break-words ${msg.role === 'user'
+                    ? 'bg-accent font-medium text-accent-foreground shadow-(--shadow-node) sm:max-w-lg'
                     : 'bg-surface text-foreground shadow-(--shadow-node)'
                   }`}
               >
                 {msg.role === 'user' ? (
                   <p className="whitespace-pre-wrap">{msg.content}</p>
                 ) : (
-                  <Markdown>{msg.content}</Markdown>
+                  <Markdown>{cleanAssistantText(msg.content)}</Markdown>
                 )}
               </div>
             </div>
           ))}
 
           {streamingContent && (
-            <div className="flex flex-col items-start">
-              <div className="mb-1 text-xs font-mono uppercase text-foreground-muted">
+            <div className="flex flex-col items-start w-full">
+              <div className="mb-1 text-xs font-bold uppercase tracking-wider text-foreground-muted">
                 Assistant (Generating…)
               </div>
-              <div className="max-w-xl rounded-md border-2 border-border-strong bg-surface p-3 text-sm leading-relaxed shadow-(--shadow-node)">
-                <Markdown>{streamingContent}</Markdown>
+              <div className="w-full max-w-full rounded-md border-2 border-border-strong bg-surface p-3.5 text-sm leading-relaxed shadow-(--shadow-node) overflow-x-auto break-words">
+                <Markdown>{cleanAssistantText(streamingContent)}</Markdown>
               </div>
             </div>
           )}
@@ -323,7 +324,7 @@ export function AssistantPanel() {
                 }
                 disabled={!quota.signedIn || isStreaming || quota.remaining === 0}
                 rows={2}
-                className="w-full resize-none rounded-sm border-2 border-border-strong bg-surface p-2.5 text-xs text-foreground placeholder:text-foreground-muted focus:outline-2 focus:outline-link disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full resize-none rounded-sm border-2 border-border-strong bg-surface p-2.5 text-xs font-node text-foreground placeholder:text-foreground-muted focus:outline-2 focus:outline-link disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
 

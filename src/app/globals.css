@@ -255,6 +255,10 @@
   line-height: 0.75rem;
 }
 
+@utility font-node {
+  font-family: var(--font-node);
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

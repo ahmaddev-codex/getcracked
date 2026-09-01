@@ -129,7 +129,7 @@ export function PersonalizedDashboard() {
           </div>
 
           <div className="pt-2 border-t border-border-subtle text-2xs text-foreground-muted">
-            Intervals expand exponentially (1d $\to$ 3d $\to$ 7d $\to$ 14d $\to$ 30d).
+            Review schedule: 1d → 3d → 7d → 14d → 30d intervals.
           </div>
         </Node>
 
