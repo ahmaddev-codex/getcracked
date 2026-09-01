@@ -30,9 +30,15 @@ import {
   simulateHashMap,
   simulateGraph,
 } from '@/lib/visualizer/data-structures';
+import {
+  getCodeSnippet,
+  SUPPORTED_CODE_LANGUAGES,
+  type AlgorithmicLanguage,
+} from '@/lib/visualizer/code-snippets';
 
 export function DataStructureWorkbench() {
   const [selectedType, setSelectedType] = useState<DataStructureType>('array');
+  const [codeLang, setCodeLang] = useState<AlgorithmicLanguage>('typescript');
   const currentMeta = useMemo(
     () => DATA_STRUCTURE_REGISTRY.find((d) => d.id === selectedType)!,
     [selectedType],
@@ -150,7 +156,11 @@ export function DataStructureWorkbench() {
   }, [isPlaying, steps.length, speed]);
 
   const currentStep = steps[safeStepIdx] || steps[0];
-  const activeCodeSnippet = currentMeta.codeSnippets[selectedOp] || currentStep?.codeSnippet || '';
+  const activeCodeSnippet =
+    getCodeSnippet(selectedType, selectedOp, codeLang) ||
+    currentMeta.codeSnippets[selectedOp] ||
+    currentStep?.codeSnippet ||
+    '';
 
   return (
     <div className="flex flex-col gap-6">
@@ -851,12 +861,30 @@ export function DataStructureWorkbench() {
           tone="surface"
           className="flex flex-col gap-3 p-4 min-h-80 justify-between lg:col-span-5 xl:col-span-4"
         >
-          <div className="flex items-center justify-between border-b border-border-subtle pb-2.5">
-            <div className="flex items-center gap-2">
-              <Code2 size={15} className="text-link" />
-              <span className="text-xs font-bold">Algorithmic Code</span>
+          <div className="flex flex-col gap-2 border-b border-border-subtle pb-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Code2 size={15} className="text-link" />
+                <span className="text-xs font-bold">Algorithmic Code</span>
+              </div>
+              <span className="text-3xs font-mono font-semibold text-link uppercase">
+                {codeLang}
+              </span>
             </div>
-            <span className="text-3xs font-mono text-foreground-muted">JavaScript / TS</span>
+
+            {/* Language Selector Pills */}
+            <div className="flex flex-wrap items-center gap-1">
+              {SUPPORTED_CODE_LANGUAGES.map((l) => (
+                <Button
+                  key={l.id}
+                  tone={codeLang === l.id ? 'strong' : 'surface'}
+                  onClick={() => setCodeLang(l.id)}
+                  className="px-2 py-0.5 text-3xs font-mono"
+                >
+                  {l.label}
+                </Button>
+              ))}
+            </div>
           </div>
 
           {/* Code Lines with Active Line Highlight */}

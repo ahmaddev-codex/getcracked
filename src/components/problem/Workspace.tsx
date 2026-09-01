@@ -23,9 +23,15 @@ import { useSession } from '@/lib/auth-client';
 import { Sparkles, Share2, MessageSquare } from 'lucide-react';
 import { entryFor, type Language, type RunnableLanguage, type TestSpec, type Tier } from '@/content/schema';
 import type { SpecResult } from '@/content/test-runner';
+import { convertJsToTypeScript } from '@/lib/runtime/type-inference';
 
-function defaultStarterFor(lang: RunnableLanguage, entry: string, jsStarter: string): string {
-  if (lang === 'typescript') return jsStarter;
+function defaultStarterFor(
+  lang: RunnableLanguage,
+  entry: string,
+  jsStarter: string,
+  spec: TestSpec,
+): string {
+  if (lang === 'typescript') return convertJsToTypeScript(jsStarter, spec);
   if (lang === 'java') {
     return `class Solution {\n    public Object ${entry}() {\n        // Write your Java solution here\n        return 0;\n    }\n}`;
   }
@@ -80,7 +86,7 @@ export function Workspace({
   const [language, setLanguage] = useState<RunnableLanguage>(initialLanguage);
   const starter =
     starterByLanguage?.[language] ??
-    defaultStarterFor(language, entryFor(spec, language), starterCode);
+    defaultStarterFor(language, entryFor(spec, language), starterCode, spec);
 
   const [result, setResult] = useState<SpecResult | null>(null);
   /**

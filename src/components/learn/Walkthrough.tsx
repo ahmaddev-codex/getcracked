@@ -21,6 +21,8 @@ function callSignature(entry: string, args: unknown[]): string {
   return `${entry}(${args.map((a) => JSON.stringify(a)).join(', ')})`;
 }
 
+import { convertJsToTypeScript } from '@/lib/runtime/type-inference';
+
 export function Walkthrough({
   entry,
   entryByLanguage,
@@ -66,7 +68,12 @@ export function Walkthrough({
 
   const source =
     sourceByLanguage[language] ??
-    (language === 'typescript' ? sourceByLanguage.javascript : undefined);
+    (language === 'typescript' && sourceByLanguage.javascript
+      ? convertJsToTypeScript(
+          sourceByLanguage.javascript,
+          walkthroughSpec({ entry, entryByLanguage, args }),
+        )
+      : undefined);
 
   useEffect(() => {
     const client = new RuntimeClient();
@@ -81,7 +88,12 @@ export function Walkthrough({
     async (target: RunnableLanguage) => {
       const code =
         sourceByLanguage[target] ??
-        (target === 'typescript' ? sourceByLanguage.javascript : undefined);
+        (target === 'typescript' && sourceByLanguage.javascript
+          ? convertJsToTypeScript(
+              sourceByLanguage.javascript,
+              walkthroughSpec({ entry, entryByLanguage, args }),
+            )
+          : undefined);
       if (!runtime.current || !code) return;
       setRunning(true);
       setFailure(null);
