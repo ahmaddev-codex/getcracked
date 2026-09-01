@@ -90,6 +90,33 @@ export const CONCEPT_CATEGORIES: ConceptCategory[] = [
         term: "Load balancer",
         definition: "Distributes incoming requests across a pool of servers.",
         matters: "The single most common first answer to 'how do we handle more traffic', and the point where health checking and session affinity become your problem.",
+        dimensions: {
+          problem: "A single application server runs out of compute/memory capacity and becomes a single point of failure under peak user traffic.",
+          whyItHappens: "Traffic surges or organic scale exceed the CPU core limits and network bandwidth of a single physical or virtual host.",
+          primitiveSolution: "Scale vertically by provisioning an oversized cloud instance with maximum CPU and RAM (e.g. 128 vCPUs, 512GB RAM).",
+          scaleLimit: "Vertical scaling hits a hardware ceiling, incurs exponential cloud costs, and requires full system downtime during hardware failure or reboot.",
+          component: "Load Balancer (Layer 4 TCP / Layer 7 HTTP Reverse Proxy like Nginx, Envoy, AWS ALB).",
+          tradeOffs: {
+            gains: [
+              "Horizontal scalability by fanning out traffic across arbitrary backend worker pools",
+              "Zero-downtime rolling deployments and blue/green traffic shifting",
+              "Automatic health check-based failover isolating unhealthy instances",
+            ],
+            sacrifices: [
+              "Adds an extra network hop and 1-3ms latency to the ingress request path",
+              "Requires state externalization (sessions must move to Redis or stateless JWTs)",
+              "Load balancer itself requires redundant active-passive/active-active setup to avoid becoming an SPOF",
+            ],
+          },
+          failureModes: "If the load balancer itself crashes or runs out of ephemeral sockets, all inbound ingress traffic drops immediately unless DNS Anycast or BGP/ECMP failover takes over.",
+          alternatives: [
+            "DNS Round Robin (primitive, lacks instant health checking or weighted routing)",
+            "Client-side load balancing via gRPC / service mesh (bypasses centralized LB hop)",
+            "Direct IP peering with ECMP (Layer 3 routing at datacenter border)",
+          ],
+          interviewSignal: "Senior candidates proactively contrast L4 (transport level, ultra-fast TCP throughput) vs L7 (application level, TLS termination, path routing) and address sticky sessions without creating load skew.",
+          realSystem: "GitHub uses HAProxy for L4 TCP routing into Envoy clusters for L7 application routing; AWS ALB fronting Amazon retail services.",
+        },
       },
       {
         slug: "reverse-proxy",
@@ -102,6 +129,32 @@ export const CONCEPT_CATEGORIES: ConceptCategory[] = [
         term: "CDN",
         definition: "Geographically distributed caches serving content near the user.",
         matters: "Latency is bounded by the speed of light. Moving bytes closer is the only fix that beats physics.",
+        dimensions: {
+          problem: "Global users suffer 150-300ms round-trip latency fetching static assets and media files from a centralized origin datacenter.",
+          whyItHappens: "Physical distance and speed-of-light propagation across transoceanic fiber links introduce irreducible geographic latency.",
+          primitiveSolution: "Host all static assets directly on the main application origin servers or an origin blob storage bucket.",
+          scaleLimit: "Origin servers drown in concurrent bandwidth consumption (gigabits/sec), starving API capacity while international latency remains unbearable.",
+          component: "Content Delivery Network (CDN) with geo-distributed Edge Points of Presence (PoPs) like Cloudflare, Fastly, or CloudFront.",
+          tradeOffs: {
+            gains: [
+              "Sub-20ms edge latency for cached assets by terminating TLS and HTTP requests near the user",
+              "Shields origin database and web servers from 80-95% of asset traffic spikes",
+              "Built-in DDoS mitigation and edge SSL termination",
+            ],
+            sacrifices: [
+              "Cache invalidation complexity (stale CSS/JS/images requiring content-hashing)",
+              "Cache-miss penalty adds 1 extra round-trip to origin on initial fetch",
+              "High egress bandwidth bill if hit-rates plummet or large media is poorly cached",
+            ],
+          },
+          failureModes: "Edge network configuration drift, widespread BGP routing hijacking, or massive cache stampede when all edge PoPs simultaneously expire a hot asset.",
+          alternatives: [
+            "Multi-region origin server deployments (cost-prohibitive for static file distribution)",
+            "Browser HTTP caching via Cache-Control headers alone (no geo-routing or DDoS shield)",
+          ],
+          interviewSignal: "Strong candidates differentiate cacheable static content from dynamic edge computation, mention cache-busting hashing strategies, and calculate bandwidth egress cost savings.",
+          realSystem: "Netflix serves 100% of video streaming bytes via Open Connect CDN appliances colocated inside ISP datacenters worldwide.",
+        },
       },
       {
         slug: "dns",
@@ -122,6 +175,33 @@ export const CONCEPT_CATEGORIES: ConceptCategory[] = [
         term: "API gateway",
         definition: "A single entry point handling routing, auth, and rate limiting for many services.",
         matters: "Removes cross-cutting duplication, at the cost of a component every request depends on.",
+        dimensions: {
+          problem: "Clients must discover, authenticate, and call dozens of internal microservices individually across changing internal IP addresses and protocols.",
+          whyItHappens: "Service decomposition splits a monolith into multiple bounded contexts with different auth tokens, rate limits, and network ports.",
+          primitiveSolution: "Expose every microservice directly to the public internet, requiring each client to orchestrate calls and each service to implement auth and TLS.",
+          scaleLimit: "Security nightmare (huge public attack surface), massive network chatter on mobile networks (N network calls per screen), and zero centralized observability.",
+          component: "API Gateway (Kong, Envoy, AWS API Gateway, Zuul) providing a single reverse-proxy entrypoint with cross-cutting plugins.",
+          tradeOffs: {
+            gains: [
+              "Centralized authentication, rate limiting, SSL termination, and request telemetry",
+              "Protocol translation (e.g. public HTTPS/JSON to internal high-performance gRPC)",
+              "Request aggregation (combining multiple backend calls into one client payload)",
+            ],
+            sacrifices: [
+              "Creates a centralized bottleneck and single point of failure in the ingress architecture",
+              "Can become a dumping ground for business logic ('fat gateway' anti-pattern)",
+              "Introduces an additional latency hop (2-10ms depending on plugin pipeline)",
+            ],
+          },
+          failureModes: "Gateway CPU exhaustion due to unbounded JSON parsing or misconfigured Lua/WASM plugins, causing all ingress traffic for the entire company to fail with 504 Gateway Timeout.",
+          alternatives: [
+            "BFF (Backend-for-Frontend) per client platform (web, mobile, third-party)",
+            "Direct ingress via Envoy service mesh ingress router",
+            "Monolithic reverse proxy with simple path routing (Nginx)",
+          ],
+          interviewSignal: "Interviewers look for candidates who keep the gateway thin (auth, rate limiting, routing) and avoid putting domain business logic or DB queries into the gateway layer.",
+          realSystem: "Netflix Zuul handles 2+ trillion daily API calls, doing dynamic routing, token validation, and canary traffic shaping at edge ingress.",
+        },
       },
       {
         slug: "microservices",
@@ -154,6 +234,30 @@ export const CONCEPT_CATEGORIES: ConceptCategory[] = [
         term: "SQL vs NoSQL",
         definition: "Relational schemas and joins versus flexible documents and denormalisation.",
         matters: "The honest question is not which is better but whether your access patterns are known in advance.",
+        dimensions: {
+          problem: "A rapidly growing application needs to choose a persistent data storage paradigm that balances complex relational integrity with unbounded horizontal write throughput.",
+          whyItHappens: "Relational constraints (ACID, foreign keys, multi-table joins) conflict mathematically with distributed partition tolerance (CAP theorem).",
+          primitiveSolution: "Default to a single relational database (PostgreSQL/MySQL) for every data type regardless of access patterns or volume.",
+          scaleLimit: "Relational databases struggle to scale writes beyond single-server I/O limits, and complex cross-table joins grind to a halt under terabyte-scale datasets.",
+          component: "Polyglot Persistence (relational SQL like PostgreSQL for transactional financial ledger alongside distributed NoSQL like DynamoDB/Cassandra for high-velocity telemetry/feeds).",
+          tradeOffs: {
+            gains: [
+              "SQL provides ACID guarantees, flexible ad-hoc querying, and strict schema validation",
+              "NoSQL provides predictable single-digit millisecond latency and horizontal partitioning to petabytes",
+            ],
+            sacrifices: [
+              "SQL requires complex manual sharding to scale writes horizontally",
+              "NoSQL sacrifices ad-hoc joins and multi-record transactions, forcing denormalization and client-side joins",
+            ],
+          },
+          failureModes: "Running unindexed full-table joins in SQL locking database connections; choosing an improper partition key in NoSQL causing hot partition throttling.",
+          alternatives: [
+            "NewSQL distributed relational engines (CockroachDB, Google Spanner) offering distributed ACID at higher hardware cost",
+            "Document stores (MongoDB) for semi-structured dynamic schemas",
+          ],
+          interviewSignal: "Never declare SQL or NoSQL as universally superior. Ground the choice in access patterns: known primary-key lookups vs ad-hoc multi-table reporting queries.",
+          realSystem: "Uber uses PostgreSQL for schemas requiring strict relational constraints while running Schemaless (built on MySQL) and Cassandra for high-throughput trip telematics.",
+        },
       },
       {
         slug: "indexing",
@@ -166,6 +270,32 @@ export const CONCEPT_CATEGORIES: ConceptCategory[] = [
         term: "Sharding",
         definition: "Splitting data across machines by a partition key.",
         matters: "The key choice is nearly irreversible and decides whether queries stay local or fan out to every shard.",
+        dimensions: {
+          problem: "A monolithic database exceeds disk capacity, IOPS limits, and memory buffer pool size on the largest available cloud instance.",
+          whyItHappens: "Data volume and write traffic grow exponentially beyond the physical limits of single-node storage and memory architectures.",
+          primitiveSolution: "Scale the database instance vertically to the largest available instance or run periodic batch archival scripts deleting historical data.",
+          scaleLimit: "Vertical limits are reached (e.g. AWS RDS 64TB / 256GB RAM limit), and vacuuming/indexing multi-billion row tables degrades read and write latencies.",
+          component: "Database Sharding (horizontal range-based, hash-based, or directory-based partitioning across independent database nodes).",
+          tradeOffs: {
+            gains: [
+              "Unbounded horizontal write throughput and storage capacity linearly proportional to shard count",
+              "Isolates hardware failure to a subset (1/N) of total user data",
+            ],
+            sacrifices: [
+              "Cross-shard joins and distributed transactions (two-phase commit) are prohibitively slow and complex",
+              "Re-sharding when changing partition keys or adding shards is an operationally hazardous live migration",
+              "Hot shard skew if the partition key is unevenly distributed (e.g. celebrity user problem)",
+            ],
+          },
+          failureModes: "A single hot shard exhausts CPU/IOPS while neighboring shards sit idle, causing localized outages for users hashed to that node.",
+          alternatives: [
+            "Read replicas (scales read queries only, does not solve write or disk limits)",
+            "Distributed NewSQL (CockroachDB/Spanner) handling automatic transparent re-balancing",
+            "Time-series table partitioning (PostgreSQL native partitioning)",
+          ],
+          interviewSignal: "Interviewers listen for the specific choice of shard key: hashing vs range, how to prevent hotspotting, and acknowledging that secondary index lookups require scatter-gather queries.",
+          realSystem: "Slack shards MySQL databases by workspace ID; Instagram initially sharded PostgreSQL instances using custom 64-bit ID generation algorithms incorporating shard IDs.",
+        },
       },
       {
         slug: "replication",
@@ -192,6 +322,33 @@ export const CONCEPT_CATEGORIES: ConceptCategory[] = [
         term: "Cache-aside",
         definition: "The application checks the cache, and on a miss loads from the store and populates it.",
         matters: "The default because it is simple and the cache failing only costs latency, not correctness.",
+        dimensions: {
+          problem: "Read-heavy traffic repeatedly hits the relational database with the same queries, driving DB CPU to 100% and causing connection timeouts.",
+          whyItHappens: "Databases read from disk/B-trees with query planning overhead, taking 5-50ms per query, which exhausts database thread pools at thousands of QPS.",
+          primitiveSolution: "Increase database connection pool size or rely solely on the database's internal shared buffer pool.",
+          scaleLimit: "Database connection limits (e.g. 5,000 connections) are exhausted, memory pressure causes disk thrashing, and database queries fail under spike traffic.",
+          component: "Cache-Aside Pattern (Lazy Loading) using an in-memory key-value store (Redis or Memcached).",
+          tradeOffs: {
+            gains: [
+              "Sub-millisecond read latency from RAM memory lookups",
+              "Protects the persistent database from 80-99% of read volume",
+              "Resilient to cache outages — a cache crash drops performance to DB baseline without data loss",
+            ],
+            sacrifices: [
+              "Cache invalidation difficulty: risk of serving stale data until TTL expires or write-path invalidates",
+              "Cache-miss penalty adds latency on first request",
+              "Cache stampede risk when popular cached keys expire simultaneously",
+            ],
+          },
+          failureModes: "Cache stampede (thundering herd) where 10,000 concurrent requests miss the same expired key simultaneously, slamming the primary database and knocking it offline.",
+          alternatives: [
+            "Write-Through / Write-Behind Cache (higher write consistency, higher broker complexity)",
+            "Read-Through Cache with automatic population",
+            "Application in-memory local caching (Guava/LRU, fast but causes memory divergence across servers)",
+          ],
+          interviewSignal: "Mention TTL strategies, jitter to prevent synchronized expiration, and lock-based cache stampede prevention (single-flight / mutex on cache miss).",
+          realSystem: "Twitter and Reddit cache timelines and user profiles in massive Redis/Memcached clusters fronting their persistent datastores.",
+        },
       },
       {
         slug: "write-through",
@@ -224,12 +381,65 @@ export const CONCEPT_CATEGORIES: ConceptCategory[] = [
         term: "Message queue",
         definition: "A durable buffer between producers and consumers.",
         matters: "Absorbs bursts and lets a slow consumer fall behind without dropping work or blocking the producer.",
+        dimensions: {
+          problem: "Synchronous HTTP request handlers attempt to execute heavy tasks (video transcoding, email sending, PDF generation), causing client timeouts and server thread exhaustion.",
+          whyItHappens: "Synchronous request-response coupling blocks web worker threads until long-running downstream I/O operations complete.",
+          primitiveSolution: "Spawn background threads or asynchronous promises inside the active web server process.",
+          scaleLimit: "If the web process crashes or restarts during a deployment, in-flight background jobs vanish; traffic spikes cause memory bloat and thread starvation.",
+          component: "Message Queue (Point-to-Point Task Queue like RabbitMQ, Amazon SQS, or Redis BullMQ).",
+          tradeOffs: {
+            gains: [
+              "Temporal decoupling: producers return 202 Accepted in 10ms while workers process jobs asynchronously",
+              "Peak traffic smoothing: spikes are buffered in the queue rather than dropping requests",
+              "Independent elastic autoscaling of consumer worker fleets based on queue depth",
+            ],
+            sacrifices: [
+              "Eventual consistency: clients must poll or use WebSockets/SSE to learn when background work finishes",
+              "Message duplication risk requiring idempotent consumer processing",
+              "Operational overhead of monitoring queue depth, lag, and dead-letter backlogs",
+            ],
+          },
+          failureModes: "Consumer starvation or slow consumer lag where messages accumulate faster than workers drain them, leading to storage exhaustion or hours-long processing delays.",
+          alternatives: [
+            "Cron jobs polling a database table (primitive, high polling DB load, high latency)",
+            "Distributed log streaming (Kafka) when ordering across millions of events or replay is mandatory",
+          ],
+          interviewSignal: "Strong candidates emphasize producer-consumer decoupling, at-least-once delivery implications, and why consumer idempotency is mandatory.",
+          realSystem: "Shopify buffers flash sale order checkout jobs through message queues; Stripe queues asynchronous webhook deliveries to merchants.",
+        },
       },
       {
         slug: "pub-sub",
         term: "Publish/subscribe",
         definition: "Producers broadcast; any number of subscribers receive independently.",
         matters: "Adding a consumer needs no change to the producer, which is what makes event-driven systems extensible.",
+        dimensions: {
+          problem: "When an event occurs (e.g. user signs up), multiple disparate services (billing, analytics, notification, fraud detection) must react without tight point-to-point coupling.",
+          whyItHappens: "Direct HTTP RPC calls from producer to N consumer services create high latency, cascading failures, and tight deployment dependencies.",
+          primitiveSolution: "The primary service loops through and synchronously calls HTTP APIs of every interested downstream service.",
+          scaleLimit: "If any downstream service is slow or down, the main transaction blocks or fails; adding a new consumer requires editing and redeploying the producer.",
+          component: "Publish/Subscribe Event Stream (Kafka, Apache Pulsar, Google Cloud Pub/Sub, AWS SNS).",
+          tradeOffs: {
+            gains: [
+              "Zero coupling: producers emit immutable events without knowing who or how many consumers exist",
+              "High-throughput log retention allowing replay of historical data for auditing or new service bootstrapping",
+              "Independent consumer group offsets and processing rates",
+            ],
+            sacrifices: [
+              "Eventual consistency across downstream projections and read models",
+              "Complex schema evolution requiring strict contracts (Protobuf/Avro with Schema Registry)",
+              "Distributed partition coordination and rebalance pauses",
+            ],
+          },
+          failureModes: "Unhandled consumer crashes causing repeated partition rebalancing, halting event consumption across healthy consumers in the group.",
+          alternatives: [
+            "Point-to-point message queues with fan-out exchanges (RabbitMQ)",
+            "Database Change Data Capture (CDC via Debezium) streaming WAL logs",
+            "Synchronous HTTP Webhooks (brittle, lacks durable replay)",
+          ],
+          interviewSignal: "Interviewers listen for the difference between a task queue (competing consumers, message deleted on ACK) and an append-only event stream (Kafka log, persistent offsets, multiple independent consumer groups).",
+          realSystem: "LinkedIn processes over 7 trillion messages per day through Apache Kafka for activity feeds, telemetry, and distributed data pipelines.",
+        },
       },
       {
         slug: "backpressure",
@@ -256,6 +466,33 @@ export const CONCEPT_CATEGORIES: ConceptCategory[] = [
         term: "Circuit breaker",
         definition: "Stops calling a failing dependency after a threshold, then probes for recovery.",
         matters: "Prevents one slow dependency from consuming every thread and taking the caller down with it.",
+        dimensions: {
+          problem: "A degraded downstream microservice responding slowly (10-30s timeouts) causes upstream services to exhaust thread pools, creating cascading outages across the entire platform.",
+          whyItHappens: "Synchronous network calls hold server worker threads and socket connections open waiting for hung dependencies.",
+          primitiveSolution: "Rely on client timeouts or simple immediate retry loops.",
+          scaleLimit: "Timeouts still tie up threads for the duration of the timeout, and immediate retries amplify traffic against a struggling dependency (the thundering herd effect).",
+          component: "Circuit Breaker Pattern (Netflix Hystrix, Resilience4j, Envoy Circuit Breaking) with Closed, Open, and Half-Open states.",
+          tradeOffs: {
+            gains: [
+              "Fails fast in <1ms when a dependency is unhealthy, freeing up upstream threads immediately",
+              "Provides breathing room for degraded downstream services to recover without receiving traffic",
+              "Enables graceful fallback paths (e.g. serving cached data or degraded default UI)",
+            ],
+            sacrifices: [
+              "Increased application architectural complexity and configuration tuning (failure thresholds, sleep windows)",
+              "Risk of false-positive tripping on temporary network blips if threshold is tuned too aggressively",
+              "State coordination required across distributed instances or local per-process breaker state",
+            ],
+          },
+          failureModes: "Breaker threshold set too loose (never trips during outage) or fallback mechanism itself throws an exception or calls another failing dependency.",
+          alternatives: [
+            "Aggressive client timeouts + jittered exponential backoff alone",
+            "Bulkhead pattern (isolating thread pools so exhaustion is contained to one dependency)",
+            "Rate limiting and adaptive concurrency limits",
+          ],
+          interviewSignal: "Candidates who explain the 3 states (Closed, Open, Half-Open) and immediately describe a meaningful graceful fallback (e.g. stale cache or partial payload) demonstrate senior production maturity.",
+          realSystem: "Amazon retail checkout pages use circuit breakers to degrade recommendation and review widgets if services stall, ensuring the 'Buy Now' button never fails.",
+        },
       },
       {
         slug: "retry-backoff",
@@ -434,6 +671,33 @@ export const CONCEPT_CATEGORIES: ConceptCategory[] = [
         term: "Dead letter queue",
         definition: "Where messages go after repeatedly failing.",
         matters: "Stops one poison message blocking a partition forever, and preserves it for inspection.",
+        dimensions: {
+          problem: "A corrupted or malformed message ('poison pill') repeatedly crashes consumer workers, blocking the entire queue partition and preventing healthy messages from processing.",
+          whyItHappens: "Uncaught exceptions (e.g. null pointer, unexpected schema, data bug) trigger infinite consumer retries according to queue redelivery policies.",
+          primitiveSolution: "Catch exceptions and silently drop failed messages or log them to an unstructured application log file.",
+          scaleLimit: "Silently dropping messages causes silent business data loss (lost payments, missing emails) with zero auditability; retrying endlessly halts the queue.",
+          component: "Dead Letter Queue (DLQ / Poison Message Queue) with configurable MaxReceiveCount.",
+          tradeOffs: {
+            gains: [
+              "Unblocks the main queue partition immediately, allowing healthy downstream messages to flow",
+              "Preserves failed messages with error metadata, stack traces, and headers for root-cause inspection",
+              "Enables automated or manual replay once the underlying bug or downstream dependency is fixed",
+            ],
+            sacrifices: [
+              "Requires operational alerting and backlog monitoring to prevent DLQ from silently overflowing",
+              "Messages replayed from DLQ arrive out of order relative to newer messages",
+              "Additional cloud queue resources and reprocessing pipeline overhead",
+            ],
+          },
+          failureModes: "DLQ monitoring is unmonitored, allowing thousands of business-critical events to expire and disappear after the DLQ retention period (e.g. 14 days).",
+          alternatives: [
+            "Retry topics with exponential backoff delays (delayed retry queues before DLQ)",
+            "Parking lot pattern with manual inspection UI",
+            "Circuit breaker on consumer processing",
+          ],
+          interviewSignal: "Interviewers want to hear that a DLQ is not a trash can: it requires monitoring, automated alerts, and a safe redrive/replay mechanism once code fixes deploy.",
+          realSystem: "Stripe and PayPal route failed payment webhook payloads to dead-letter queues, alerting engineers and automatically replaying messages once merchants fix their endpoints.",
+        },
       },
       {
         slug: "outbox",
@@ -466,6 +730,33 @@ export const CONCEPT_CATEGORIES: ConceptCategory[] = [
         term: "Rate limiting",
         definition: "Capping request rate per client.",
         matters: "Protects capacity and cost, and is the first line against both abuse and accidental loops.",
+        dimensions: {
+          problem: "Malicious actors or buggy client loops flood APIs with millions of requests, causing denial of service, resource starvation, and massive cloud bills.",
+          whyItHappens: "Public APIs without request admission control allow individual clients to monopolize shared server and database capacity.",
+          primitiveSolution: "IP-based firewall rules blocking suspicious traffic manually or basic Nginx connection limits.",
+          scaleLimit: "Manual blocking is too slow during automated attacks; IP blocking breaks corporate proxies where thousands of legitimate users share one egress IP; no tier-based business quotas.",
+          component: "Distributed Rate Limiter (Token Bucket / Sliding Window Counter in Redis / Envoy).",
+          tradeOffs: {
+            gains: [
+              "Protects downstream infrastructure from capacity collapse and noisy neighbor starvation",
+              "Enables tiered API monetization (e.g. Free: 60 req/min, Pro: 10,000 req/min)",
+              "Returns standard HTTP 429 Too Many Requests with Retry-After headers",
+            ],
+            sacrifices: [
+              "Introduces a fast centralized lookup hop (1-2ms to Redis) on every inbound request",
+              "Race conditions in high-concurrency counter increments unless atomic Lua scripts are used",
+              "Risk of false positive rejections for legitimate bursts of user activity",
+            ],
+          },
+          failureModes: "Centralized rate limiter store (Redis) crashes or latency spikes, either blocking all incoming traffic (fail-closed) or allowing traffic floods to swamp the backend (fail-open).",
+          alternatives: [
+            "Client-side request throttling and token bucket smoothing",
+            "WAF (Web Application Firewall) Layer 7 DDoS mitigation rules (Cloudflare)",
+            "Adaptive Concurrency Limiting based on service latency",
+          ],
+          interviewSignal: "Strong candidates compare algorithms (Token Bucket vs Leaky Bucket vs Sliding Window Counter), address fail-open vs fail-closed strategy, and specify HTTP 429 response headers.",
+          realSystem: "GitHub, Stripe, and Twitter enforce strict sliding window rate limits on API keys, returning X-RateLimit-Remaining and Retry-After headers.",
+        },
       },
       {
         slug: "defense-in-depth",
@@ -516,6 +807,33 @@ export const CONCEPT_CATEGORIES: ConceptCategory[] = [
         term: "Read replicas",
         definition: "Standby database copies updated via asynchronous or synchronous replication streams.",
         matters: "Offloads read-heavy query load from primary transactional instances and provides failover targets.",
+        dimensions: {
+          problem: "Read query volume (SELECT statements) overwhelms the primary database, driving CPU and IOPS to saturation and causing transactional write operations to stall.",
+          whyItHappens: "Most web applications exhibit heavily skewed read-to-write ratios (e.g. 99:1 reads on social feeds, blogs, e-commerce listings).",
+          primitiveSolution: "Route all read and write queries directly to the single primary database instance.",
+          scaleLimit: "Database CPU reaches 100%, read locks block write locks, and the database begins refusing new connections.",
+          component: "Asynchronous Read Replicas (Primary-Replica Replication via PostgreSQL WAL streaming or MySQL binlog).",
+          tradeOffs: {
+            gains: [
+              "Scales read query capacity linearly by adding replica nodes across multiple availability zones",
+              "Shields primary instance write capacity for transactional operations",
+              "Replicas can serve as standby promotion targets in high-availability failover",
+            ],
+            sacrifices: [
+              "Replication lag: asynchronous propagation means reads from a replica can return stale data",
+              "Read-your-own-writes inconsistency (user posts a comment, refreshes, but does not see it yet)",
+              "Increased cloud infrastructure costs and connection pool management complexity",
+            ],
+          },
+          failureModes: "Replication lag spikes (seconds or minutes) during heavy write bursts or network partitions, serving severely outdated data or failing health checks.",
+          alternatives: [
+            "In-memory caching (Redis) mitigating read volume before it reaches SQL",
+            "Horizontal database sharding (solves both write and read limits)",
+            "Multi-primary replication (complex conflict resolution)",
+          ],
+          interviewSignal: "The key differentiator in interviews is explaining how to handle replication lag: routing read-your-own-writes back to the primary for 5-10 seconds after a user write.",
+          realSystem: "Reddit, GitHub, and Shopify route read queries to fleets of MySQL/PostgreSQL read replicas while reserving primary instances for writes.",
+        },
       },
     ],
   },

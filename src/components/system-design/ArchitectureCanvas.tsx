@@ -28,7 +28,9 @@ import { ComponentPalette, renderPaletteIcon } from './ComponentPalette';
 import { TopologyAnalyzer } from './TopologyAnalyzer';
 import { SimulationPanel } from './SimulationPanel';
 import { FailureDecisionModal } from './FailureDecisionModal';
-import { ARCHITECTURE_PRESETS } from '@/lib/system-design/canvas-presets';
+import { ComponentReferenceModal } from './ComponentReferenceModal';
+import { ARCHITECTURE_PRESETS, COMPONENT_TEMPLATES } from '@/lib/system-design/canvas-presets';
+import { findConcept, type Concept } from '@/content/concepts';
 import { analyzeTopology } from '@/lib/system-design/topology';
 import {
   simulateArchitecture,
@@ -106,6 +108,7 @@ export function ArchitectureCanvas({
     activeChaos: [],
   });
   const [activeRemediationPrompt, setActiveRemediationPrompt] = useState<RemediationPrompt | null>(null);
+  const [referenceModalConcept, setReferenceModalConcept] = useState<Concept | null>(null);
 
   // Analyze topology whenever nodes or edges update
   const topologyReport = useMemo(() => analyzeTopology(nodes, edges), [nodes, edges]);
@@ -943,6 +946,23 @@ export function ArchitectureCanvas({
                   className="w-12 px-1.5 py-0.5 bg-background border border-border-subtle rounded-xs text-xs font-mono text-foreground"
                 />
               </div>
+
+              {(() => {
+                const template = COMPONENT_TEMPLATES.find((t) => t.type === selectedNode.type);
+                const concept = template?.conceptSlug ? findConcept(template.conceptSlug) : undefined;
+                if (!concept) return null;
+                return (
+                  <button
+                    type="button"
+                    onClick={() => setReferenceModalConcept(concept)}
+                    className="px-2 py-1 bg-accent/15 border border-accent/30 text-accent rounded-xs text-2xs font-semibold hover:bg-accent/25 transition-colors flex items-center gap-1 cursor-pointer"
+                    title={`View 10D Architectural Spec for ${concept.term}`}
+                  >
+                    <Sparkles size={11} />
+                    <span>10D Spec</span>
+                  </button>
+                );
+              })()}
             </div>
           )}
 
@@ -991,6 +1011,14 @@ export function ArchitectureCanvas({
             <span>Delete Selected</span>
           </button>
         </footer>
+      )}
+
+      {referenceModalConcept && (
+        <ComponentReferenceModal
+          concept={referenceModalConcept}
+          isOpen={Boolean(referenceModalConcept)}
+          onClose={() => setReferenceModalConcept(null)}
+        />
       )}
     </div>
   );

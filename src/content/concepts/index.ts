@@ -62,4 +62,4 @@ export function findConcept(slug: string): (Concept & { category: string }) | un
 }
 
 export { CONCEPT_CATEGORIES };
-export type { Concept, ConceptCategory };
+export type { Concept, ConceptCategory, TenDimensions } from './schema';
