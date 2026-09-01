@@ -7,8 +7,10 @@ import { Node } from '@/components/ui/Node';
 import { Scorecard } from './Scorecard';
 import { LabTimer } from './LabTimer';
 import { ConceptLinks } from './ConceptLinks';
+import { ArchitectureCanvas } from './ArchitectureCanvas';
+import { ARCHITECTURE_PRESETS } from '@/lib/system-design/canvas-presets';
 import { track } from '@/lib/analytics/track';
-import { correctOptions, estimateAccepted, gradeStep, scoreLab } from '@/lib/system-design/rubric';
+import { correctOptions, gradeStep, scoreLab } from '@/lib/system-design/rubric';
 import type { LabAnswer, LabAnswers } from '@/lib/system-design/rubric';
 import { LAB_DIMENSION_LABELS, type LabStep, type ScenarioLab as Lab } from '@/content/schema';
 
@@ -34,6 +36,7 @@ export function ScenarioLab({ lab }: { lab: Lab }) {
   const [draft, setDraft] = useState<number[]>([]);
   const [estimateDraft, setEstimateDraft] = useState('');
   const [done, setDone] = useState(false);
+  const [showCanvas, setShowCanvas] = useState(false);
   /** Epoch ms when the clock started, or null for an untimed run (C7). */
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -91,6 +94,8 @@ export function ScenarioLab({ lab }: { lab: Lab }) {
   const canCommit =
     step.kind === 'estimate' ? estimateDraft.trim() !== '' : draft.length > 0;
 
+  const initialArch = ARCHITECTURE_PRESETS[lab.slug] ?? ARCHITECTURE_PRESETS['url-shortener'];
+
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -98,6 +103,18 @@ export function ScenarioLab({ lab }: { lab: Lab }) {
           Step {index + 1} of {lab.steps.length}
         </h2>
         <span className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowCanvas((v) => !v)}
+            className={`node-surface node-pressable px-2 py-1 text-xs transition-colors flex items-center gap-1 ${
+              showCanvas
+                ? 'bg-accent font-semibold text-accent-foreground'
+                : 'bg-surface text-foreground'
+            }`}
+          >
+            <span>{showCanvas ? 'Hide Whiteboard' : 'Whiteboard Diagram (C1)'}</span>
+          </button>
+
           <span className="text-xs text-foreground-muted">
             {LAB_DIMENSION_LABELS[step.dimension]}
           </span>
@@ -123,6 +140,12 @@ export function ScenarioLab({ lab }: { lab: Lab }) {
           )}
         </span>
       </div>
+
+      {showCanvas && (
+        <div className="w-full my-2">
+          <ArchitectureCanvas initialArchitecture={initialArch} compact />
+        </div>
+      )}
 
       {/* A bar rather than "3/6": the number is already above it, and the bar is
           the part readable without reading. */}
@@ -173,52 +196,30 @@ export function ScenarioLab({ lab }: { lab: Lab }) {
             )
           }
           answered={Boolean(committed)}
+          result={result}
         />
       )}
 
-      {result && step.concepts.length > 0 && <ConceptLinks slugs={step.concepts} />}
-
-      {result && (
-        <Node tone={result.met ? 'strong' : 'muted'} className="p-3 text-sm">
-          {result.met
-            ? 'That is the answer to defend.'
-            : step.kind === 'estimate'
-              ? 'Not within range — the working is above.'
-              : verdict(result.missed.length, result.overreached.length)}
-        </Node>
-      )}
-
-      <div className="flex flex-wrap items-center gap-3">
-        {!committed ? (
-          <Button onClick={commit} disabled={!canCommit}>
-            {step.kind === 'estimate' ? 'Check my estimate' : 'Commit to this'}
-          </Button>
-        ) : (
-          <Button onClick={advance}>
-            {index < lab.steps.length - 1 ? 'Next step' : 'See the review'}
-          </Button>
-        )}
-        {!committed && (
-          <span className="text-xs text-foreground-muted">
-            {step.kind === 'estimate'
-              ? 'Roughly right is the target — you are marked within a factor of three.'
-              : step.multiple
-                ? 'Pick everything that belongs. Over-picking counts against you.'
-                : 'One answer.'}
-          </span>
-        )}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <ConceptLinks slugs={committed ? step.concepts : []} />
+        <div className="flex gap-2">
+          {!committed ? (
+            <Button
+              onClick={commit}
+              disabled={!canCommit}
+              tone="strong"
+            >
+              Commit answer
+            </Button>
+          ) : (
+            <Button onClick={advance} tone="strong">
+              {index < lab.steps.length - 1 ? 'Next question →' : 'See scorecard →'}
+            </Button>
+          )}
+        </div>
       </div>
     </section>
   );
-}
-
-/** Names the mistake, because leaving out and dragging in are different errors. */
-function verdict(missed: number, overreached: number): string {
-  if (missed > 0 && overreached > 0) {
-    return `Missed ${missed} that belong, and included ${overreached} that do not.`;
-  }
-  if (missed > 0) return `Missed ${missed} that belong.`;
-  return `Included ${overreached} that do not belong — thoroughness is not the same as judgement.`;
 }
 
 function SelectStep({
@@ -226,74 +227,86 @@ function SelectStep({
   draft,
   onToggle,
   answered,
+  result,
 }: {
   step: Extract<LabStep, { kind: 'select' }>;
   draft: number[];
   onToggle: (index: number) => void;
   answered: boolean;
+  result: ReturnType<typeof gradeStep> | null;
 }) {
-  const correct = new Set(correctOptions(step));
+  const correctSet = useMemo(() => new Set(correctOptions(step)), [step]);
 
   return (
-    <ul className="flex flex-col gap-2">
-      {step.options.map((option, i) => {
+    <div className="flex flex-col gap-2">
+      {step.options.map((opt, i) => {
         const picked = draft.includes(i);
-        const belongs = correct.has(i);
+        const isCorrect = correctSet.has(i);
+
+        let highlight = '';
+        if (answered) {
+          if (isCorrect) {
+            highlight = 'border-l-4 border-l-success';
+          } else if (picked) {
+            highlight = 'border-l-4 border-l-danger';
+          }
+        }
 
         return (
-          <li key={option.label}>
-            <button
-              type="button"
-              disabled={answered}
-              onClick={() => onToggle(i)}
-              aria-pressed={picked}
-              className={`node-surface flex w-full items-start gap-3 p-3 text-left disabled:cursor-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link ${
-                answered
-                  ? belongs
-                    ? 'bg-success-soft'
-                    : picked
-                      ? 'bg-danger-soft'
-                      : 'bg-surface-muted'
-                  : picked
-                    ? 'bg-accent-strong text-accent-foreground'
-                    : 'bg-surface'
-              }`}
-            >
-              <span aria-hidden className="mt-0.5 shrink-0">
-                {answered ? (
-                  belongs ? (
-                    <Check size={16} strokeWidth={3} className="text-success" />
-                  ) : picked ? (
-                    <X size={16} strokeWidth={3} className="text-danger" />
-                  ) : (
-                    <span className="block size-4" />
-                  )
-                ) : (
-                  <span
-                    className={`block size-4 rounded-node border-2 border-current ${
-                      picked ? 'bg-accent-foreground' : ''
-                    }`}
-                  />
-                )}
+          <button
+            key={i}
+            type="button"
+            disabled={answered}
+            onClick={() => onToggle(i)}
+            className={`node-surface text-left transition-all ${
+              !answered ? 'node-pressable' : ''
+            } ${picked && !answered ? 'ring-2 ring-accent' : ''} ${highlight} p-3`}
+          >
+            <div className="flex items-start gap-3">
+              <span
+                aria-hidden
+                className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-node border border-border-strong text-2xs ${
+                  picked ? 'bg-accent text-accent-foreground' : 'bg-surface'
+                }`}
+              >
+                {picked && <Check size={12} strokeWidth={3} />}
               </span>
-
-              <span className="flex flex-col gap-1">
-                <span className="text-sm font-medium">{option.label}</span>
-                {/*
-                  Every option's reasoning, not just the chosen one — the rule
-                  the decision trees follow, for the same reason.
-                */}
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-medium">{opt.label}</p>
                 {answered && (
-                  <span className="text-xs leading-relaxed text-foreground-muted">
-                    {option.reason}
-                  </span>
+                  <p className="text-xs leading-relaxed text-foreground-muted">
+                    {opt.reason}
+                  </p>
                 )}
-              </span>
-            </button>
-          </li>
+              </div>
+            </div>
+          </button>
         );
       })}
-    </ul>
+
+      {answered && result && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="mt-2 flex items-center gap-2 text-xs text-foreground-muted"
+        >
+          {result.met ? (
+            <span className="flex items-center gap-1 font-semibold text-success">
+              <Check size={14} /> Solid answer
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 font-semibold text-danger">
+              <X size={14} />
+              {result.missed.length > 0 && result.overreached.length > 0
+                ? 'Missed some essentials and brought in non-requirements'
+                : result.missed.length > 0
+                  ? 'Left out an essential requirement'
+                  : 'Included things that are not requirements'}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -306,49 +319,48 @@ function EstimateStep({
 }: {
   step: Extract<LabStep, { kind: 'estimate' }>;
   value: string;
-  onChange: (next: string) => void;
+  onChange: (val: string) => void;
   answered: boolean;
   correct: boolean;
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <label className="flex flex-wrap items-center gap-2 text-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <label htmlFor="estimate-input" className="sr-only">
+          Your estimate in {step.unit}
+        </label>
         <input
+          id="estimate-input"
           type="number"
-          inputMode="decimal"
-          value={value}
+          step="any"
           disabled={answered}
+          value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="node-surface w-40 bg-surface px-3 py-1.5 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
-          aria-label={`Your estimate, in ${step.unit}`}
+          placeholder="e.g. 1000"
+          className="node-surface bg-surface px-3 py-2 text-sm font-mono focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link disabled:opacity-75"
         />
-        <span className="text-foreground-muted">{step.unit}</span>
-      </label>
+        <span className="text-sm text-foreground-muted">{step.unit}</span>
+      </div>
 
       {answered && (
-        <Node tone={correct ? 'strong' : 'surface'} className="flex flex-col gap-2 p-3">
-          <p className="text-xs font-semibold">
-            {/*
-              The accepted band is stated rather than implied. "Wrong" without a
-              range leaves a learner unable to tell whether they were close.
-            */}
-            Accepted between {round(step.answer / step.tolerance)} and{' '}
-            {round(step.answer * step.tolerance)} {step.unit}
-            {!estimateAccepted(Number(value), step.answer, step.tolerance) &&
-              ` — you said ${value}`}
-          </p>
-          {step.working.split('\n\n').map((p, i) => (
-            <p key={i} className="text-sm leading-relaxed">
-              {p.replace(/\n/g, ' ')}
-            </p>
-          ))}
+        <Node tone="surface" className="flex flex-col gap-2 p-3 text-xs">
+          <div className="flex items-center gap-2 font-semibold">
+            {correct ? (
+              <span className="flex items-center gap-1 text-success">
+                <Check size={14} /> Right order of magnitude
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-danger">
+                <X size={14} /> Off the mark
+              </span>
+            )}
+            <span className="text-foreground-muted">
+              (Reference: ~{step.answer.toLocaleString()} {step.unit})
+            </span>
+          </div>
+          <p className="leading-relaxed text-foreground-muted">{step.working}</p>
         </Node>
       )}
     </div>
   );
-}
-
-/** Two significant figures: the band is approximate, so printing 12.866667 lies. */
-function round(n: number): string {
-  return Number(n.toPrecision(2)).toLocaleString();
 }

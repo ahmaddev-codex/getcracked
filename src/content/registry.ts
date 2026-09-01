@@ -56,6 +56,10 @@ import { cdnLesson } from './lessons/system-design/cdn';
 import { consistentHashingLesson } from './lessons/system-design/consistent-hashing';
 import { idempotencyLesson } from './lessons/system-design/idempotency';
 import { urlShortenerLab } from './labs/url-shortener';
+import { rateLimiterLab } from './labs/rate-limiter';
+import { distributedCacheLab } from './labs/distributed-cache';
+import { videoStreamingLab } from './labs/video-streaming';
+import { realTimeChatLab } from './labs/real-time-chat';
 import { lruCacheChallenge } from './challenges/dsa/lru-cache';
 import { tokenBucketChallenge } from './challenges/real-world/token-bucket';
 import { undoRedoChallenge } from './challenges/design-patterns/undo-redo';
@@ -94,10 +98,31 @@ import {
  */
 export const RAW_PROBLEMS: readonly ProblemInput[] = [
   twoSum,
-  maxSubarray, runningSum, binarySearch, searchInsert, climbStairs, coinChange, houseRobber, countComponents, firstUniqueChar, groupAnagrams, kthLargest, fibMemo, longestUniqueSubstring, maxSumSubarrayK, dailyTemperatures, validParentheses, maxDepth, containerWater, removeDuplicates,
-  // Six topics that had a lesson and an empty problem set — a path that handed
-  // off to nothing.
-  singleNumber, jumpGame, mergeIntervals, subarraySumK, sortColors, subsets,
+  maxSubarray,
+  runningSum,
+  binarySearch,
+  searchInsert,
+  climbStairs,
+  coinChange,
+  houseRobber,
+  countComponents,
+  firstUniqueChar,
+  groupAnagrams,
+  kthLargest,
+  fibMemo,
+  longestUniqueSubstring,
+  maxSumSubarrayK,
+  dailyTemperatures,
+  validParentheses,
+  maxDepth,
+  containerWater,
+  removeDuplicates,
+  singleNumber,
+  jumpGame,
+  mergeIntervals,
+  subarraySumK,
+  sortColors,
+  subsets,
 ];
 
 function parseProblem(input: ProblemInput): Problem {
@@ -182,7 +207,15 @@ export const RAW_LESSONS: readonly LessonInput[] = [
   cdnLesson,
   consistentHashingLesson,
   idempotencyLesson,
-  arraysLesson, slidingWindowLesson, stacksQueuesLesson, binarySearchLesson, recursionLesson, treesLesson, graphsLesson, heapsLesson, dynamicProgrammingLesson,
+  arraysLesson,
+  slidingWindowLesson,
+  stacksQueuesLesson,
+  binarySearchLesson,
+  recursionLesson,
+  treesLesson,
+  graphsLesson,
+  heapsLesson,
+  dynamicProgrammingLesson,
 ];
 
 let lessonCache: readonly Lesson[] | undefined;
@@ -331,7 +364,13 @@ export function getChallengesForTopic(topic: string): readonly Challenge[] {
 }
 
 /** Authored System Design labs, unvalidated — the check script reports on these. */
-export const RAW_LABS: readonly ScenarioLabInput[] = [urlShortenerLab];
+export const RAW_LABS: readonly ScenarioLabInput[] = [
+  urlShortenerLab,
+  rateLimiterLab,
+  distributedCacheLab,
+  videoStreamingLab,
+  realTimeChatLab,
+];
 
 let labCache: readonly ScenarioLab[] | undefined;
 

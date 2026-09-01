@@ -66,7 +66,7 @@ const GROUPS: NavGroup[] = [
   },
   {
     label: 'Practice',
-    prefixes: ['/problems', '/challenges', '/sandbox', '/learn/system-design/labs'],
+    prefixes: ['/problems', '/challenges', '/sandbox', '/learn/system-design/labs', '/learn/system-design/canvas'],
     items: [
       {
         href: '/problems',
@@ -82,6 +82,11 @@ const GROUPS: NavGroup[] = [
         href: '/learn/system-design/labs',
         label: 'Design labs',
         detail: 'Work a scenario and get scored on the six things a round weighs',
+      },
+      {
+        href: '/learn/system-design/canvas',
+        label: 'Whiteboard canvas',
+        detail: 'Draw architectures and run real-time topology checks',
       },
       {
         href: '/sandbox',

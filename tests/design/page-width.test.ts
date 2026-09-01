@@ -43,6 +43,7 @@ const EXPECTED: Record<string, PageWidth> = {
   'src/app/learn/system-design/page.tsx': 'canvas',
   'src/app/learn/system-design/[topic]/page.tsx': 'reading',
   'src/app/learn/system-design/capacity/page.tsx': 'catalog',
+  'src/app/learn/system-design/canvas/page.tsx': 'canvas',
   'src/app/learn/system-design/labs/page.tsx': 'canvas',
   // Reading, not catalog: a lab is one scenario worked top to bottom, and the
   // options are prose that has to stay readable — the same call the problem and
