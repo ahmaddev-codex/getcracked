@@ -14,6 +14,7 @@ import { clearDraft, readDraft, subscribeToDrafts, writeDraft } from '@/lib/draf
 import { track } from '@/lib/analytics/track';
 import { persistAttempt } from '@/lib/attempts';
 import { supportedLanguages } from '@/content/test-runner';
+import { useAssistant } from '@/components/assistant';
 import type { Language, TestSpec, Tier } from '@/content/schema';
 import type { SpecResult } from '@/content/test-runner';
 
@@ -103,6 +104,29 @@ export function Workspace({
   // The editor is uncontrolled and keeps this mirror current, so `run` reads the
   // real document without the tree re-rendering on every keystroke.
   const codeRef = useRef(starter);
+
+  const { openAssistant, setContext } = useAssistant();
+
+  useEffect(() => {
+    setContext({
+      exercise: {
+        title: exerciseId,
+        tier,
+        language,
+        code: codeRef.current,
+        starterCode: starter,
+        solved: result?.passed ?? false,
+        testResults: result
+          ? {
+              passed: result.passed,
+              totalCases: result.cases.length,
+              passedCases: result.cases.filter((c) => c.passed).length,
+              failedCase: result.cases.find((c) => !c.passed),
+            }
+          : undefined,
+      },
+    });
+  }, [exerciseId, tier, language, starter, result, setContext]);
 
   const runtime = useRef<RuntimeClient | null>(null);
   const onSolvedRef = useRef(onSolved);
@@ -332,6 +356,45 @@ export function Workspace({
 
         <Button tone="surface" onClick={reset} disabled={running}>
           Reset
+        </Button>
+
+        <Button
+          tone="surface"
+          onClick={() => {
+            const isPassing = result?.passed ?? false;
+            openAssistant({
+              mode: isPassing ? 'code_review' : 'socratic',
+              context: {
+                exercise: {
+                  title: exerciseId,
+                  tier,
+                  language,
+                  code: codeRef.current,
+                  starterCode: starter,
+                  solved: isPassing,
+                  testResults: result
+                    ? {
+                        passed: result.passed,
+                        totalCases: result.cases.length,
+                        passedCases: result.cases.filter((c) => c.passed).length,
+                        failedCase: result.cases.find((c) => !c.passed),
+                      }
+                    : undefined,
+                },
+              },
+              initialPrompt: isPassing
+                ? 'Can you review my solution for Big-O complexity, edge cases, and clean idiomatic code?'
+                : error
+                  ? `My code threw an error: "${error}". Can you guide me on how to fix it without giving away the answer?`
+                  : result && !result.passed
+                    ? 'My code is failing some test cases. Can you give me a Socratic hint to help me debug?'
+                    : 'Can you give me a conceptual hint on how to approach this problem?',
+            });
+          }}
+          disabled={running}
+          className="text-xs"
+        >
+          {result?.passed ? '✨ Review my code' : '✨ Ask Assistant'}
         </Button>
 
         <span className="text-xs text-foreground-muted">

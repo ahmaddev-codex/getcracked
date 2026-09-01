@@ -123,6 +123,28 @@ export async function checkRateLimit(
   }
 }
 
+export async function getRateLimitStatus(
+  policy: LimitPolicy,
+  identifier: string,
+): Promise<LimitResult> {
+  const { limit, failOpen } = POLICIES[policy];
+  const limiter = getLimiter(policy);
+
+  if (!limiter) {
+    return { allowed: failOpen, limit, remaining: failOpen ? limit : 0, reset: Date.now() };
+  }
+
+  try {
+    const r = await limiter.getRemaining(identifier);
+    const remaining = typeof r.remaining === 'number' ? r.remaining : limit;
+    return { allowed: remaining > 0, limit, remaining, reset: r.reset ?? Date.now() };
+  } catch {
+    return { allowed: failOpen, limit, remaining: 0, reset: Date.now() };
+  }
+}
+
+
+
 /**
  * Builds the rate-limit key for a request.
  *

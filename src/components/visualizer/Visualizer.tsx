@@ -9,6 +9,7 @@ import { selectRenderer, type VisualKind } from '@/lib/visualizer/registry';
 import '@/lib/visualizer/renderers';
 import { CodePanel } from './CodePanel';
 import type { Language } from '@/content/schema';
+import { useAssistant } from '@/components/assistant';
 
 /**
  * Playback over a trace (B3).
@@ -260,6 +261,26 @@ export function Visualizer({
   const drawnKind = visual === 'map' ? 'map' : visual === 'grid' ? 'grid' : 'array';
   const arrayName = trace.collections.find((c) => c.kind === drawnKind)?.name ?? '';
 
+  const { openAssistant } = useAssistant();
+
+  const handleExplainState = useCallback(() => {
+    openAssistant({
+      mode: 'explain_state',
+      context: {
+        traceStep: {
+          stepIndex: step,
+          totalSteps: total,
+          line: currentLine ?? undefined,
+          changedVariables: Object.fromEntries(
+            [...changed].map((name) => [name, variables.get(name)]),
+          ),
+          description,
+        },
+      },
+      initialPrompt: `Can you explain what is happening at step ${step + 1} of ${total} in this execution trace?`,
+    });
+  }, [openAssistant, step, total, currentLine, changed, variables, description]);
+
   /** Draws one step. Called from the loop and from every control. */
   const draw = useCallback(
     (next: number) => {
@@ -495,6 +516,9 @@ export function Visualizer({
         </Button>
         <Button tone="surface" onClick={jumpToDivergence}>
           Jump to end
+        </Button>
+        <Button tone="surface" onClick={handleExplainState} title="Ask AI assistant to explain this animation state">
+          ✨ Explain state
         </Button>
 
         <div className="flex items-center gap-1">

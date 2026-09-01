@@ -1,30 +1,28 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
+import { Sparkles } from 'lucide-react';
 import { AccountSlot } from '@/components/auth/AccountMenu';
 import { SearchTrigger } from '@/components/search/SearchTrigger';
 import { SiteNav } from '@/components/nav/SiteNav';
-import Image from 'next/image';
+import { useAssistant } from '@/components/assistant';
 
-/**
- * The site header (K1).
- *
- * A dark bar spanning the full width, with the wordmark at the left, the
- * surfaces in the middle, and account actions at the right — the reference's
- * arrangement, because it is the part of the layout a returning learner
- * navigates by muscle memory.
- *
- * Dark against the light page ground on purpose: it is the one element that is
- * not a node, which is what lets the yellow-on-white node language own
- * everything below it without competing for attention.
- *
- * The destinations are grouped rather than listed — see `SiteNav` for why. The
- * auth actions are the only part that varies, and they live in
- * `AccountSlot` — signed out it shows the pair the reference does, a quiet link
- * plus one filled call to action, because a learner can use the whole product
- * signed out (§2.6) and the header should invite an account rather than demand
- * one. Signed in it becomes the account menu, which is where sign-out lives.
- */
+function AssistantHeaderButton() {
+  const { openAssistant } = useAssistant();
+  return (
+    <button
+      type="button"
+      onClick={() => openAssistant()}
+      aria-label="Open AI Assistant"
+      className="flex items-center gap-1.5 rounded-xs text-header-foreground/80 transition-colors hover:text-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
+      title="Open AI Assistant"
+    >
+      <Sparkles size={16} aria-hidden />
+      <span className="hidden sm:inline text-xs font-medium">AI</span>
+    </button>
+  );
+}
 
 export function SiteHeader() {
   return (
@@ -55,7 +53,8 @@ export function SiteHeader() {
           three claims on the space and the links would sit a third of the way
           across rather than centred.
         */}
-        <div className="ml-auto flex shrink-0 items-center gap-3 sm:ml-0">
+        <div className="ml-auto flex shrink-0 items-center gap-4 sm:ml-0">
+          <AssistantHeaderButton />
           <SearchTrigger />
           <AccountSlot />
         </div>
