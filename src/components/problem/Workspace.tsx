@@ -15,6 +15,9 @@ import { track } from '@/lib/analytics/track';
 import { persistAttempt } from '@/lib/attempts';
 import { supportedLanguages } from '@/content/test-runner';
 import { useAssistant } from '@/components/assistant';
+import { SolutionShareModal } from '@/components/community/SolutionShareModal';
+import { CommunitySolutionGallery } from '@/components/community/CommunitySolutionGallery';
+import { Sparkles, Share2 } from 'lucide-react';
 import type { Language, TestSpec, Tier } from '@/content/schema';
 import type { SpecResult } from '@/content/test-runner';
 
@@ -86,6 +89,9 @@ export function Workspace({
   const [tracedLine, setTracedLine] = useState<number | null>(null);
   /** True once a passing run was recorded, so the state is legible. */
   const [submitted, setSubmitted] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareCode, setShareCode] = useState('');
+  const [bottomTab, setBottomTab] = useState<'tests' | 'solutions'>('tests');
 
   /** The problem's own first visible case — what a learner is trying to satisfy. */
   const defaultWatchArgs = (spec.cases.find((c) => !c.hidden) ?? spec.cases[0])?.args ?? [];
@@ -397,6 +403,20 @@ export function Workspace({
           {result?.passed ? '✨ Review my code' : '✨ Ask Assistant'}
         </Button>
 
+        {result?.passed && (
+          <Button
+            tone="surface"
+            onClick={() => {
+              setShareCode(codeRef.current);
+              setIsShareModalOpen(true);
+            }}
+            className="text-xs flex items-center gap-1"
+          >
+            <Share2 size={12} className="inline mr-1" />
+            <span>Share Solution</span>
+          </Button>
+        )}
+
         <span className="text-xs text-foreground-muted">
           {running
             ? 'Executing in a sandbox…'
@@ -418,13 +438,63 @@ export function Workspace({
         </Node>
       )}
 
-      <TestCases spec={spec} result={result} />
+      {/* Bottom section tabs: Test cases vs Community Solutions */}
+      <div className="flex items-center gap-2 border-b border-border-subtle pt-2">
+        <button
+          type="button"
+          onClick={() => setBottomTab('tests')}
+          className={`px-3 py-1.5 text-xs font-semibold rounded-t-node border-t border-x transition-all cursor-pointer ${
+            bottomTab === 'tests'
+              ? 'bg-surface text-foreground font-bold border-border-strong -mb-px'
+              : 'text-foreground-muted hover:text-foreground border-transparent'
+          }`}
+        >
+          Test Cases
+        </button>
+        <button
+          type="button"
+          onClick={() => setBottomTab('solutions')}
+          className={`px-3 py-1.5 text-xs font-semibold rounded-t-node border-t border-x transition-all cursor-pointer flex items-center gap-1.5 ${
+            bottomTab === 'solutions'
+              ? 'bg-surface text-foreground font-bold border-border-strong -mb-px'
+              : 'text-foreground-muted hover:text-foreground border-transparent'
+          }`}
+        >
+          <Sparkles size={12} className="text-accent" />
+          <span>Community Solutions</span>
+        </button>
+      </div>
 
-      {!compact && (
-        <Complexity
-          target={complexity}
-          metrics={result?.metrics ?? null}
-          inputSize={largestInputSize(spec)}
+      {bottomTab === 'tests' ? (
+        <>
+          <TestCases spec={spec} result={result} />
+          {!compact && (
+            <Complexity
+              target={complexity}
+              metrics={result?.metrics ?? null}
+              inputSize={largestInputSize(spec)}
+            />
+          )}
+        </>
+      ) : (
+        <CommunitySolutionGallery
+          exerciseId={exerciseId}
+          isSolved={result?.passed ?? false}
+          onOpenShareModal={() => {
+            setShareCode(codeRef.current);
+            setIsShareModalOpen(true);
+          }}
+        />
+      )}
+
+      {isShareModalOpen && (
+        <SolutionShareModal
+          exerciseId={exerciseId}
+          code={shareCode}
+          language={language as 'python' | 'javascript' | 'typescript'}
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          onPublished={() => setBottomTab('solutions')}
         />
       )}
     </section>
