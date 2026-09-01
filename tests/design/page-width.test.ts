@@ -43,6 +43,7 @@ const EXPECTED: Record<string, PageWidth> = {
   'src/app/learn/system-design/page.tsx': 'canvas',
   'src/app/learn/system-design/[topic]/page.tsx': 'reading',
   'src/app/learn/system-design/capacity/page.tsx': 'catalog',
+  'src/app/learn/system-design/canvas/page.tsx': 'canvas',
   'src/app/learn/system-design/labs/page.tsx': 'canvas',
   // Reading, not catalog: a lab is one scenario worked top to bottom, and the
   // options are prose that has to stay readable — the same call the problem and
@@ -57,6 +58,8 @@ const EXPECTED: Record<string, PageWidth> = {
   'src/app/companies/page.tsx': 'catalog',
   'src/app/companies/[slug]/page.tsx': 'catalog',
 
+  'src/app/leaderboard/page.tsx': 'catalog',
+
   'src/app/challenges/page.tsx': 'catalog',
   'src/app/challenges/[slug]/page.tsx': 'catalog',
   // Canvas for the same reason the roadmaps are: a second column beside the
@@ -66,6 +69,8 @@ const EXPECTED: Record<string, PageWidth> = {
 
   // One column of editor, controls and animation — no second column, no graph.
   'src/app/sandbox/page.tsx': 'reading',
+
+  'src/app/interviews/page.tsx': 'catalog',
 
   'src/app/(dev)/components/page.tsx': 'catalog',
 };
@@ -83,6 +88,10 @@ const NO_RAIL: Record<string, string> = {
   'src/app/(auth)/sign-up/page.tsx': 'Centred form card; the width is the form’s, not the page’s.',
   'src/app/(spike)/runtime/page.tsx':
     'Throwaway prototype that predates the design system — exempted in eslint.config.mjs for the same reason.',
+  'src/app/interviews/dsa/[trackSlug]/page.tsx':
+    'Full-viewport timed mock coding IDE and chat workspace without document rails.',
+  'src/app/interviews/system-design/[trackSlug]/page.tsx':
+    'Full-viewport system design architecture canvas and simulation workspace without document rails.',
 };
 
 /** Every route file, found rather than listed — an unlisted page must fail. */

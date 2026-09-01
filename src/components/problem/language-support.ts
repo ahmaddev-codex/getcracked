@@ -12,6 +12,8 @@ import type { Language } from '@/content/schema';
  * and `None` were plain text, and `#` comments were not recognised as comments
  * at all.
  */
-export function languageExtension(language: Language): Extension {
-  return language === 'python' ? python() : javascript();
+export function languageExtension(language: Language | 'typescript'): Extension {
+  if (language === 'python') return python();
+  if (language === 'typescript') return javascript({ typescript: true });
+  return javascript();
 }

@@ -19,6 +19,7 @@
     "services:reset": "docker compose down -v && docker compose up -d --wait",
     "db:setup": "pnpm services:up && pnpm db:migrate && pnpm db:seed",
     "content:check": "tsx scripts/check-content.ts",
+    "content:new": "tsx scripts/create-content.ts",
     "prebuild": "pnpm db:deploy && pnpm quickjs:wasm && pnpm content:check",
     "groq:models": "tsx --env-file-if-exists=.env scripts/groq-models.ts",
     "quickjs:wasm": "tsx scripts/copy-quickjs-wasm.ts",
@@ -57,6 +58,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "zod": "^4.5.2"
   },
   "devDependencies": {

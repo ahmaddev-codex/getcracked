@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { runJavaScript } from '@/lib/runtime/javascript';
 import { runPython } from '@/lib/runtime/python';
+import { runTypeScript } from '@/lib/runtime/typescript';
 import { runTestSpec, supportedLanguages, type LanguageRuntime } from '@/content/test-runner';
 import type { RunResult } from '@/lib/runtime/javascript';
 
@@ -120,8 +121,16 @@ describe('a third language needs only an adapter', () => {
   it('satisfies the interface every real adapter satisfies', async () => {
     // Structural, not nominal: if the shared path grows a JavaScript-specific
     // requirement, this stops type-checking.
-    const adapters: LanguageRuntime[] = [runJavaScript, runPython, stubAdapter];
-    expect(adapters).toHaveLength(3);
+    const adapters: LanguageRuntime[] = [runJavaScript, runPython, runTypeScript, stubAdapter];
+    expect(adapters).toHaveLength(4);
+
+    const tsResult: RunResult = await runTypeScript({
+      source: 'function countItems(nums: number[]): number { return nums.length; }',
+      entry: 'countItems',
+      args: [[10, 20, 30]],
+    });
+    expect(tsResult.ok).toBe(true);
+    expect(tsResult.value).toBe(3);
 
     const result: RunResult = await stubAdapter({
       source: 'anything',

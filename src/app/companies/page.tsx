@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { Node } from '@/components/ui/Node';
 import { Page } from '@/components/ui/Page';
+import { CompanyLogo } from '@/components/company/CompanyLogo';
 import { getCompanies } from '@/content/companies';
 import { companyTags } from '@/lib/catalog';
 
@@ -39,11 +39,14 @@ export default function CompaniesPage() {
             <li key={company.slug}>
               <Link
                 href={`/companies/${company.slug}`}
-                className="node-surface node-interactive flex h-full flex-col gap-2 bg-surface p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+                className="node-surface node-interactive flex h-full flex-col gap-3 bg-surface p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
               >
-                <span className="flex items-start justify-between gap-3">
-                  <span className="text-sm font-bold">{company.name}</span>
-                  <ArrowRight size={15} aria-hidden className="mt-0.5 shrink-0" />
+                <span className="flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-2.5">
+                    <CompanyLogo name={company.name} size={28} className="rounded-xs" />
+                    <span className="text-base font-bold">{company.name}</span>
+                  </span>
+                  <ArrowRight size={15} aria-hidden className="shrink-0 text-foreground-muted" />
                 </span>
                 <span className="text-xs text-foreground-muted">{company.summary}</span>
                 <span className="mt-auto pt-1 text-xs text-foreground-muted">
@@ -68,29 +71,17 @@ export default function CompaniesPage() {
               <li key={tag.name}>
                 <Link
                   href={`/dashboard?company=${encodeURIComponent(tag.name)}`}
-                  className="node-surface bg-surface-muted px-3 py-1.5 text-xs hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+                  className="node-surface flex items-center gap-2 bg-surface-muted px-3 py-1.5 text-xs hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
                 >
-                  {tag.name} <span className="opacity-60">{tag.count}</span>
+                  <CompanyLogo name={tag.name} size={14} className="rounded-xs" />
+                  <span>{tag.name}</span>
+                  <span className="opacity-60">{tag.count}</span>
                 </Link>
               </li>
             ))}
           </ul>
         </section>
       )}
-
-      <Node tone="muted" className="flex flex-col gap-2 p-4 text-sm text-foreground-muted">
-        <p>
-          <strong className="font-semibold text-foreground">No scraped question bank.</strong>{' '}
-          The obvious sources for one — LeetCode discussions, Glassdoor, Blind — forbid it in
-          their terms, so building it would mean ignoring that or reproducing their content
-          with the exposure that carries.
-        </p>
-        <p>
-          The company tags on practice problems are widely-reported associations with no
-          source and no date. Treat them as a rough signal about what a company tends to ask,
-          not as evidence that it asked this.
-        </p>
-      </Node>
     </Page>
   );
 }

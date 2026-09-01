@@ -50,6 +50,9 @@ export const EVENT_NAMES = [
   'signed_out_notice_shown',
   'signed_out_notice_dismissed',
   'anonymous_progress_claimed',
+  // AI Assistant (Module L, F6)
+  'assistant_opened',
+  'assistant_query',
 ] as const;
 
 export type EventName = (typeof EVENT_NAMES)[number];

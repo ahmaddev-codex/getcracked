@@ -14,6 +14,13 @@ import { clearDraft, readDraft, subscribeToDrafts, writeDraft } from '@/lib/draf
 import { track } from '@/lib/analytics/track';
 import { persistAttempt } from '@/lib/attempts';
 import { supportedLanguages } from '@/content/test-runner';
+import { useAssistant } from '@/components/assistant';
+import { SolutionShareModal } from '@/components/community/SolutionShareModal';
+import { CommunitySolutionGallery } from '@/components/community/CommunitySolutionGallery';
+import { ProblemDiscussions } from '@/components/community/ProblemDiscussions';
+import Link from 'next/link';
+import { useSession } from '@/lib/auth-client';
+import { Sparkles, Share2, MessageSquare } from 'lucide-react';
 import type { Language, TestSpec, Tier } from '@/content/schema';
 import type { SpecResult } from '@/content/test-runner';
 
@@ -63,6 +70,7 @@ export function Workspace({
       : [initialLanguage]
   ).filter((l) => supportedLanguages().includes(l));
 
+  const { data: session } = useSession();
   const [language, setLanguage] = useState<Language>(initialLanguage);
   const starter = starterByLanguage?.[language] ?? starterCode;
 
@@ -85,6 +93,9 @@ export function Workspace({
   const [tracedLine, setTracedLine] = useState<number | null>(null);
   /** True once a passing run was recorded, so the state is legible. */
   const [submitted, setSubmitted] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareCode, setShareCode] = useState('');
+  const [bottomTab, setBottomTab] = useState<'tests' | 'solutions' | 'discussions'>('tests');
 
   /** The problem's own first visible case — what a learner is trying to satisfy. */
   const defaultWatchArgs = (spec.cases.find((c) => !c.hidden) ?? spec.cases[0])?.args ?? [];
@@ -103,6 +114,29 @@ export function Workspace({
   // The editor is uncontrolled and keeps this mirror current, so `run` reads the
   // real document without the tree re-rendering on every keystroke.
   const codeRef = useRef(starter);
+
+  const { openAssistant, setContext } = useAssistant();
+
+  useEffect(() => {
+    setContext({
+      exercise: {
+        title: exerciseId,
+        tier,
+        language,
+        code: codeRef.current,
+        starterCode: starter,
+        solved: result?.passed ?? false,
+        testResults: result
+          ? {
+              passed: result.passed,
+              totalCases: result.cases.length,
+              passedCases: result.cases.filter((c) => c.passed).length,
+              failedCase: result.cases.find((c) => !c.passed),
+            }
+          : undefined,
+      },
+    });
+  }, [exerciseId, tier, language, starter, result, setContext]);
 
   const runtime = useRef<RuntimeClient | null>(null);
   const onSolvedRef = useRef(onSolved);
@@ -334,6 +368,60 @@ export function Workspace({
           Reset
         </Button>
 
+        <Button
+          tone="surface"
+          onClick={() => {
+            const isPassing = result?.passed ?? false;
+            openAssistant({
+              mode: isPassing ? 'code_review' : 'socratic',
+              context: {
+                exercise: {
+                  title: exerciseId,
+                  tier,
+                  language,
+                  code: codeRef.current,
+                  starterCode: starter,
+                  solved: isPassing,
+                  testResults: result
+                    ? {
+                        passed: result.passed,
+                        totalCases: result.cases.length,
+                        passedCases: result.cases.filter((c) => c.passed).length,
+                        failedCase: result.cases.find((c) => !c.passed),
+                      }
+                    : undefined,
+                },
+              },
+              initialPrompt: isPassing
+                ? 'Can you review my solution for Big-O complexity, edge cases, and clean idiomatic code?'
+                : error
+                  ? `My code threw an error: "${error}". Can you guide me on how to fix it without giving away the answer?`
+                  : result && !result.passed
+                    ? 'My code is failing some test cases. Can you give me a Socratic hint to help me debug?'
+                    : 'Can you give me a conceptual hint on how to approach this problem?',
+            });
+          }}
+          disabled={running}
+          className="text-xs flex items-center gap-1.5"
+        >
+          <Sparkles size={13} className="text-accent-strong shrink-0" aria-hidden />
+          <span>{result?.passed ? 'Review my code' : 'Ask Assistant'}</span>
+        </Button>
+
+        {result?.passed && (
+          <Button
+            tone="surface"
+            onClick={() => {
+              setShareCode(codeRef.current);
+              setIsShareModalOpen(true);
+            }}
+            className="text-xs flex items-center gap-1"
+          >
+            <Share2 size={12} className="inline mr-1" />
+            <span>Share Solution</span>
+          </Button>
+        )}
+
         <span className="text-xs text-foreground-muted">
           {running
             ? 'Executing in a sandbox…'
@@ -344,8 +432,16 @@ export function Workspace({
       </div>
 
       {requiresSubmit && submitted && (
-        <Node tone="muted" className="p-3 text-sm">
-          Recorded. This problem now counts toward your progress.
+        <Node tone="muted" className="flex flex-wrap items-center justify-between gap-3 p-3 text-sm">
+          <span>Recorded in this browser. This problem now counts toward your progress.</span>
+          {!session && (
+            <Link
+              href="/sign-up"
+              className="text-xs font-semibold text-link underline underline-offset-2 shrink-0"
+            >
+              Sign up to save permanently across devices →
+            </Link>
+          )}
         </Node>
       )}
 
@@ -355,13 +451,77 @@ export function Workspace({
         </Node>
       )}
 
-      <TestCases spec={spec} result={result} />
+      {/* Bottom section tabs: Test cases vs Community Solutions vs Discussions */}
+      <div className="flex items-center gap-2 border-b border-border-subtle pt-2">
+        <button
+          type="button"
+          onClick={() => setBottomTab('tests')}
+          className={`px-3 py-1.5 text-xs font-semibold rounded-t-node border-t border-x transition-all cursor-pointer ${
+            bottomTab === 'tests'
+              ? 'bg-surface text-foreground font-bold border-border-strong -mb-px'
+              : 'text-foreground-muted hover:text-foreground border-transparent'
+          }`}
+        >
+          Test Cases
+        </button>
+        <button
+          type="button"
+          onClick={() => setBottomTab('solutions')}
+          className={`px-3 py-1.5 text-xs font-semibold rounded-t-node border-t border-x transition-all cursor-pointer flex items-center gap-1.5 ${
+            bottomTab === 'solutions'
+              ? 'bg-surface text-foreground font-bold border-border-strong -mb-px'
+              : 'text-foreground-muted hover:text-foreground border-transparent'
+          }`}
+        >
+          <Sparkles size={12} className="text-accent" />
+          <span>Community Solutions</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setBottomTab('discussions')}
+          className={`px-3 py-1.5 text-xs font-semibold rounded-t-node border-t border-x transition-all cursor-pointer flex items-center gap-1.5 ${
+            bottomTab === 'discussions'
+              ? 'bg-surface text-foreground font-bold border-border-strong -mb-px'
+              : 'text-foreground-muted hover:text-foreground border-transparent'
+          }`}
+        >
+          <MessageSquare size={12} className="text-accent" />
+          <span>Discussions</span>
+        </button>
+      </div>
 
-      {!compact && (
-        <Complexity
-          target={complexity}
-          metrics={result?.metrics ?? null}
-          inputSize={largestInputSize(spec)}
+      {bottomTab === 'tests' ? (
+        <>
+          <TestCases spec={spec} result={result} />
+          {!compact && (
+            <Complexity
+              target={complexity}
+              metrics={result?.metrics ?? null}
+              inputSize={largestInputSize(spec)}
+            />
+          )}
+        </>
+      ) : bottomTab === 'solutions' ? (
+        <CommunitySolutionGallery
+          exerciseId={exerciseId}
+          isSolved={result?.passed ?? false}
+          onOpenShareModal={() => {
+            setShareCode(codeRef.current);
+            setIsShareModalOpen(true);
+          }}
+        />
+      ) : (
+        <ProblemDiscussions exerciseId={exerciseId} />
+      )}
+
+      {isShareModalOpen && (
+        <SolutionShareModal
+          exerciseId={exerciseId}
+          code={shareCode}
+          language={language as 'python' | 'javascript' | 'typescript'}
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          onPublished={() => setBottomTab('solutions')}
         />
       )}
     </section>

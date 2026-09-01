@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Node } from '@/components/ui/Node';
+import { RotateCcw, Sparkles } from 'lucide-react';
 import { stateAtStep, type Scalar, type Trace } from '@/lib/trace/protocol';
 import { describeStep } from '@/lib/visualizer/array-renderer';
 import { selectRenderer, type VisualKind } from '@/lib/visualizer/registry';
 import '@/lib/visualizer/renderers';
 import { CodePanel } from './CodePanel';
 import type { Language } from '@/content/schema';
+import { useAssistant } from '@/components/assistant';
 
 /**
  * Playback over a trace (B3).
@@ -260,6 +262,26 @@ export function Visualizer({
   const drawnKind = visual === 'map' ? 'map' : visual === 'grid' ? 'grid' : 'array';
   const arrayName = trace.collections.find((c) => c.kind === drawnKind)?.name ?? '';
 
+  const { openAssistant } = useAssistant();
+
+  const handleExplainState = useCallback(() => {
+    openAssistant({
+      mode: 'explain_state',
+      context: {
+        traceStep: {
+          stepIndex: step,
+          totalSteps: total,
+          line: currentLine ?? undefined,
+          changedVariables: Object.fromEntries(
+            [...changed].map((name) => [name, variables.get(name)]),
+          ),
+          description,
+        },
+      },
+      initialPrompt: `Can you explain what is happening at step ${step + 1} of ${total} in this execution trace?`,
+    });
+  }, [openAssistant, step, total, currentLine, changed, variables, description]);
+
   /** Draws one step. Called from the loop and from every control. */
   const draw = useCallback(
     (next: number) => {
@@ -491,10 +513,15 @@ export function Visualizer({
           }}
           disabled={step === 0 && !playing}
         >
-          ↺ Start over
+          <RotateCcw size={13} className="inline mr-1" aria-hidden />
+          Start over
         </Button>
         <Button tone="surface" onClick={jumpToDivergence}>
           Jump to end
+        </Button>
+        <Button tone="surface" onClick={handleExplainState} title="Ask AI assistant to explain this animation state">
+          <Sparkles size={13} className="inline mr-1 text-accent-strong" aria-hidden />
+          Explain state
         </Button>
 
         <div className="flex items-center gap-1">

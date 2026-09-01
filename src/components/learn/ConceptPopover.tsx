@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { X, Sparkles } from 'lucide-react';
 import type { Concept } from '@/content/concepts';
+import { ComponentReferenceModal } from '@/components/system-design/ComponentReferenceModal';
 
 /**
  * A reference definition, shown next to the term it defines.
@@ -100,6 +101,7 @@ export function ConceptPopover({
   const [placement, setPlacement] = useState<Placement>(() =>
     typeof ResizeObserver === 'undefined' ? 'sheet' : 'pending',
   );
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const card = cardRef.current;
@@ -172,6 +174,19 @@ export function ConceptPopover({
     };
   }, [onClose]);
 
+  if (showModal) {
+    return (
+      <ComponentReferenceModal
+        concept={concept}
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false);
+          onClose();
+        }}
+      />
+    );
+  }
+
   return createPortal(
     <>
       {/*
@@ -227,6 +242,22 @@ export function ConceptPopover({
         */}
         <p className="text-sm leading-6">{concept.definition}</p>
         <p className="text-sm leading-6 text-foreground-muted">{concept.matters}</p>
+
+        {concept.dimensions && (
+          <div className="pt-2.5 mt-1 border-t border-border-subtle flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-node text-2xs font-bold uppercase bg-accent text-accent-foreground border border-border-strong shadow-2xs">
+              <Sparkles size={11} className="shrink-0" />
+              10D Spec
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowModal(true)}
+              className="text-xs text-link hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+            >
+              Open Full Breakdown →
+            </button>
+          </div>
+        )}
       </div>
     </>,
     document.body,

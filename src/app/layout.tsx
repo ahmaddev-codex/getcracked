@@ -7,20 +7,8 @@ import { SignedOutNotice } from "./SignedOutNotice";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { AssistantProvider, AssistantPanel } from "@/components/assistant";
 
-/**
- * The roadmap node face (K5).
- *
- * Measured from the reference rather than guessed: the only web font it serves
- * is `balsamiq.woff2`, and the only place it applies it is the text inside
- * roadmap nodes. Header, navigation and headings all compute to the system
- * stack, so this is deliberately *not* the body font — using it everywhere
- * would look less like the reference, not more.
- *
- * Balsamiq Sans is SIL Open Font License, so it can be embedded. `next/font`
- * self-hosts it at build time, so there is no third-party request at runtime
- * and no layout shift while it loads.
- */
 const nodeFont = Balsamiq_Sans({
   subsets: ["latin"],
   weight: ["400", "700"],
@@ -48,12 +36,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/getcracked_favicon.svg" type="image/svg+xml" />
       </head>
       <body className="min-h-full flex flex-col">
-        <SignedOutNotice />
-        <SiteHeader />
-        {children}
-        <div className="fixed bottom-3 right-3 z-50">
-          <ThemeToggle />
-        </div>
+        <AssistantProvider>
+          <SignedOutNotice />
+          <SiteHeader />
+          {children}
+          <AssistantPanel />
+          <div className="fixed bottom-3 right-3 z-40">
+            <ThemeToggle />
+          </div>
+        </AssistantProvider>
 
         {/* Vercel's own analytics and Core Web Vitals reporting. */}
         <Analytics />

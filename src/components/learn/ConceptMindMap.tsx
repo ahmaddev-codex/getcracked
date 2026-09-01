@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Sparkles } from 'lucide-react';
 import { ConnectorFan, FAN_ORIGIN, FAN_TARGET } from './ConnectorFan';
 import type { Concept, ConceptCategory } from '@/content/concepts';
 import { ConceptPopover } from './ConceptPopover';
@@ -99,9 +99,17 @@ function CategoryRow({
                     {...{ [FAN_TARGET]: concept.slug }}
                     id={concept.slug}
                     onClick={() => onOpen(concept)}
-                    className="node-surface node-interactive block w-full scroll-mt-24 truncate bg-accent px-3 py-2 text-center text-sm text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+                    className="node-surface node-interactive flex items-center justify-center gap-1.5 w-full scroll-mt-24 truncate bg-accent px-3 py-2 text-center text-sm text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link cursor-pointer"
                   >
-                    {concept.term}
+                    <span className="truncate">{concept.term}</span>
+                    {concept.dimensions && (
+                      <span
+                        title="Standardized 10D Architectural Reference available"
+                        className="inline-flex items-center text-accent-foreground/80 shrink-0"
+                      >
+                        <Sparkles size={11} aria-hidden />
+                      </span>
+                    )}
                   </button>
                 </li>
               ))}

@@ -23,6 +23,10 @@ const PATTERN_CATEGORIES = new Set([
   'cloud-design',
   'cloud-data',
   'cloud-messaging',
+  'microservices-architecture',
+  'caching-strategies',
+  'distributed-reliability',
+  'consensus-coordination',
 ]);
 
 /** The named-pattern catalogue. */
@@ -58,4 +62,4 @@ export function findConcept(slug: string): (Concept & { category: string }) | un
 }
 
 export { CONCEPT_CATEGORIES };
-export type { Concept, ConceptCategory };
+export type { Concept, ConceptCategory, TenDimensions } from './schema';

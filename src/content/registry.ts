@@ -1,29 +1,45 @@
 import { twoSum } from './problems/hashing/two-sum';
+import { validAnagram } from './problems/hashing/valid-anagram';
+import { firstUniqueChar } from './problems/hashing/first-unique-char';
+import { groupAnagrams } from './problems/hashing/group-anagrams';
+import { longestConsecutiveSequence } from './problems/hashing/longest-consecutive-sequence';
 import { maxSubarray } from './problems/arrays/max-subarray';
 import { runningSum } from './problems/arrays/running-sum';
 import { binarySearch } from './problems/binary-search/binary-search';
 import { searchInsert } from './problems/binary-search/search-insert';
+import { searchRotatedSortedArray } from './problems/binary-search/search-rotated-sorted-array';
 import { climbStairs } from './problems/dynamic-programming/climb-stairs';
 import { coinChange } from './problems/dynamic-programming/coin-change';
 import { houseRobber } from './problems/dynamic-programming/house-robber';
+import { longestPalindromicSubstring } from './problems/dynamic-programming/longest-palindromic-substring';
 import { countComponents } from './problems/graphs/count-components';
-import { firstUniqueChar } from './problems/hashing/first-unique-char';
-import { groupAnagrams } from './problems/hashing/group-anagrams';
+import { numberOfIslands } from './problems/graphs/number-of-islands';
 import { kthLargest } from './problems/heaps/kth-largest';
+import { topKFrequent } from './problems/heaps/top-k-frequent';
 import { fibMemo } from './problems/recursion/fib-memo';
 import { longestUniqueSubstring } from './problems/sliding-window/longest-unique-substring';
 import { maxSumSubarrayK } from './problems/sliding-window/max-sum-subarray-k';
 import { dailyTemperatures } from './problems/stacks-queues/daily-temperatures';
 import { validParentheses } from './problems/stacks-queues/valid-parentheses';
 import { maxDepth } from './problems/trees/max-depth';
+import { isValidBst } from './problems/trees/is-valid-bst';
 import { containerWater } from './problems/two-pointers/container-water';
 import { removeDuplicates } from './problems/two-pointers/remove-duplicates';
+import { trapRainWater } from './problems/two-pointers/trap-rain-water';
 import { singleNumber } from './problems/bit-manipulation/single-number';
 import { jumpGame } from './problems/greedy/jump-game';
+import { bestTimeToBuyAndSellStock } from './problems/greedy/best-time-to-buy-and-sell-stock';
 import { mergeIntervals } from './problems/intervals/merge-intervals';
+import { insertInterval } from './problems/intervals/insert-interval';
 import { subarraySumK } from './problems/prefix-sums/subarray-sum-k';
 import { sortColors } from './problems/sorting/sort-colors';
 import { subsets } from './problems/backtracking/subsets';
+import { wordSearch } from './problems/backtracking/word-search';
+import { reverseLinkedList } from './problems/linked-lists/reverse-linked-list';
+import { threeSum } from './problems/two-pointers/three-sum';
+import { productExceptSelf } from './problems/arrays/product-except-self';
+import { levelOrder } from './problems/trees/level-order';
+import { longestCommonSubsequence } from './problems/dynamic-programming/longest-common-subsequence';
 import { hashingLesson } from './lessons/hashing';
 import { arraysLesson } from './lessons/arrays';
 import { slidingWindowLesson } from './lessons/sliding-window';
@@ -56,7 +72,17 @@ import { cdnLesson } from './lessons/system-design/cdn';
 import { consistentHashingLesson } from './lessons/system-design/consistent-hashing';
 import { idempotencyLesson } from './lessons/system-design/idempotency';
 import { urlShortenerLab } from './labs/url-shortener';
+import { rateLimiterLab } from './labs/rate-limiter';
+import { distributedCacheLab } from './labs/distributed-cache';
+import { videoStreamingLab } from './labs/video-streaming';
+import { realTimeChatLab } from './labs/real-time-chat';
+import { notificationServiceLab } from './labs/notification-service';
 import { lruCacheChallenge } from './challenges/dsa/lru-cache';
+import { hashMapChallenge } from './challenges/dsa/hash-map';
+import { minHeapChallenge } from './challenges/dsa/min-heap';
+import { trieChallenge } from './challenges/dsa/trie';
+import { linkedListChallenge } from './challenges/dsa/linked-list';
+import { binarySearchTreeChallenge } from './challenges/dsa/binary-search-tree';
 import { tokenBucketChallenge } from './challenges/real-world/token-bucket';
 import { undoRedoChallenge } from './challenges/design-patterns/undo-redo';
 import {
@@ -94,10 +120,47 @@ import {
  */
 export const RAW_PROBLEMS: readonly ProblemInput[] = [
   twoSum,
-  maxSubarray, runningSum, binarySearch, searchInsert, climbStairs, coinChange, houseRobber, countComponents, firstUniqueChar, groupAnagrams, kthLargest, fibMemo, longestUniqueSubstring, maxSumSubarrayK, dailyTemperatures, validParentheses, maxDepth, containerWater, removeDuplicates,
-  // Six topics that had a lesson and an empty problem set — a path that handed
-  // off to nothing.
-  singleNumber, jumpGame, mergeIntervals, subarraySumK, sortColors, subsets,
+  validAnagram,
+  firstUniqueChar,
+  groupAnagrams,
+  longestConsecutiveSequence,
+  maxSubarray,
+  runningSum,
+  binarySearch,
+  searchInsert,
+  searchRotatedSortedArray,
+  climbStairs,
+  coinChange,
+  houseRobber,
+  longestPalindromicSubstring,
+  countComponents,
+  numberOfIslands,
+  kthLargest,
+  topKFrequent,
+  fibMemo,
+  longestUniqueSubstring,
+  maxSumSubarrayK,
+  dailyTemperatures,
+  validParentheses,
+  maxDepth,
+  isValidBst,
+  containerWater,
+  removeDuplicates,
+  trapRainWater,
+  singleNumber,
+  jumpGame,
+  bestTimeToBuyAndSellStock,
+  mergeIntervals,
+  insertInterval,
+  subarraySumK,
+  sortColors,
+  subsets,
+  wordSearch,
+  reverseLinkedList,
+  threeSum,
+  productExceptSelf,
+  levelOrder,
+  longestCommonSubsequence,
 ];
 
 function parseProblem(input: ProblemInput): Problem {
@@ -182,7 +245,15 @@ export const RAW_LESSONS: readonly LessonInput[] = [
   cdnLesson,
   consistentHashingLesson,
   idempotencyLesson,
-  arraysLesson, slidingWindowLesson, stacksQueuesLesson, binarySearchLesson, recursionLesson, treesLesson, graphsLesson, heapsLesson, dynamicProgrammingLesson,
+  arraysLesson,
+  slidingWindowLesson,
+  stacksQueuesLesson,
+  binarySearchLesson,
+  recursionLesson,
+  treesLesson,
+  graphsLesson,
+  heapsLesson,
+  dynamicProgrammingLesson,
 ];
 
 let lessonCache: readonly Lesson[] | undefined;
@@ -258,7 +329,12 @@ export function getTopics(): readonly string[] {
 
 /** Authored build challenges, unvalidated — the check script reports on these. */
 export const RAW_CHALLENGES: readonly ChallengeInput[] = [
+  linkedListChallenge,
   lruCacheChallenge,
+  hashMapChallenge,
+  minHeapChallenge,
+  binarySearchTreeChallenge,
+  trieChallenge,
   tokenBucketChallenge,
   undoRedoChallenge,
 ];
@@ -331,7 +407,14 @@ export function getChallengesForTopic(topic: string): readonly Challenge[] {
 }
 
 /** Authored System Design labs, unvalidated — the check script reports on these. */
-export const RAW_LABS: readonly ScenarioLabInput[] = [urlShortenerLab];
+export const RAW_LABS: readonly ScenarioLabInput[] = [
+  urlShortenerLab,
+  rateLimiterLab,
+  distributedCacheLab,
+  videoStreamingLab,
+  realTimeChatLab,
+  notificationServiceLab,
+];
 
 let labCache: readonly ScenarioLab[] | undefined;
 

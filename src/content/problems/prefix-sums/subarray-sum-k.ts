@@ -6,6 +6,7 @@ export const subarraySumK: ProblemInput = {
   topic: 'prefix-sums',
   difficulty: 'medium',
   title: 'Subarray Sum Equals K',
+  companies: ['Stripe', 'Meta', 'Amazon'],
   recommendedAfter: ['prefix-sums', 'hashing'],
 
   brief: `Count the contiguous subarrays of \`nums\` whose values sum to \`k\`.
