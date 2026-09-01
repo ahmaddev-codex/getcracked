@@ -14,7 +14,7 @@ import { Page } from '@/components/ui/Page';
  */
 export const metadata = {
   title: 'Practice problems — GetCracked',
-  description: 'Interview-style practice problems, grouped by topic. Free, no account needed.',
+  description: 'Interview-style practice problems, grouped by topic. Sign up free to track your progress.',
 };
 
 export default function ProblemsPage() {

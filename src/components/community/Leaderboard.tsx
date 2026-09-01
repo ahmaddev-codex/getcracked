@@ -9,6 +9,8 @@ import {
   Hammer,
   Send,
 } from 'lucide-react';
+import Link from 'next/link';
+import { useSession } from '@/lib/auth-client';
 import {
   getLeaderboard,
   type LeaderboardEntry,
@@ -43,12 +45,32 @@ function primaryMetric(entry: LeaderboardEntry, sortBy: LeaderboardSort): string
 }
 
 export function Leaderboard() {
+  const { data: session } = useSession();
   const [sortBy, setSortBy] = useState<LeaderboardSort>('problems_solved');
 
   const entries = getLeaderboard(sortBy);
 
   return (
     <div className="flex flex-col gap-4">
+      {!session && (
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-node bg-surface border border-border-subtle shadow-2xs">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-semibold text-foreground">
+              Want to claim your rank on the leaderboard?
+            </span>
+            <span className="text-xs text-foreground-muted">
+              You can explore and solve as a guest, but an account is needed to sync your scores and rank.
+            </span>
+          </div>
+          <Link
+            href="/sign-up"
+            className="px-3.5 py-1.5 text-xs font-bold rounded-node bg-accent-strong text-accent-foreground hover:opacity-90 transition-opacity node-interactive shrink-0"
+          >
+            Create free account
+          </Link>
+        </div>
+      )}
+
       {/* Sort Controls */}
       <div className="flex items-center gap-2 flex-wrap">
         {SORT_OPTIONS.map((opt) => {

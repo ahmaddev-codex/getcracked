@@ -42,7 +42,7 @@ import { getCompanies } from '@/content/companies';
 export const metadata = {
   title: 'GetCracked — Build real systems. Step by step. In your browser.',
   description:
-    'Learn data structures, algorithms and system design by writing code that runs and animates in your browser. Free, and it works without an account.',
+    'Learn data structures, algorithms and system design by writing code that runs and animates in your browser. Start exploring instantly — sign up to save your progress.',
 };
 
 export default function LandingPage() {
@@ -98,25 +98,20 @@ export default function LandingPage() {
 
         <div className="flex flex-wrap items-center gap-3 pt-1">
           <Link
-            href="/learn/dsa"
+            href="/sign-up"
             className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-accent-strong px-4 py-2 text-sm font-bold text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
           >
-            Start learning
+            Create free account
             <ArrowRight size={15} aria-hidden />
           </Link>
           <Link
             href="/problems"
             className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-surface px-4 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
           >
-            Jump into a problem
+            Explore as guest
           </Link>
-          {/*
-            Said here rather than in a footer. The single most common reason a
-            visitor bounces from a learning site is not knowing whether they are
-            about to hit a sign-up wall, and the answer is no.
-          */}
           <span className="text-xs text-foreground-muted">
-            Free, and it all works without an account.
+            Start solving instantly without an account — sign up when you&apos;re ready to permanently save your progress.
           </span>
         </div>
       </header>
@@ -399,22 +394,22 @@ export default function LandingPage() {
           Ready to start cracking?
         </h2>
         <p className="max-w-lg text-sm text-foreground-muted">
-          No sign-up required. Pick a topic, write some code, and see it run.
-          Everything is free, and nothing is locked behind an account.
+          Jump in and start exploring — when you&apos;re ready to track your streaks,
+          save progress, and climb the leaderboard, create a free account in seconds.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
           <Link
-            href="/learn/dsa"
+            href="/sign-up"
             className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-accent-strong px-5 py-2.5 text-sm font-bold text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
           >
-            Start learning
+            Create free account
             <ArrowRight size={15} aria-hidden />
           </Link>
           <Link
-            href="/dashboard"
+            href="/learn/dsa"
             className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-surface px-5 py-2.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
           >
-            Go to dashboard
+            Explore as guest
           </Link>
         </div>
       </section>

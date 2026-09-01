@@ -18,6 +18,8 @@ import { useAssistant } from '@/components/assistant';
 import { SolutionShareModal } from '@/components/community/SolutionShareModal';
 import { CommunitySolutionGallery } from '@/components/community/CommunitySolutionGallery';
 import { ProblemDiscussions } from '@/components/community/ProblemDiscussions';
+import Link from 'next/link';
+import { useSession } from '@/lib/auth-client';
 import { Sparkles, Share2, MessageSquare } from 'lucide-react';
 import type { Language, TestSpec, Tier } from '@/content/schema';
 import type { SpecResult } from '@/content/test-runner';
@@ -68,6 +70,7 @@ export function Workspace({
       : [initialLanguage]
   ).filter((l) => supportedLanguages().includes(l));
 
+  const { data: session } = useSession();
   const [language, setLanguage] = useState<Language>(initialLanguage);
   const starter = starterByLanguage?.[language] ?? starterCode;
 
@@ -428,8 +431,16 @@ export function Workspace({
       </div>
 
       {requiresSubmit && submitted && (
-        <Node tone="muted" className="p-3 text-sm">
-          Recorded. This problem now counts toward your progress.
+        <Node tone="muted" className="flex flex-wrap items-center justify-between gap-3 p-3 text-sm">
+          <span>Recorded in this browser. This problem now counts toward your progress.</span>
+          {!session && (
+            <Link
+              href="/sign-up"
+              className="text-xs font-semibold text-link underline underline-offset-2 shrink-0"
+            >
+              Sign up to save permanently across devices →
+            </Link>
+          )}
         </Node>
       )}
 

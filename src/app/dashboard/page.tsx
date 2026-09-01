@@ -21,7 +21,7 @@ import { PersonalizedDashboard } from '@/components/dashboard/PersonalizedDashbo
  */
 export const metadata = {
   title: 'Dashboard — GetCracked',
-  description: 'Learn, practise, and build. Free and open, no account needed.',
+  description: 'Learn, practise, and build. Sign up free to track your streaks and progress.',
 };
 
 export default async function DashboardPage(props: {
@@ -109,8 +109,8 @@ export default async function DashboardPage(props: {
 
       <Node tone="muted" className="p-4 text-sm text-foreground-muted">
         Three tiers, one direction: read a topic, practise it on single functions, then
-        build the thing itself across several files. In any order — nothing is locked
-        behind anything.
+        build the thing itself across several files. In any order — sign up to track your
+        progress across them all.
       </Node>
 
       <section className="flex flex-col gap-4">

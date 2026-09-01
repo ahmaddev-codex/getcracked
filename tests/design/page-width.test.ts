@@ -58,6 +58,8 @@ const EXPECTED: Record<string, PageWidth> = {
   'src/app/companies/page.tsx': 'catalog',
   'src/app/companies/[slug]/page.tsx': 'catalog',
 
+  'src/app/leaderboard/page.tsx': 'catalog',
+
   'src/app/challenges/page.tsx': 'catalog',
   'src/app/challenges/[slug]/page.tsx': 'catalog',
   // Canvas for the same reason the roadmaps are: a second column beside the

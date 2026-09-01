@@ -121,22 +121,22 @@ export function SignedOutNotice() {
               can picture losing.
             */}
             You&apos;ve solved {notice.solved}{' '}
-            {notice.solved === 1 ? 'exercise' : 'exercises'} — all of it lives in this
-            browser, and clearing your site data takes it with them.{' '}
-            <Link href="/sign-up" className="underline underline-offset-2">
-              Create a free account
+            {notice.solved === 1 ? 'exercise' : 'exercises'} — this progress is stored
+            only in this browser. If your cache or site data is cleared, it will be lost.{' '}
+            <Link href="/sign-up" className="font-semibold underline underline-offset-2">
+              Sign up now
             </Link>{' '}
-            to keep your progress, streaks and activity across devices.
+            to permanently protect your streaks, solutions, and leaderboard standing.
           </>
         ) : (
           <>
-            You&apos;re browsing signed out — everything works, but your progress lives in
+            You&apos;re exploring signed out — everything works, but your progress lives in
             this browser only. We count anonymous usage against a random id that resets
             monthly, to see which lessons work.{' '}
-            <Link href="/sign-up" className="underline underline-offset-2">
-              Sign in
+            <Link href="/sign-up" className="font-semibold underline underline-offset-2">
+              Create a free account
             </Link>{' '}
-            to keep your progress, streaks and activity across devices.
+            to permanently sync your progress, streaks, and activity across devices.
           </>
         )}
       </span>
