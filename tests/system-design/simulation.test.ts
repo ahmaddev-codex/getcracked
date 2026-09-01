@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   simulateArchitecture,
   type SimulationConfig,
-  type SimulationReport,
 } from '@/lib/system-design/simulation';
 import type {
   CanvasArchitecture,
@@ -243,7 +242,7 @@ describe('System Design Dynamic Simulation Engine', () => {
         makeNode('lb-1', 'load-balancer', { category: 'edge' }),
         makeNode('cache-1', 'cache-cluster', { category: 'cache' }),
         makeNode('app-1', 'app-server', { category: 'compute' }),
-        makeNode('db-1', 'database-primary', { category: 'storage' }),
+        makeNode('db-1', 'database-primary', { category: 'database' }),
         makeNode('queue-1', 'message-queue', { category: 'queue' }),
         makeNode('worker-1', 'worker-fleet', { category: 'compute' }),
       ],

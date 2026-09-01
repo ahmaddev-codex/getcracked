@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { Node } from '@/components/ui/Node';
 import { Page } from '@/components/ui/Page';
 import { getCompanies } from '@/content/companies';
 import { companyTags } from '@/lib/catalog';
@@ -77,20 +76,6 @@ export default function CompaniesPage() {
           </ul>
         </section>
       )}
-
-      <Node tone="muted" className="flex flex-col gap-2 p-4 text-sm text-foreground-muted">
-        <p>
-          <strong className="font-semibold text-foreground">No scraped question bank.</strong>{' '}
-          The obvious sources for one — LeetCode discussions, Glassdoor, Blind — forbid it in
-          their terms, so building it would mean ignoring that or reproducing their content
-          with the exposure that carries.
-        </p>
-        <p>
-          The company tags on practice problems are widely-reported associations with no
-          source and no date. Treat them as a rough signal about what a company tends to ask,
-          not as evidence that it asked this.
-        </p>
-      </Node>
     </Page>
   );
 }
