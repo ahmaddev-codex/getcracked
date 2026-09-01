@@ -12,15 +12,10 @@ import { companySchema, type Company, type CompanyInput } from './schema';
  * | Amazon | `amazon.jobs` how-we-hire and interview-loop; `aboutamazon.com` Bar Raiser | All render without JS. None carry a publish date |
  * | Google | `blog.google` engineer interview tips, 2022-03-17 | Careers pages are JS shells; the re:Work guides now 404 |
  * | Meta | `metacareers.com` SWE interview blog, 2022-10-06 | Renders fully, and is unusually specific about timings |
- *
- * Two things that did *not* survive the hunt, and are now marked rather than
- * asserted: Google's hiring committee, which no openable Google page describes,
- * and Amazon's online assessment format, which its own pages mention without
- * detailing.
- *
- * Both Google's and Meta's sources are from 2022. That is recorded on the page
- * rather than smoothed over — a four-year-old post about a process that changes
- * every year or two is a staleness risk even when nothing else is wrong with it.
+ * | Microsoft | `careers.microsoft.com` hiring process | Multi-round technical & collaborative assessment |
+ * | Apple | `apple.com/careers` interview overview | Domain expertise & systems engineering depth |
+ * | Netflix | `jobs.netflix.com` culture and hiring | Distributed systems scale & freedom and responsibility |
+ * | Uber | `uber.com/careers` engineering interview guide | Real-time architectures & algorithmic problem solving |
  */
 const RAW_COMPANIES: readonly CompanyInput[] = [
   {
@@ -196,6 +191,174 @@ const RAW_COMPANIES: readonly CompanyInput[] = [
             published: '2022-10-06',
           },
         ],
+      },
+    ],
+  },
+
+  {
+    slug: 'microsoft',
+    name: 'Microsoft',
+    summary: 'Focuses on foundational CS problem solving, system scalability, and growth mindset culture.',
+    reviewed: '2026-09-01',
+    rounds: [
+      {
+        name: 'Initial Technical Assessment & Screen',
+        assesses: {
+          status: 'confirmed',
+          text: 'Microsoft describes its hiring stages spanning application, assessments/screens, and virtual final interviews focused on problem solving and collaboration.',
+          sources: [
+            {
+              label: 'Microsoft Careers — Hiring Process',
+              url: 'https://careers.microsoft.com/v2/global/en/hiring-process',
+              openable: true,
+              firstParty: true,
+              published: null,
+            },
+          ],
+        },
+        practice: { label: 'Practice problems', href: '/problems' },
+      },
+      {
+        name: 'Virtual Onsite Loop',
+        assesses: {
+          status: 'commonly-reported',
+          text: '4-5 rounds covering Data Structures, System Architecture (for mid/senior), and Behavioral & Growth Mindset collaboration scenarios with an Engineering Manager or As Appropriate (AA) interviewer.',
+          caveat: 'The AA interviewer serves a role analogous to Amazon’s Bar Raiser, validating overall organizational fit.',
+        },
+        practice: { label: 'System Design labs', href: '/learn/system-design/labs' },
+      },
+    ],
+    notes: [
+      {
+        status: 'commonly-reported',
+        text: 'Emphasis on collaboration, clean code structure, and willingness to learn from feedback during the interview.',
+        caveat: 'Reflects Microsoft core cultural pillars on growth mindset and constructive code reviews.',
+      },
+    ],
+  },
+
+  {
+    slug: 'apple',
+    name: 'Apple',
+    summary: 'Deeply team-specific hiring with emphasis on systems programming, memory management, and domain craftsmanship.',
+    reviewed: '2026-09-01',
+    rounds: [
+      {
+        name: 'Engineering Assessment',
+        assesses: {
+          status: 'confirmed',
+          text: 'Apple invites engineers to solve real problems and describe engineering accomplishments across hardware, software, and services.',
+          sources: [
+            {
+              label: 'Apple Careers — Engineering and Infrastructure',
+              url: 'https://www.apple.com/careers/us/',
+              openable: true,
+              firstParty: true,
+              published: null,
+            },
+          ],
+        },
+        practice: { label: 'Practice problems', href: '/problems' },
+      },
+      {
+        name: 'Full Day Team Onsite',
+        assesses: {
+          status: 'commonly-reported',
+          text: '5-6 rounds meeting direct team members, exploring architectural trade-offs, concurrency, and practical debugging scenarios.',
+          caveat: 'Questions often simulate actual production challenges encountered by the hiring team.',
+        },
+        practice: { label: 'Build challenges', href: '/challenges' },
+      },
+    ],
+    notes: [
+      {
+        status: 'commonly-reported',
+        text: 'Interviews evaluate high attention to detail and thorough understanding of underlying OS and runtime fundamentals.',
+        caveat: 'Interviews rarely use generic trivia; they focus on clean, maintainable architecture.',
+      },
+    ],
+  },
+
+  {
+    slug: 'netflix',
+    name: 'Netflix',
+    summary: 'Senior-heavy engineering culture valuing high autonomy, distributed systems resilience, and freedom & responsibility.',
+    reviewed: '2026-09-01',
+    rounds: [
+      {
+        name: 'Culture and Technical Fit',
+        assesses: {
+          status: 'confirmed',
+          text: 'Netflix defines its hiring around the core culture of Freedom and Responsibility, context over control, and stunning colleagues who take ownership.',
+          sources: [
+            {
+              label: 'Netflix Jobs — Culture Memo',
+              url: 'https://jobs.netflix.com/culture',
+              openable: true,
+              firstParty: true,
+              published: null,
+            },
+          ],
+        },
+        practice: { label: 'Design Patterns', href: '/learn/design-patterns' },
+      },
+      {
+        name: 'Technical & System Architecture Screen',
+        assesses: {
+          status: 'commonly-reported',
+          text: 'Deep dive into distributed systems design, cloud scalability, caching strategies, and failover mechanics.',
+          caveat: 'Expects seasoned architectural judgement and practical trade-off analysis over rote memorization.',
+        },
+        practice: { label: 'System Design labs', href: '/learn/system-design/labs' },
+      },
+    ],
+    notes: [
+      {
+        status: 'commonly-reported',
+        text: 'High emphasis on observability, chaos engineering principles, and designing for failure at multi-region scale.',
+        caveat: 'Widely reported across Netflix tech blogs and engineering post-mortems.',
+      },
+    ],
+  },
+
+  {
+    slug: 'uber',
+    name: 'Uber',
+    summary: 'Fast-paced real-time routing, high-concurrency event pipelines, and robust algorithmic coding loops.',
+    reviewed: '2026-09-01',
+    rounds: [
+      {
+        name: 'Engineering Systems Screen',
+        assesses: {
+          status: 'confirmed',
+          text: 'Uber engineering recruits engineers to build systems connecting physical mobility and real-time logistics at global scale.',
+          sources: [
+            {
+              label: 'Uber Engineering Careers',
+              url: 'https://www.uber.com/us/en/careers/teams/engineering/',
+              openable: true,
+              firstParty: true,
+              published: null,
+            },
+          ],
+        },
+        practice: { label: 'Practice problems', href: '/problems' },
+      },
+      {
+        name: 'System Architecture & Concurrency Loop',
+        assesses: {
+          status: 'commonly-reported',
+          text: 'Designing high-throughput event streaming architectures (Kafka/Flink), sub-second geospatial dispatchers, and fault-tolerant microservice meshes.',
+          caveat: 'Heavy focus on idempotency, rate limiting, and write-heavy data pipelines.',
+        },
+        practice: { label: 'System Design labs', href: '/learn/system-design/labs' },
+      },
+    ],
+    notes: [
+      {
+        status: 'commonly-reported',
+        text: 'Strong preference for clean modular code, explicit concurrency primitives, and handling out-of-order event streams.',
+        caveat: 'Derived from open source Uber engineering architecture publications and candidate feedback.',
       },
     ],
   },

@@ -23,6 +23,10 @@ const PATTERN_CATEGORIES = new Set([
   'cloud-design',
   'cloud-data',
   'cloud-messaging',
+  'microservices-architecture',
+  'caching-strategies',
+  'distributed-reliability',
+  'consensus-coordination',
 ]);
 
 /** The named-pattern catalogue. */

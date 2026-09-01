@@ -1,29 +1,41 @@
 import { twoSum } from './problems/hashing/two-sum';
+import { validAnagram } from './problems/hashing/valid-anagram';
+import { firstUniqueChar } from './problems/hashing/first-unique-char';
+import { groupAnagrams } from './problems/hashing/group-anagrams';
+import { longestConsecutiveSequence } from './problems/hashing/longest-consecutive-sequence';
 import { maxSubarray } from './problems/arrays/max-subarray';
 import { runningSum } from './problems/arrays/running-sum';
 import { binarySearch } from './problems/binary-search/binary-search';
 import { searchInsert } from './problems/binary-search/search-insert';
+import { searchRotatedSortedArray } from './problems/binary-search/search-rotated-sorted-array';
 import { climbStairs } from './problems/dynamic-programming/climb-stairs';
 import { coinChange } from './problems/dynamic-programming/coin-change';
 import { houseRobber } from './problems/dynamic-programming/house-robber';
+import { longestPalindromicSubstring } from './problems/dynamic-programming/longest-palindromic-substring';
 import { countComponents } from './problems/graphs/count-components';
-import { firstUniqueChar } from './problems/hashing/first-unique-char';
-import { groupAnagrams } from './problems/hashing/group-anagrams';
+import { numberOfIslands } from './problems/graphs/number-of-islands';
 import { kthLargest } from './problems/heaps/kth-largest';
+import { topKFrequent } from './problems/heaps/top-k-frequent';
 import { fibMemo } from './problems/recursion/fib-memo';
 import { longestUniqueSubstring } from './problems/sliding-window/longest-unique-substring';
 import { maxSumSubarrayK } from './problems/sliding-window/max-sum-subarray-k';
 import { dailyTemperatures } from './problems/stacks-queues/daily-temperatures';
 import { validParentheses } from './problems/stacks-queues/valid-parentheses';
 import { maxDepth } from './problems/trees/max-depth';
+import { isValidBst } from './problems/trees/is-valid-bst';
 import { containerWater } from './problems/two-pointers/container-water';
 import { removeDuplicates } from './problems/two-pointers/remove-duplicates';
+import { trapRainWater } from './problems/two-pointers/trap-rain-water';
 import { singleNumber } from './problems/bit-manipulation/single-number';
 import { jumpGame } from './problems/greedy/jump-game';
+import { bestTimeToBuyAndSellStock } from './problems/greedy/best-time-to-buy-and-sell-stock';
 import { mergeIntervals } from './problems/intervals/merge-intervals';
+import { insertInterval } from './problems/intervals/insert-interval';
 import { subarraySumK } from './problems/prefix-sums/subarray-sum-k';
 import { sortColors } from './problems/sorting/sort-colors';
 import { subsets } from './problems/backtracking/subsets';
+import { wordSearch } from './problems/backtracking/word-search';
+import { reverseLinkedList } from './problems/linked-lists/reverse-linked-list';
 import { hashingLesson } from './lessons/hashing';
 import { arraysLesson } from './lessons/arrays';
 import { slidingWindowLesson } from './lessons/sliding-window';
@@ -98,31 +110,43 @@ import {
  */
 export const RAW_PROBLEMS: readonly ProblemInput[] = [
   twoSum,
+  validAnagram,
+  firstUniqueChar,
+  groupAnagrams,
+  longestConsecutiveSequence,
   maxSubarray,
   runningSum,
   binarySearch,
   searchInsert,
+  searchRotatedSortedArray,
   climbStairs,
   coinChange,
   houseRobber,
+  longestPalindromicSubstring,
   countComponents,
-  firstUniqueChar,
-  groupAnagrams,
+  numberOfIslands,
   kthLargest,
+  topKFrequent,
   fibMemo,
   longestUniqueSubstring,
   maxSumSubarrayK,
   dailyTemperatures,
   validParentheses,
   maxDepth,
+  isValidBst,
   containerWater,
   removeDuplicates,
+  trapRainWater,
   singleNumber,
   jumpGame,
+  bestTimeToBuyAndSellStock,
   mergeIntervals,
+  insertInterval,
   subarraySumK,
   sortColors,
   subsets,
+  wordSearch,
+  reverseLinkedList,
 ];
 
 function parseProblem(input: ProblemInput): Problem {
