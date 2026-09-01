@@ -16,6 +16,7 @@ import {
 } from '@/content/challenge';
 import { exerciseId, type Language } from '@/content/schema';
 import { pageClasses } from '@/components/ui/Page';
+import { EngineeringStackBreadcrumb } from '@/components/content/EngineeringStackBreadcrumb';
 
 /**
  * One step of a build challenge (PRD §2.2, `/challenges/{slug}/{step}`).
@@ -111,6 +112,8 @@ export default async function ChallengeStepPage(props: StepRouteProps) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col gap-6">
+        <EngineeringStackBreadcrumb tier="challenge" slug={challenge.slug} />
+
         <header className="flex flex-col gap-2">
           <p className="text-xs text-foreground-muted">
             Step {index + 1} of {challenge.steps.length}

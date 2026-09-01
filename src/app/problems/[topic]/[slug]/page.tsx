@@ -9,6 +9,7 @@ import { Workspace } from '@/components/problem/Workspace';
 import { findLesson, findProblem, getProblems, getSetPosition } from '@/content/registry';
 import { exerciseId } from '@/content/schema';
 import { Page } from '@/components/ui/Page';
+import { EngineeringStackBreadcrumb } from '@/components/content/EngineeringStackBreadcrumb';
 
 /**
  * A practice problem (B15).
@@ -59,6 +60,8 @@ export default async function ProblemPage(props: ProblemRouteProps) {
 
   return (
     <Page width="reading">
+      <EngineeringStackBreadcrumb tier="problem" slug={problem.slug} />
+
       <header className="flex flex-col gap-3">
         <p className="text-xs text-foreground-muted">
           <Link href={`/problems/${problem.topic}`} className="text-link underline underline-offset-2">

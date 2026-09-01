@@ -5,6 +5,7 @@ import { Node } from '@/components/ui/Node';
 import { Markdown } from '@/components/Markdown';
 import { ScenarioLab } from '@/components/system-design/ScenarioLab';
 import { findLab, findLesson, getLabs } from '@/content/registry';
+import { EngineeringStackBreadcrumb } from '@/components/content/EngineeringStackBreadcrumb';
 
 /**
  * One guided scenario (C2), scored against the rubric (C5).
@@ -41,6 +42,8 @@ export default async function LabPage(props: LabRouteProps) {
 
   return (
     <Page width="reading">
+      <EngineeringStackBreadcrumb tier="lab" slug={lab.slug} />
+
       <header className="flex flex-col gap-3">
         <p className="text-xs text-foreground-muted">
           <Link

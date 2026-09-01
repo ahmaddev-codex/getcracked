@@ -92,7 +92,7 @@ export function AssistantProvider({ children }: { children: React.ReactNode }) {
           loading: false,
         });
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return () => {
       active = false;

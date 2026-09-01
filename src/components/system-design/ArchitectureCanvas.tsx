@@ -20,11 +20,22 @@ import {
   ChevronRight,
   ChevronLeft,
   ShieldAlert,
+  Activity,
+  Flame,
+  AlertTriangle,
 } from 'lucide-react';
 import { ComponentPalette, renderPaletteIcon } from './ComponentPalette';
 import { TopologyAnalyzer } from './TopologyAnalyzer';
+import { SimulationPanel } from './SimulationPanel';
+import { FailureDecisionModal } from './FailureDecisionModal';
 import { ARCHITECTURE_PRESETS } from '@/lib/system-design/canvas-presets';
 import { analyzeTopology } from '@/lib/system-design/topology';
+import {
+  simulateArchitecture,
+  type SimulationConfig,
+  type RemediationPrompt,
+  type RemediationOption,
+} from '@/lib/system-design/simulation';
 import type {
   CanvasArchitecture,
   CanvasEdge,
@@ -85,8 +96,25 @@ export function ArchitectureCanvas({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isFullscreen]);
 
+  // Canvas Mode: Design vs Simulate
+  const [canvasMode, setCanvasMode] = useState<'design' | 'simulate'>('design');
+
+  // Simulation Config & State
+  const [simConfig, setSimConfig] = useState<SimulationConfig>({
+    globalQps: 25000,
+    profile: 'steady',
+    activeChaos: [],
+  });
+  const [activeRemediationPrompt, setActiveRemediationPrompt] = useState<RemediationPrompt | null>(null);
+
   // Analyze topology whenever nodes or edges update
   const topologyReport = useMemo(() => analyzeTopology(nodes, edges), [nodes, edges]);
+
+  // Compute live architecture simulation report
+  const simReport = useMemo(
+    () => simulateArchitecture({ nodes, edges, title: 'Canvas Architecture' }, simConfig),
+    [nodes, edges, simConfig],
+  );
 
   // Load a preset
   const loadPreset = (presetKey: string) => {
@@ -336,6 +364,40 @@ export function ArchitectureCanvas({
               <option value="rate-limiter">Distributed Rate Limiter</option>
               <option value="video-streaming">Video Streaming Platform</option>
             </select>
+          </div>
+
+          {/* Mode Switcher: Studio Design vs Live Simulation */}
+          <div className="flex items-center bg-surface-muted/60 p-0.5 rounded-xs border border-border-strong text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => setCanvasMode('design')}
+              className={`px-2 py-0.5 rounded-xs transition-all cursor-pointer flex items-center gap-1 text-2xs ${
+                canvasMode === 'design'
+                  ? 'bg-surface text-foreground shadow-xs font-bold border border-border-subtle'
+                  : 'text-foreground-muted hover:text-foreground'
+              }`}
+            >
+              <Sparkles size={11} className="text-link" />
+              <span>Design</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCanvasMode('simulate');
+                setShowTopology(true);
+              }}
+              className={`px-2 py-0.5 rounded-xs transition-all cursor-pointer flex items-center gap-1 text-2xs ${
+                canvasMode === 'simulate'
+                  ? 'bg-accent text-accent-foreground font-bold shadow-xs'
+                  : 'text-foreground-muted hover:text-foreground'
+              }`}
+            >
+              <Activity size={11} />
+              <span>Simulation</span>
+              {simReport.overallHealth !== 'healthy' && (
+                <span className="w-1.5 h-1.5 rounded-full bg-danger animate-ping" />
+              )}
+            </button>
           </div>
 
           {/* Quick counts */}
@@ -618,37 +680,122 @@ export function ArchitectureCanvas({
               {nodes.map((node) => {
                 const isSelected = selectedNodeId === node.id;
                 const isConnectingSource = connectingSourceId === node.id;
+                const simMetric = simReport.nodeMetrics[node.id];
+
+                // Determine border and halo based on mode and health
+                let nodeStatusStyle = isSelected
+                  ? 'ring-2 ring-link ring-offset-2 shadow-node-lifted'
+                  : 'shadow-node';
+
+                if (canvasMode === 'simulate' && simMetric) {
+                  if (simMetric.health === 'crashed') {
+                    nodeStatusStyle =
+                      'border-danger bg-danger/15 ring-2 ring-danger animate-pulse shadow-node-lifted font-semibold';
+                  } else if (simMetric.health === 'critical') {
+                    nodeStatusStyle = 'border-danger ring-2 ring-danger/40 shadow-node-lifted';
+                  } else if (simMetric.health === 'warning') {
+                    nodeStatusStyle = 'border-warning ring-1 ring-warning/50 shadow-node';
+                  } else {
+                    nodeStatusStyle = 'border-success/60 shadow-node';
+                  }
+                }
 
                 return (
                   <foreignObject
                     key={node.id}
                     x={node.x}
                     y={node.y}
-                    width={154}
-                    height={62}
+                    width={158}
+                    height={canvasMode === 'simulate' ? 68 : 62}
                     data-node-item="true"
                     className="overflow-visible pointer-events-auto select-none"
                     onPointerDown={(e) => handlePointerDownNode(e, node.id)}
                   >
                     <div
-                      className={`node-surface flex flex-col p-2 rounded-node bg-surface text-foreground border border-border-strong transition-shadow cursor-grab active:cursor-grabbing ${isSelected ? 'ring-2 ring-link ring-offset-2 shadow-node-lifted' : 'shadow-node'
-                        } ${isConnectingSource ? 'border-link ring-2 ring-link animate-pulse' : ''}`}
+                      className={`node-surface flex flex-col p-2 rounded-node bg-surface text-foreground border border-border-strong transition-all cursor-grab active:cursor-grabbing ${nodeStatusStyle} ${
+                        isConnectingSource ? 'border-link ring-2 ring-link animate-pulse' : ''
+                      }`}
                     >
                       <div className="flex items-center gap-1.5 justify-between min-w-0">
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="p-0.5 rounded-xs bg-surface-muted text-foreground-muted shrink-0">
                             {renderPaletteIcon(node.icon, 'w-3 h-3')}
                           </span>
-                          <span className="text-xs font-semibold truncate leading-tight text-foreground">{node.label}</span>
+                          <span className="text-xs font-semibold truncate leading-tight text-foreground">
+                            {node.label}
+                          </span>
                         </div>
+
+                        {/* Live Health Badge in Simulation Mode */}
+                        {canvasMode === 'simulate' && simMetric && (
+                          <div className="shrink-0">
+                            {simMetric.health === 'crashed' ? (
+                              <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded-xs bg-danger text-white text-3xs font-mono font-bold">
+                                <Flame size={9} />
+                                <span>CRASH</span>
+                              </span>
+                            ) : simMetric.health === 'critical' ? (
+                              <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded-xs bg-danger/20 text-danger text-3xs font-mono font-bold">
+                                <AlertTriangle size={9} />
+                                <span>{simMetric.cpuPct}%</span>
+                              </span>
+                            ) : simMetric.health === 'warning' ? (
+                              <span className="inline-flex items-center px-1 py-0.2 rounded-xs bg-warning/20 text-warning text-3xs font-mono font-semibold">
+                                {simMetric.cpuPct}%
+                              </span>
+                            ) : (
+                              <span className="w-2 h-2 rounded-full bg-success inline-block shadow-xs" />
+                            )}
+                          </div>
+                        )}
                       </div>
 
-                      {/* Concise metrics snippet */}
+                      {/* Metrics display: Static in design mode, Live in simulation mode */}
                       <div className="mt-1 flex items-center justify-between text-2xs font-mono text-foreground-muted border-t border-border-subtle/50 pt-0.5">
-                        <span>{node.metrics.qps ? `${Math.round(node.metrics.qps / 1000)}k/s` : '—'}</span>
-                        <span>{node.metrics.latencyMs ? `${node.metrics.latencyMs}ms` : ''}</span>
-                        {node.metrics.replicationCount && <span>{node.metrics.replicationCount}x</span>}
+                        {canvasMode === 'simulate' && simMetric ? (
+                          <>
+                            <span className="font-semibold text-foreground">
+                              {simMetric.qps > 1000
+                                ? `${Math.round(simMetric.qps / 1000)}k/s`
+                                : `${simMetric.qps}/s`}
+                            </span>
+                            <span
+                              className={
+                                simMetric.p99LatencyMs > 200
+                                  ? 'text-danger font-bold'
+                                  : simMetric.p99LatencyMs > 100
+                                    ? 'text-warning font-semibold'
+                                    : 'text-foreground-muted'
+                              }
+                            >
+                              {simMetric.p99LatencyMs}ms
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span>{node.metrics.qps ? `${Math.round(node.metrics.qps / 1000)}k/s` : '—'}</span>
+                            <span>{node.metrics.latencyMs ? `${node.metrics.latencyMs}ms` : ''}</span>
+                            {node.metrics.replicationCount && <span>{node.metrics.replicationCount}x</span>}
+                          </>
+                        )}
                       </div>
+
+                      {/* CPU Utilization Progress Bar in Simulation Mode */}
+                      {canvasMode === 'simulate' && simMetric && (
+                        <div className="w-full bg-surface-muted h-1 rounded-full overflow-hidden mt-1">
+                          <div
+                            className={`h-full transition-all duration-300 ${
+                              simMetric.cpuPct > 90
+                                ? 'bg-danger w-full'
+                                : simMetric.cpuPct > 70
+                                  ? 'bg-warning w-3/4'
+                                  : simMetric.cpuPct > 40
+                                    ? 'bg-success w-1/2'
+                                    : 'bg-success w-1/4'
+                            }`}
+                          />
+                        </div>
+                      )}
                     </div>
                   </foreignObject>
                 );
@@ -657,27 +804,66 @@ export function ArchitectureCanvas({
           </svg>
         </div>
 
-        {/* Right Extreme Topology Analyzer Dock */}
+        {/* Right Extreme Dock: Topology Analyzer (Design) or Simulation Panel (Simulate) */}
         {showTopology ? (
-          <TopologyAnalyzer
-            report={topologyReport}
-            onClose={() => setShowTopology(false)}
-            onSelectNodes={(nodeIds: string[]) => {
-              if (nodeIds[0]) setSelectedNodeId(nodeIds[0]);
-            }}
-          />
+          <div className="w-80 shrink-0 border-l border-border-strong bg-surface overflow-y-auto max-h-full">
+            {canvasMode === 'simulate' ? (
+              <SimulationPanel
+                config={simConfig}
+                report={simReport}
+                onConfigChange={setSimConfig}
+                onReset={() =>
+                  setSimConfig({
+                    globalQps: 25000,
+                    profile: 'steady',
+                    activeChaos: [],
+                  })
+                }
+                onOpenRemediation={() => {
+                  if (simReport.remediationPrompts.length > 0) {
+                    setActiveRemediationPrompt(simReport.remediationPrompts[0]!);
+                  }
+                }}
+              />
+            ) : (
+              <TopologyAnalyzer
+                report={topologyReport}
+                onClose={() => setShowTopology(false)}
+                onSelectNodes={(nodeIds: string[]) => {
+                  if (nodeIds[0]) setSelectedNodeId(nodeIds[0]);
+                }}
+              />
+            )}
+          </div>
         ) : (
           <button
             type="button"
             onClick={() => setShowTopology(true)}
-            aria-label="Open Topology Analyzer"
+            aria-label="Open Right Panel"
             className="absolute right-2 top-3 z-20 node-surface node-pressable bg-surface p-1.5 text-xs text-foreground flex items-center gap-1 rounded-xs shadow-node cursor-pointer"
           >
             <ChevronLeft size={14} />
-            <ShieldAlert size={14} className="text-link" />
+            {canvasMode === 'simulate' ? (
+              <Activity size={14} className="text-link" />
+            ) : (
+              <ShieldAlert size={14} className="text-link" />
+            )}
           </button>
         )}
       </div>
+
+      {/* Socratic Incident Remediation Modal */}
+      {activeRemediationPrompt && (
+        <FailureDecisionModal
+          prompt={activeRemediationPrompt}
+          onApplyOption={(option: RemediationOption) => {
+            const updated = option.action({ nodes, edges, title: 'Canvas Architecture' });
+            setNodes(updated.nodes);
+            setEdges(updated.edges);
+          }}
+          onClose={() => setActiveRemediationPrompt(null)}
+        />
+      )}
 
       {/* Bottom Inspector Bar (when node or edge selected) */}
       {(selectedNode || selectedEdge) && (

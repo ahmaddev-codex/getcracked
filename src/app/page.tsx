@@ -215,17 +215,6 @@ export default function LandingPage() {
           ))}
         </Node>
       </section>
-
-      <Node tone="muted" className="flex flex-col gap-2 p-5 text-sm text-foreground-muted">
-        <p>
-          <strong className="font-semibold text-foreground">
-            No account needed, and nothing is locked.
-          </strong>{' '}
-          Every lesson, problem, build and lab is open to everyone from the first visit —
-          prerequisites suggest an order, they never gate one. Signing in keeps your
-          progress, streaks and activity across devices; it has never bought access.
-        </p>
-      </Node>
     </Page>
   );
 }

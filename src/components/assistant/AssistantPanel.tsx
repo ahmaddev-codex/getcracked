@@ -134,13 +134,12 @@ export function AssistantPanel() {
           <div className="flex items-center gap-2">
             {quota.signedIn ? (
               <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 font-mono text-xs border border-border-strong rounded-sm ${
-                  quota.remaining > 3
+                className={`inline-flex items-center gap-1 px-2 py-0.5 font-mono text-xs border border-border-strong rounded-sm ${quota.remaining > 3
                     ? 'bg-success/15 text-success'
                     : quota.remaining > 0
                       ? 'bg-warning/15 text-warning'
                       : 'bg-danger/15 text-danger font-bold'
-                }`}
+                  }`}
                 title="Daily quota limit"
               >
                 ● {quota.remaining}/{quota.limit} queries today
@@ -240,19 +239,17 @@ export function AssistantPanel() {
           {messages.map((msg, idx) => (
             <div
               key={idx}
-              className={`flex flex-col ${
-                msg.role === 'user' ? 'items-end' : 'items-start'
-              }`}
+              className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'
+                }`}
             >
               <div className="mb-1 text-xs font-mono uppercase text-foreground-muted">
                 {msg.role === 'user' ? 'You' : 'Assistant'}
               </div>
               <div
-                className={`max-w-xl rounded-md border-2 border-border-strong p-3 text-sm leading-relaxed ${
-                  msg.role === 'user'
+                className={`max-w-xl rounded-md border-2 border-border-strong p-3 text-sm leading-relaxed ${msg.role === 'user'
                     ? 'bg-accent font-medium text-accent-foreground shadow-(--shadow-node)'
                     : 'bg-surface text-foreground shadow-(--shadow-node)'
-                }`}
+                  }`}
               >
                 {msg.role === 'user' ? (
                   <p className="whitespace-pre-wrap">{msg.content}</p>

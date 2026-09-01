@@ -73,6 +73,11 @@ import { distributedCacheLab } from './labs/distributed-cache';
 import { videoStreamingLab } from './labs/video-streaming';
 import { realTimeChatLab } from './labs/real-time-chat';
 import { lruCacheChallenge } from './challenges/dsa/lru-cache';
+import { hashMapChallenge } from './challenges/dsa/hash-map';
+import { minHeapChallenge } from './challenges/dsa/min-heap';
+import { trieChallenge } from './challenges/dsa/trie';
+import { linkedListChallenge } from './challenges/dsa/linked-list';
+import { binarySearchTreeChallenge } from './challenges/dsa/binary-search-tree';
 import { tokenBucketChallenge } from './challenges/real-world/token-bucket';
 import { undoRedoChallenge } from './challenges/design-patterns/undo-redo';
 import {
@@ -315,7 +320,12 @@ export function getTopics(): readonly string[] {
 
 /** Authored build challenges, unvalidated — the check script reports on these. */
 export const RAW_CHALLENGES: readonly ChallengeInput[] = [
+  linkedListChallenge,
   lruCacheChallenge,
+  hashMapChallenge,
+  minHeapChallenge,
+  binarySearchTreeChallenge,
+  trieChallenge,
   tokenBucketChallenge,
   undoRedoChallenge,
 ];
