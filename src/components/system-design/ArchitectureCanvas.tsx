@@ -963,10 +963,10 @@ export function ArchitectureCanvas({
                   <button
                     type="button"
                     onClick={() => setReferenceModalConcept(concept)}
-                    className="px-2 py-1 bg-accent/15 border border-accent/30 text-accent rounded-xs text-2xs font-semibold hover:bg-accent/25 transition-colors flex items-center gap-1 cursor-pointer"
+                    className="px-2 py-1 bg-accent border border-border-strong text-accent-foreground rounded-xs text-2xs font-bold hover:bg-accent-strong transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
                     title={`View 10D Architectural Spec for ${concept.term}`}
                   >
-                    <Sparkles size={11} />
+                    <Sparkles size={11} className="shrink-0" />
                     <span>10D Spec</span>
                   </button>
                 );

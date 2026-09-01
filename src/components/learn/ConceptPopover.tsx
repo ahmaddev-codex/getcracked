@@ -174,6 +174,19 @@ export function ConceptPopover({
     };
   }, [onClose]);
 
+  if (showModal) {
+    return (
+      <ComponentReferenceModal
+        concept={concept}
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false);
+          onClose();
+        }}
+      />
+    );
+  }
+
   return createPortal(
     <>
       {/*
@@ -232,28 +245,20 @@ export function ConceptPopover({
 
         {concept.dimensions && (
           <div className="pt-2.5 mt-1 border-t border-border-subtle flex items-center justify-between gap-2">
-            <span className="text-2xs text-accent font-semibold flex items-center gap-1">
-              <Sparkles size={11} />
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-node text-2xs font-bold uppercase bg-accent text-accent-foreground border border-border-strong shadow-2xs">
+              <Sparkles size={11} className="shrink-0" />
               10D Spec
             </span>
             <button
               type="button"
               onClick={() => setShowModal(true)}
-              className="text-xs text-accent hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+              className="text-xs text-link hover:underline font-semibold flex items-center gap-1 cursor-pointer"
             >
               Open Full Breakdown →
             </button>
           </div>
         )}
       </div>
-
-      {showModal && (
-        <ComponentReferenceModal
-          concept={concept}
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
-        />
-      )}
     </>,
     document.body,
   );

@@ -122,8 +122,8 @@ export function Scorecard({
       {remediations.length > 0 && (
         <section className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <span className="p-1 rounded-xs bg-accent/20 text-accent">
-              <Sparkles size={14} />
+            <span className="p-1 rounded-node bg-accent text-accent-foreground border border-border-strong shadow-2xs">
+              <Sparkles size={13} className="shrink-0" />
             </span>
             <h3 className="text-sm font-bold text-foreground">
               Targeted Remediation Plan (Track 5)
@@ -135,7 +135,7 @@ export function Scorecard({
               <Node key={rem.id} tone="surface" className="flex flex-col gap-3 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wider bg-accent/15 text-accent border border-accent/30">
+                    <span className="px-2 py-0.5 rounded-node text-2xs font-bold uppercase tracking-wider bg-accent text-accent-foreground border border-border-strong shadow-2xs">
                       {LAB_DIMENSION_LABELS[rem.dimension]}
                     </span>
                     <h4 className="text-sm font-semibold text-foreground">{rem.title}</h4>
@@ -145,26 +145,26 @@ export function Scorecard({
                     <button
                       type="button"
                       onClick={() => onLaunchRemediation(rem.suggestedSimConfig)}
-                      className="px-3 py-1.5 bg-accent text-accent-foreground rounded-xs text-xs font-semibold hover:bg-accent-strong transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      className="px-3 py-1.5 bg-accent text-accent-foreground border border-border-strong rounded-node text-xs font-bold hover:bg-accent-strong transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
                     >
-                      <Flame size={13} />
+                      <Flame size={13} className="shrink-0" />
                       <span>Simulate & Fix on Whiteboard</span>
                     </button>
                   )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                  <div className="p-2.5 rounded-xs bg-surface-muted/40 border border-border-subtle flex flex-col gap-1">
-                    <span className="font-semibold text-rose-500 flex items-center gap-1">
-                      <ShieldAlert size={12} />
+                  <div className="p-2.5 rounded-node bg-danger-soft/20 border border-danger/30 flex flex-col gap-1">
+                    <span className="font-bold text-danger flex items-center gap-1">
+                      <ShieldAlert size={12} className="shrink-0" />
                       Diagnostic
                     </span>
-                    <p className="text-foreground-muted leading-relaxed">{rem.diagnostic}</p>
+                    <p className="text-foreground leading-relaxed">{rem.diagnostic}</p>
                   </div>
 
-                  <div className="p-2.5 rounded-xs bg-surface-muted/40 border border-border-subtle flex flex-col gap-1">
-                    <span className="font-semibold text-amber-500 flex items-center gap-1">
-                      <ArrowRight size={12} />
+                  <div className="p-2.5 rounded-node bg-surface-muted/60 border border-border-subtle flex flex-col gap-1">
+                    <span className="font-bold text-foreground flex items-center gap-1">
+                      <ArrowRight size={12} className="shrink-0 text-foreground-muted" />
                       Prescribed Architectural Fix
                     </span>
                     <p className="text-foreground-muted leading-relaxed">{rem.actionAdvice}</p>
@@ -174,7 +174,7 @@ export function Scorecard({
                 {/* 10D Component Chips */}
                 {rem.conceptSlugs.length > 0 && (
                   <div className="pt-2 border-t border-border-subtle flex flex-wrap items-center gap-2">
-                    <span className="text-2xs text-foreground-muted">Study 10D Component Spec:</span>
+                    <span className="text-2xs text-foreground-muted font-medium">Study 10D Component Spec:</span>
                     {rem.conceptSlugs.map((slug) => {
                       const concept = findConcept(slug);
                       if (!concept) return null;
@@ -183,9 +183,9 @@ export function Scorecard({
                           key={slug}
                           type="button"
                           onClick={() => setActiveModalConcept(concept)}
-                          className="px-2 py-1 rounded-xs text-xs font-semibold bg-surface border border-border-strong text-foreground hover:bg-accent/10 hover:border-accent/40 hover:text-accent transition-colors flex items-center gap-1 cursor-pointer"
+                          className="px-2 py-1 rounded-node text-xs font-semibold bg-surface border border-border-strong text-foreground hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
                         >
-                          <Sparkles size={11} className="text-accent" />
+                          <Sparkles size={11} className="shrink-0" />
                           <span>{concept.term}</span>
                         </button>
                       );

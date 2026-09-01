@@ -1,18 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
-  X,
   AlertTriangle,
-  CheckCircle2,
-  TrendingDown,
-  Layers,
-  Sparkles,
-  Server,
   ArrowRight,
-  ShieldAlert,
-  Radio,
+  CheckCircle2,
   ExternalLink,
+  Layers,
+  Radio,
+  Server,
+  ShieldAlert,
+  Sparkles,
+  TrendingDown,
+  X,
 } from 'lucide-react';
 import type { Concept, TenDimensions } from '@/content/concepts';
 
@@ -24,6 +25,13 @@ interface ComponentReferenceModalProps {
 
 type TabKey = 'progression' | 'tradeoffs' | 'production' | 'interview';
 
+const TABS: Array<{ id: TabKey; label: string; icon: typeof Layers }> = [
+  { id: 'progression', label: '1. The Progression (01-05)', icon: Layers },
+  { id: 'tradeoffs', label: '2. Trade-Offs (06)', icon: CheckCircle2 },
+  { id: 'production', label: '3. Production Reality (07 & 10)', icon: Server },
+  { id: 'interview', label: '4. Interview Signals (08-09)', icon: Radio },
+];
+
 export function ComponentReferenceModal({
   concept,
   isOpen,
@@ -33,8 +41,10 @@ export function ComponentReferenceModal({
   const dimensions = concept.dimensions;
 
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
@@ -44,33 +54,34 @@ export function ComponentReferenceModal({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="reference-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs animate-in fade-in duration-150"
     >
+      {/* Click outside to close */}
       <div
-        className="fixed inset-0"
+        className="fixed inset-0 cursor-default"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      <div className="relative w-full max-w-3xl max-h-full bg-surface border border-border-strong rounded-node shadow-2xl flex flex-col overflow-hidden z-10">
+      <div className="relative w-full max-w-3xl max-h-full my-auto bg-surface border-2 border-border-strong rounded-node shadow-2xl flex flex-col overflow-hidden z-10">
         {/* Modal Header */}
-        <header className="p-5 border-b border-border-subtle bg-surface-muted/40 flex items-start justify-between gap-4">
+        <header className="p-4 border-b border-border-subtle bg-surface-muted/50 flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wider bg-accent/20 text-accent border border-accent/30">
-                <Sparkles size={11} className="text-accent" />
-                10-Dimension Architectural Reference
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-node text-2xs font-bold uppercase tracking-wider bg-accent text-accent-foreground border border-border-strong shadow-2xs">
+                <Sparkles size={11} className="shrink-0" />
+                10D Architectural Reference
               </span>
             </div>
             <h2 id="reference-modal-title" className="text-xl font-bold font-sans text-foreground">
               {concept.term}
             </h2>
-            <p className="text-xs text-foreground-muted max-w-xl">
+            <p className="text-xs text-foreground-muted max-w-xl leading-relaxed">
               {concept.definition}
             </p>
           </div>
@@ -79,68 +90,38 @@ export function ComponentReferenceModal({
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="p-1.5 text-foreground-muted hover:text-foreground hover:bg-surface-muted rounded-md transition-colors cursor-pointer"
+            className="p-1.5 text-foreground-muted hover:text-foreground hover:bg-surface-muted rounded-xs border border-transparent hover:border-border-subtle transition-colors cursor-pointer"
           >
             <X size={18} />
           </button>
         </header>
 
-        {/* Tab Navigation */}
+        {/* Tab Navigation - Pill Segmented Control with clear contrast in Light & Dark mode */}
         {dimensions && (
-          <nav className="flex items-center border-b border-border-subtle px-5 bg-surface gap-2 overflow-x-auto">
-            <button
-              type="button"
-              onClick={() => setActiveTab('progression')}
-              className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                activeTab === 'progression'
-                  ? 'border-accent text-accent'
-                  : 'border-transparent text-foreground-muted hover:text-foreground'
-              }`}
-            >
-              <Layers size={14} />
-              1. The Progression (01-05)
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('tradeoffs')}
-              className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                activeTab === 'tradeoffs'
-                  ? 'border-accent text-accent'
-                  : 'border-transparent text-foreground-muted hover:text-foreground'
-              }`}
-            >
-              <CheckCircle2 size={14} />
-              2. Trade-Offs (06)
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('production')}
-              className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                activeTab === 'production'
-                  ? 'border-accent text-accent'
-                  : 'border-transparent text-foreground-muted hover:text-foreground'
-              }`}
-            >
-              <Server size={14} />
-              3. Production Reality (07 & 10)
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('interview')}
-              className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                activeTab === 'interview'
-                  ? 'border-accent text-accent'
-                  : 'border-transparent text-foreground-muted hover:text-foreground'
-              }`}
-            >
-              <Radio size={14} />
-              4. Interview Signals (08-09)
-            </button>
+          <nav className="flex items-center border-b border-border-subtle px-4 py-2 bg-surface-muted/30 gap-2 overflow-x-auto">
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-node border transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                    isActive
+                      ? 'bg-accent text-accent-foreground border-border-strong shadow-xs'
+                      : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface border-border-subtle'
+                  }`}
+                >
+                  <tab.icon size={13} className="shrink-0" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </nav>
         )}
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto flex-1 text-sm space-y-6">
+        <div className="p-5 overflow-y-auto flex-1 text-sm space-y-5">
           {!dimensions ? (
             <div className="p-6 text-center text-foreground-muted">
               <p>Standardized 10-dimension architectural spec is currently being curated for this component.</p>
@@ -165,77 +146,88 @@ export function ComponentReferenceModal({
         </div>
 
         {/* Modal Footer */}
-        <footer className="p-4 border-t border-border-subtle bg-surface-muted/30 flex items-center justify-between text-xs text-foreground-muted">
+        <footer className="p-3.5 border-t border-border-subtle bg-surface-muted/30 flex items-center justify-between text-xs text-foreground-muted">
           <span>GetCracked Universal System Design Reference</span>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 bg-surface border border-border-strong text-foreground font-semibold rounded-md hover:bg-surface-muted transition-colors cursor-pointer"
+            className="px-3.5 py-1.5 bg-surface border border-border-strong text-foreground font-semibold rounded-node hover:bg-surface-muted transition-colors cursor-pointer shadow-2xs"
           >
             Close
           </button>
         </footer>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
 function ProgressionTab({ dimensions }: { dimensions: TenDimensions }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       {/* 01 Problem */}
-      <div className="p-4 rounded-md border border-border-subtle bg-surface-muted/20 flex flex-col gap-1.5">
-        <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase text-accent">
-          <span>01 — Problem</span>
-          <span className="text-foreground-muted font-sans font-normal text-2xs">What problem exists?</span>
+      <div className="p-4 rounded-node border border-border-subtle bg-surface-muted/30 flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
+          <span className="text-2xs font-mono font-bold uppercase tracking-wider text-foreground bg-surface border border-border-subtle px-2 py-0.5 rounded-xs">
+            01 — Problem
+          </span>
+          <span className="text-foreground-muted text-2xs">What problem exists?</span>
         </div>
         <p className="text-sm text-foreground leading-relaxed">{dimensions.problem}</p>
       </div>
 
       {/* 02 Why it happens */}
-      <div className="p-4 rounded-md border border-border-subtle bg-surface-muted/20 flex flex-col gap-1.5">
-        <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase text-accent">
-          <span>02 — Why It Happens</span>
-          <span className="text-foreground-muted font-sans font-normal text-2xs">Root cause / trigger</span>
+      <div className="p-4 rounded-node border border-border-subtle bg-surface-muted/30 flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
+          <span className="text-2xs font-mono font-bold uppercase tracking-wider text-foreground bg-surface border border-border-subtle px-2 py-0.5 rounded-xs">
+            02 — Why It Happens
+          </span>
+          <span className="text-foreground-muted text-2xs">Root cause / trigger</span>
         </div>
         <p className="text-sm text-foreground leading-relaxed">{dimensions.whyItHappens}</p>
       </div>
 
       {/* Flow arrow */}
       <div className="flex justify-center text-foreground-muted/40">
-        <ArrowRight size={18} className="rotate-90" />
+        <ArrowRight size={16} className="rotate-90" />
       </div>
 
       {/* 03 Primitive Solution */}
-      <div className="p-4 rounded-md border border-border-subtle bg-surface-muted/20 flex flex-col gap-1.5">
-        <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase text-foreground-muted">
-          <span>03 — Primitive Solution</span>
-          <span className="text-foreground-muted font-sans font-normal text-2xs">Naive first approach</span>
+      <div className="p-4 rounded-node border border-border-subtle bg-surface-muted/30 flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
+          <span className="text-2xs font-mono font-bold uppercase tracking-wider text-foreground-muted bg-surface border border-border-subtle px-2 py-0.5 rounded-xs">
+            03 — Primitive Solution
+          </span>
+          <span className="text-foreground-muted text-2xs">Naive first approach</span>
         </div>
         <p className="text-sm text-foreground leading-relaxed">{dimensions.primitiveSolution}</p>
       </div>
 
       {/* 04 Scale Limit */}
-      <div className="p-4 rounded-md border border-amber-500/20 bg-amber-500/5 flex flex-col gap-1.5">
-        <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase text-amber-500">
-          <TrendingDown size={14} />
-          <span>04 — Scale Limit</span>
-          <span className="text-foreground-muted font-sans font-normal text-2xs">Where the naive approach breaks</span>
+      <div className="p-4 rounded-node border border-danger/30 bg-danger-soft/20 flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
+          <span className="text-2xs font-mono font-bold uppercase tracking-wider text-danger bg-danger-soft/50 border border-danger/30 px-2 py-0.5 rounded-xs flex items-center gap-1">
+            <TrendingDown size={12} />
+            04 — Scale Limit
+          </span>
+          <span className="text-foreground-muted text-2xs">Where the naive approach breaks</span>
         </div>
         <p className="text-sm text-foreground leading-relaxed">{dimensions.scaleLimit}</p>
       </div>
 
       {/* Flow arrow */}
       <div className="flex justify-center text-foreground-muted/40">
-        <ArrowRight size={18} className="rotate-90" />
+        <ArrowRight size={16} className="rotate-90" />
       </div>
 
       {/* 05 Component */}
-      <div className="p-4 rounded-md border border-accent/40 bg-accent/10 flex flex-col gap-1.5">
-        <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase text-accent">
-          <Layers size={14} />
-          <span>05 — Architectural Component</span>
-          <span className="text-foreground-muted font-sans font-normal text-2xs">The standard scalable solution</span>
+      <div className="p-4 rounded-node border-2 border-border-strong bg-accent/20 flex flex-col gap-1.5 shadow-xs">
+        <div className="flex items-center gap-2">
+          <span className="text-2xs font-mono font-bold uppercase tracking-wider bg-accent text-accent-foreground border border-border-strong px-2 py-0.5 rounded-xs flex items-center gap-1 shadow-2xs">
+            <Layers size={12} />
+            05 — Architectural Component
+          </span>
+          <span className="text-foreground-muted text-2xs">The standard scalable solution</span>
         </div>
         <p className="text-sm font-semibold text-foreground leading-relaxed">{dimensions.component}</p>
       </div>
@@ -245,40 +237,42 @@ function ProgressionTab({ dimensions }: { dimensions: TenDimensions }) {
 
 function TradeoffsTab({ tradeOffs }: { tradeOffs: TenDimensions['tradeOffs'] }) {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase text-accent">
-        <span>06 — Trade-Offs Matrix</span>
-        <span className="text-foreground-muted font-sans font-normal text-2xs">What do we gain and what do we sacrifice?</span>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <span className="text-2xs font-mono font-bold uppercase tracking-wider text-foreground bg-surface border border-border-subtle px-2 py-0.5 rounded-xs">
+          06 — Trade-Offs Matrix
+        </span>
+        <span className="text-foreground-muted text-2xs">What do we gain and what do we sacrifice?</span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Gains */}
-        <div className="p-4 rounded-md border border-emerald-500/30 bg-emerald-500/5 flex flex-col gap-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+        <div className="p-4 rounded-node border border-success/40 bg-success-soft/30 flex flex-col gap-3">
+          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-success">
             <CheckCircle2 size={15} />
             <span>Architectural Gains</span>
           </div>
-          <ul className="space-y-2 text-xs text-foreground/90">
+          <ul className="space-y-2 text-xs text-foreground">
             {tradeOffs.gains.map((gain, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span className="text-emerald-500 font-bold">•</span>
-                <span>{gain}</span>
+                <span className="text-success font-bold">•</span>
+                <span className="leading-relaxed">{gain}</span>
               </li>
             ))}
           </ul>
         </div>
 
         {/* Sacrifices */}
-        <div className="p-4 rounded-md border border-rose-500/30 bg-rose-500/5 flex flex-col gap-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-rose-600 dark:text-rose-400">
+        <div className="p-4 rounded-node border border-danger/40 bg-danger-soft/30 flex flex-col gap-3">
+          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-danger">
             <AlertTriangle size={15} />
             <span>Operational & Cost Sacrifices</span>
           </div>
-          <ul className="space-y-2 text-xs text-foreground/90">
+          <ul className="space-y-2 text-xs text-foreground">
             {tradeOffs.sacrifices.map((sacrifice, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span className="text-rose-500 font-bold">•</span>
-                <span>{sacrifice}</span>
+                <span className="text-danger font-bold">•</span>
+                <span className="leading-relaxed">{sacrifice}</span>
               </li>
             ))}
           </ul>
@@ -290,21 +284,25 @@ function TradeoffsTab({ tradeOffs }: { tradeOffs: TenDimensions['tradeOffs'] }) 
 
 function ProductionTab({ dimensions }: { dimensions: TenDimensions }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* 07 Failure Modes */}
-      <div className="p-4 rounded-md border border-rose-500/20 bg-rose-500/5 flex flex-col gap-2">
-        <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase text-rose-500">
-          <ShieldAlert size={15} />
-          <span>07 — Production Failure Modes</span>
+      <div className="p-4 rounded-node border border-danger/30 bg-danger-soft/20 flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-2xs font-mono font-bold uppercase tracking-wider text-danger bg-danger-soft/50 border border-danger/30 px-2 py-0.5 rounded-xs flex items-center gap-1">
+            <ShieldAlert size={13} />
+            07 — Production Failure Modes
+          </span>
         </div>
         <p className="text-sm text-foreground leading-relaxed">{dimensions.failureModes}</p>
       </div>
 
       {/* 10 Real Systems */}
-      <div className="p-4 rounded-md border border-border-subtle bg-surface-muted/20 flex flex-col gap-2">
-        <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase text-accent">
-          <Server size={15} />
-          <span>10 — Real-World Deployments</span>
+      <div className="p-4 rounded-node border border-border-subtle bg-surface-muted/30 flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-2xs font-mono font-bold uppercase tracking-wider text-foreground bg-surface border border-border-subtle px-2 py-0.5 rounded-xs flex items-center gap-1">
+            <Server size={13} />
+            10 — Real-World Deployments
+          </span>
         </div>
         <p className="text-sm text-foreground leading-relaxed">{dimensions.realSystem}</p>
       </div>
@@ -314,26 +312,30 @@ function ProductionTab({ dimensions }: { dimensions: TenDimensions }) {
 
 function InterviewTab({ dimensions }: { dimensions: TenDimensions }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* 09 Interview Signals */}
-      <div className="p-4 rounded-md border border-accent/30 bg-accent/5 flex flex-col gap-2">
-        <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase text-accent">
-          <Radio size={15} />
-          <span>09 — Interview Signals & Calibration</span>
+      <div className="p-4 rounded-node border-2 border-border-strong bg-surface flex flex-col gap-2 shadow-xs">
+        <div className="flex items-center gap-2">
+          <span className="text-2xs font-mono font-bold uppercase tracking-wider bg-accent text-accent-foreground border border-border-strong px-2 py-0.5 rounded-xs flex items-center gap-1 shadow-2xs">
+            <Radio size={13} />
+            09 — Interview Signals & Calibration
+          </span>
         </div>
         <p className="text-sm text-foreground leading-relaxed">{dimensions.interviewSignal}</p>
       </div>
 
       {/* 08 Alternatives */}
-      <div className="p-4 rounded-md border border-border-subtle bg-surface-muted/20 flex flex-col gap-3">
-        <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase text-foreground-muted">
-          <span>08 — Competing Architectural Alternatives</span>
+      <div className="p-4 rounded-node border border-border-subtle bg-surface-muted/30 flex flex-col gap-2.5">
+        <div className="flex items-center gap-2">
+          <span className="text-2xs font-mono font-bold uppercase tracking-wider text-foreground-muted bg-surface border border-border-subtle px-2 py-0.5 rounded-xs">
+            08 — Competing Architectural Alternatives
+          </span>
         </div>
         <div className="flex flex-wrap gap-2">
           {dimensions.alternatives.map((alt, i) => (
             <span
               key={i}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs bg-surface border border-border-strong text-foreground font-medium"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-node text-xs bg-surface border border-border-strong text-foreground font-medium shadow-2xs"
             >
               <ExternalLink size={11} className="text-foreground-muted" />
               {alt}
