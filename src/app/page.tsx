@@ -98,12 +98,6 @@ export default function LandingPage() {
             <Play size={15} className="text-link" />
             Try DS Visualizer
           </Link>
-          <Link
-            href="/problems"
-            className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-surface px-4 py-2.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
-          >
-            Explore Problems
-          </Link>
           <span className="w-full text-xs text-foreground-muted pt-1">
             Start solving and visualizing instantly without an account — sign up when you&apos;re ready to permanently save your progress.
           </span>
