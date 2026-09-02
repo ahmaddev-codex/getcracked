@@ -736,7 +736,19 @@ h6 {
   background-size: 20px 20px;
 }
 
+/* ── Theme-aware brand logo display ────────────────────────────────────────── */
+.gc-logo-for-light-mode {
+  display: block;
+}
 
+.gc-logo-for-dark-mode {
+  display: none;
+}
 
+:root[data-theme='dark'] .gc-logo-for-light-mode {
+  display: none;
+}
 
-
+:root[data-theme='dark'] .gc-logo-for-dark-mode {
+  display: block;
+}

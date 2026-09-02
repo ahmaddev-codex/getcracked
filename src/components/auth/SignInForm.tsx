@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { safeNext } from '@/lib/auth-redirect';
 import { Button } from '@/components/ui/Button';
@@ -13,8 +13,9 @@ import { signIn } from '@/lib/auth-client';
 export function SignInForm({ providers }: { providers: ReadonlyArray<{ id: OAuthProviderId; label: string }> }) {
   const router = useRouter();
   // Validated, not just defaulted — `next` reaches router.push() and the OAuth
-  // provider's callbackURL, so an unchecked value is an open redirect.
-  const next = safeNext(useSearchParams().get('next'));
+  // callback so it must be safe against open redirects.
+  const searchParams = useSearchParams();
+  const next = safeNext(searchParams.get('next'));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -36,14 +37,7 @@ export function SignInForm({ providers }: { providers: ReadonlyArray<{ id: OAuth
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 p-8 text-center">
       <div className="flex flex-col items-center gap-2">
         <Link href="/" className="inline-flex justify-center transition-transform hover:scale-105">
-          <Image
-            src="/getcracked.png"
-            alt="GetCracked"
-            width={72}
-            height={59}
-            className="rounded-node object-contain drop-shadow-xs"
-            priority
-          />
+          <BrandLogo className="h-10 w-auto" priority />
         </Link>
         <h1 className="font-sans text-2xl font-semibold tracking-tight">Sign in</h1>
         <p className="text-sm opacity-70">Pick up where you left off.</p>
