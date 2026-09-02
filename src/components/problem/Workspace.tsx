@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Node } from '@/components/ui/Node';
+import { LanguageIcon } from '@/components/ui/LanguageIcon';
 import { Editor } from './Editor';
 import { TestCases } from './TestCases';
 import { Complexity } from './Complexity';
@@ -21,8 +22,37 @@ import { ProblemDiscussions } from '@/components/community/ProblemDiscussions';
 import Link from 'next/link';
 import { useSession } from '@/lib/auth-client';
 import { Sparkles, Share2, MessageSquare } from 'lucide-react';
-import type { Language, TestSpec, Tier } from '@/content/schema';
+import { entryFor, type Language, type RunnableLanguage, type TestSpec, type Tier } from '@/content/schema';
 import type { SpecResult } from '@/content/test-runner';
+import { convertJsToTypeScript } from '@/lib/runtime/type-inference';
+
+const LANGUAGE_LABELS: Record<RunnableLanguage, string> = {
+  javascript: 'JS',
+  typescript: 'TS',
+  python: 'Python',
+  java: 'Java',
+  cpp: 'C++',
+  go: 'Go',
+};
+
+function defaultStarterFor(
+  lang: RunnableLanguage,
+  entry: string,
+  jsStarter: string,
+  spec: TestSpec,
+): string {
+  if (lang === 'typescript') return convertJsToTypeScript(jsStarter, spec);
+  if (lang === 'java') {
+    return `class Solution {\n    public Object ${entry}() {\n        // Write your Java solution here\n        return 0;\n    }\n}`;
+  }
+  if (lang === 'cpp') {
+    return `#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    auto ${entry}() {\n        // Write your C++ solution here\n        return 0;\n    }\n};`;
+  }
+  if (lang === 'go') {
+    return `package main\n\nfunc ${entry}() any {\n    // Write your Go solution here\n    return 0\n}`;
+  }
+  return jsStarter;
+}
 
 /**
  * The solve surface: editor, run, results (A6, A7).
@@ -42,9 +72,9 @@ export function Workspace({
   starterByLanguage,
 }: {
   exerciseId: string;
-  language: Language;
+  language: RunnableLanguage;
   /** Starter code per language, so switching swaps the scaffold (A6). */
-  starterByLanguage?: Partial<Record<Language, string>>;
+  starterByLanguage?: Partial<Record<RunnableLanguage, string>>;
   starterCode: string;
   spec: TestSpec;
   complexity?: { time: string; space: string; note?: string };
@@ -60,19 +90,13 @@ export function Workspace({
   /** Fires when a run passes, so a lesson can advance its own state. */
   onSolved?: () => void;
 }) {
-  /**
-   * The switcher only offers languages this exercise actually has code for.
-   * Listing a language with no starter would hand a learner an empty editor.
-   */
-  const available = (
-    starterByLanguage
-      ? (Object.keys(starterByLanguage) as Language[]).filter((l) => starterByLanguage[l])
-      : [initialLanguage]
-  ).filter((l) => supportedLanguages().includes(l));
+  const available = supportedLanguages();
 
   const { data: session } = useSession();
-  const [language, setLanguage] = useState<Language>(initialLanguage);
-  const starter = starterByLanguage?.[language] ?? starterCode;
+  const [language, setLanguage] = useState<RunnableLanguage>(initialLanguage);
+  const starter =
+    starterByLanguage?.[language] ??
+    defaultStarterFor(language, entryFor(spec, language), starterCode, spec);
 
   const [result, setResult] = useState<SpecResult | null>(null);
   /**
@@ -209,10 +233,11 @@ export function Workspace({
         track('exercise_solved', { exerciseId, language });
         onSolvedRef.current?.();
       }
+      const dbLang: Language = language === 'python' ? 'python' : 'javascript';
       void persistAttempt({
         exerciseId,
         tier,
-        language,
+        language: dbLang,
         code: codeRef.current,
         passed: outcome.passed,
       });
@@ -287,7 +312,7 @@ export function Workspace({
     setWatchTrace(null);
     setTracedLine(null);
     setError(null);
-  }, [exerciseId, language, starter]);
+  }, [exerciseId, language, starter, setTracedLine]);
 
   return (
     <section className="flex flex-col gap-4">
@@ -295,12 +320,13 @@ export function Workspace({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold">Your solution</h2>
           {available.length > 1 ? (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {available.map((l) => (
                 <Button
                   key={l}
                   tone={l === language ? 'strong' : 'surface'}
                   aria-pressed={l === language}
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs"
                   onClick={() => {
                     // Drafts are keyed per language, so switching preserves
                     // whatever was written in the language being left.
@@ -310,7 +336,8 @@ export function Workspace({
                     setResetCount((n) => n + 1);
                   }}
                 >
-                  {l}
+                  <LanguageIcon language={l} size={13} />
+                  <span>{LANGUAGE_LABELS[l] ?? l}</span>
                 </Button>
               ))}
             </div>

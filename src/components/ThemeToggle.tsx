@@ -41,6 +41,7 @@ export function ThemeToggle() {
   useEffect(() => {
     // While following the system, track changes to it live.
     if (preference !== 'system') return;
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const sync = () => applyTheme('system');
     media.addEventListener('change', sync);

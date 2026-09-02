@@ -228,13 +228,11 @@
   --container-catalog: 56rem;
   --container-reading: 48rem;
 
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+  --font-sans: var(--font-sans-family), Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  /* Roadmap node text only — see the note in layout.tsx. Falls back to the
-     body stack, so a failed font load degrades to the rest of the UI rather
-     than to a serif. */
-  --font-node: var(--font-node-family), ui-sans-serif, system-ui, sans-serif;
+  /* Roadmap node and body text in Balsamiq Sans */
+  --font-node: var(--font-node-family), "Balsamiq Sans", ui-sans-serif, system-ui, sans-serif;
 
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
@@ -259,15 +257,29 @@
   font-family: var(--font-node);
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  /* The node face carries the body copy, so a card reads as the same object as
-     the node it came from. Page headings opt back out via `font-sans` — the
-     reference sets its own headings in the system stack, and a 48px heading is
-     where a display face's lack of an italic and of intermediate weights shows
-     most. */
   font-family: var(--font-node);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-sans);
 }
 
 /* The K3 treatment as a utility, so every component composes the same shape
@@ -563,4 +575,168 @@ body {
     animation: none;
   }
 }
+
+/* ── Physical Swap Motion Classes ────────────────────────────────────────── */
+/* Lift and arc to the right */
+.gc-swap-arc-right-1 { transform: translateY(-2rem) translateX(4.125rem) scale(1.1); z-index: 20; }
+.gc-swap-arc-right-2 { transform: translateY(-2.25rem) translateX(8.25rem) scale(1.1); z-index: 20; }
+.gc-swap-arc-right-3 { transform: translateY(-2.5rem) translateX(12.375rem) scale(1.1); z-index: 20; }
+.gc-swap-arc-right-4 { transform: translateY(-2.75rem) translateX(16.5rem) scale(1.1); z-index: 20; }
+.gc-swap-arc-right-5 { transform: translateY(-3rem) translateX(20.625rem) scale(1.1); z-index: 20; }
+.gc-swap-arc-right-6 { transform: translateY(-3rem) translateX(24.75rem) scale(1.1); z-index: 20; }
+
+/* Lower and arc to the left */
+.gc-swap-arc-left-1 { transform: translateY(1.75rem) translateX(-4.125rem) scale(0.95); z-index: 10; }
+.gc-swap-arc-left-2 { transform: translateY(2rem) translateX(-8.25rem) scale(0.95); z-index: 10; }
+.gc-swap-arc-left-3 { transform: translateY(2.25rem) translateX(-12.375rem) scale(0.95); z-index: 10; }
+.gc-swap-arc-left-4 { transform: translateY(2.5rem) translateX(-16.5rem) scale(0.95); z-index: 10; }
+.gc-swap-arc-left-5 { transform: translateY(2.75rem) translateX(-20.625rem) scale(0.95); z-index: 10; }
+.gc-swap-arc-left-6 { transform: translateY(2.75rem) translateX(-24.75rem) scale(0.95); z-index: 10; }
+
+/* Heap Array Swap Motion (56px stride = 3.5rem) */
+.gc-heap-swap-right-1 { transform: translateY(-1.75rem) translateX(3.5rem) scale(1.1); z-index: 20; }
+.gc-heap-swap-right-2 { transform: translateY(-2rem) translateX(7rem) scale(1.1); z-index: 20; }
+.gc-heap-swap-right-3 { transform: translateY(-2.25rem) translateX(10.5rem) scale(1.1); z-index: 20; }
+.gc-heap-swap-right-4 { transform: translateY(-2.5rem) translateX(14rem) scale(1.1); z-index: 20; }
+.gc-heap-swap-right-5 { transform: translateY(-2.75rem) translateX(17.5rem) scale(1.1); z-index: 20; }
+
+.gc-heap-swap-left-1 { transform: translateY(1.5rem) translateX(-3.5rem) scale(0.95); z-index: 10; }
+.gc-heap-swap-left-2 { transform: translateY(1.75rem) translateX(-7rem) scale(0.95); z-index: 10; }
+.gc-heap-swap-left-3 { transform: translateY(2rem) translateX(-10.5rem) scale(0.95); z-index: 10; }
+.gc-heap-swap-left-4 { transform: translateY(2.25rem) translateX(-14rem) scale(0.95); z-index: 10; }
+.gc-heap-swap-left-5 { transform: translateY(2.5rem) translateX(-17.5rem) scale(0.95); z-index: 10; }
+
+/* Header navigation dropdown entrance animation */
+@keyframes gc-nav-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.gc-nav-panel-enter {
+  animation: gc-nav-enter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gc-nav-panel-enter {
+    animation: none;
+  }
+}
+
+/* ── Topology Canvas Data Flow & Activity Animations ──────────────────────── */
+@keyframes gc-flow {
+  from {
+    stroke-dashoffset: 20;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.gc-topology-flow {
+  stroke-dasharray: 5, 5;
+  animation: gc-flow 1.4s linear infinite;
+}
+
+@keyframes gc-ping-slow {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+.gc-ping-slow {
+  animation: gc-ping-slow 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gc-topology-flow,
+  .gc-ping-slow {
+    animation: none;
+  }
+}
+
+/* ── Floating AI Assistant Shiny Rotating Ring ────────────────────────────── */
+@keyframes gc-ring-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.gc-shiny-ring-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 2.5px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+.gc-shiny-ring-spinner {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 180deg,
+    var(--link) 260deg,
+    var(--accent-strong) 320deg,
+    #ffffff 360deg
+  );
+  animation: gc-ring-spin 2.4s linear infinite;
+  pointer-events: none;
+}
+
+.dark .gc-shiny-ring-spinner {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 160deg,
+    var(--link) 250deg,
+    var(--accent-strong) 315deg,
+    #ffffff 360deg
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gc-shiny-ring-spinner {
+    animation: none;
+  }
+}
+
+/* ── Subtle Background Grid Pattern (Tailwind / IDE aesthetic) ────────────── */
+.gc-grid-pattern {
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.dark .gc-grid-pattern {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+
+
+
 

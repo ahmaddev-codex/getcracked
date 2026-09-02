@@ -9,7 +9,7 @@ import { describeStep } from '@/lib/visualizer/array-renderer';
 import { selectRenderer, type VisualKind } from '@/lib/visualizer/registry';
 import '@/lib/visualizer/renderers';
 import { CodePanel } from './CodePanel';
-import type { Language } from '@/content/schema';
+import type { Language, RunnableLanguage } from '@/content/schema';
 import { useAssistant } from '@/components/assistant';
 
 /**
@@ -215,7 +215,7 @@ export function Visualizer({
 }: {
   trace: Trace;
   source?: string;
-  language?: Language;
+  language?: Language | RunnableLanguage | string;
   /** What this run is solving, stated rather than left to be inferred. */
   title?: string;
   /** What to watch for, from the lesson author. Stays on screen while playing. */

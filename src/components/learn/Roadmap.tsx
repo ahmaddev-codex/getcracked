@@ -232,7 +232,7 @@ function RoadmapRow({
   const stepsDone = steps.filter((id) => solved.has(id)).length;
 
   const branches = (
-    <ul className={`flex w-full flex-col gap-2 ${BRANCH_W}`}>
+    <ul className={`flex w-full flex-col gap-2 border-l-2 border-connector/30 pl-3 ml-2 md:border-l-0 md:pl-0 md:ml-0 ${BRANCH_W}`}>
       {problems.map((problem) => (
         <li key={problem.slug}>
           <Link

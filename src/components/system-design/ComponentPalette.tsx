@@ -172,7 +172,7 @@ export function ComponentPalette({ onAddComponent, onClose }: ComponentPalettePr
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="p-1 rounded-xs bg-surface-muted text-foreground-muted group-hover:text-foreground">
+                <span className="p-1 rounded-xs bg-surface-muted text-link">
                   {renderPaletteIcon(template.icon, 'w-3.5 h-3.5')}
                 </span>
                 <span className="text-xs font-semibold text-foreground">{template.label}</span>

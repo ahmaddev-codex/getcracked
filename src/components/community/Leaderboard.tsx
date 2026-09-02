@@ -95,97 +95,117 @@ export function Leaderboard() {
 
       {/* Leaderboard Table */}
       <div className="node-surface bg-surface border border-border-strong rounded-node overflow-hidden shadow-xs">
-        {/* Top 3 Podium */}
-        <div className="grid grid-cols-3 gap-px bg-border-subtle">
-          {entries.slice(0, 3).map((entry, i) => {
-            const medal = rankMedal(i);
-            return (
-              <div
-                key={entry.id}
-                className={`flex flex-col items-center gap-2 p-4 text-center ${
-                  i === 0
-                    ? 'bg-accent/10 border-b-2 border-accent'
-                    : 'bg-surface'
-                }`}
-              >
-                <span className="text-2xl">{medal}</span>
-                <span className="text-sm font-bold text-foreground truncate max-w-full">
-                  {entry.username}
-                </span>
-                {entry.badge && (
-                  <span className="px-1.5 py-0.5 rounded-xs bg-accent/20 text-accent-foreground text-3xs font-semibold border border-border-subtle flex items-center gap-1">
-                    <Award size={9} />
-                    {entry.badge}
+        {entries.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-12 text-center gap-3">
+            <Trophy size={36} className="text-foreground-muted/40" />
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-bold text-foreground">No leaderboard entries yet</span>
+              <span className="text-xs text-foreground-muted max-w-sm">
+                Complete an algorithmic problem or build challenge to be the first learner on the leaderboard!
+              </span>
+            </div>
+            <Link
+              href="/problems"
+              className="mt-2 px-4 py-2 text-xs font-bold rounded-node bg-accent-strong text-accent-foreground hover:opacity-90 transition-opacity"
+            >
+              Start Solving Problems &rarr;
+            </Link>
+          </div>
+        ) : (
+          <>
+            {/* Top 3 Podium */}
+            <div className="grid grid-cols-3 gap-px bg-border-subtle">
+              {entries.slice(0, 3).map((entry, i) => {
+                const medal = rankMedal(i);
+                return (
+                  <div
+                    key={entry.id}
+                    className={`flex flex-col items-center gap-2 p-4 text-center ${
+                      i === 0
+                        ? 'bg-accent/10 border-b-2 border-accent'
+                        : 'bg-surface'
+                    }`}
+                  >
+                    <span className="text-2xl">{medal}</span>
+                    <span className="text-sm font-bold text-foreground truncate max-w-full">
+                      {entry.username}
+                    </span>
+                    {entry.badge && (
+                      <span className="px-1.5 py-0.5 rounded-xs bg-accent/20 text-accent-foreground text-3xs font-semibold border border-border-subtle flex items-center gap-1">
+                        <Award size={9} />
+                        {entry.badge}
+                      </span>
+                    )}
+                    <span className="text-lg font-bold text-foreground">
+                      {primaryMetric(entry, sortBy)}
+                    </span>
+                    <div className="flex items-center gap-2 text-3xs text-foreground-muted">
+                      <span className="flex items-center gap-0.5">
+                        <Flame size={9} className="text-danger" />
+                        {entry.currentStreak}d
+                      </span>
+                      <span>·</span>
+                      <span>{entry.languages.join(', ')}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Rest of Rankings */}
+            <div className="divide-y divide-border-subtle">
+              {entries.slice(3).map((entry, i) => (
+                <div
+                  key={entry.id}
+                  className="flex items-center gap-3 px-4 py-2.5 bg-surface hover:bg-surface-muted/30 transition-colors"
+                >
+                  {/* Rank */}
+                  <span className="w-8 text-center text-xs font-bold text-foreground-muted shrink-0">
+                    #{i + 4}
                   </span>
-                )}
-                <span className="text-lg font-bold text-foreground">
-                  {primaryMetric(entry, sortBy)}
-                </span>
-                <div className="flex items-center gap-2 text-3xs text-foreground-muted">
-                  <span className="flex items-center gap-0.5">
-                    <Flame size={9} className="text-danger" />
+
+                  {/* Username & Badge */}
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className="text-xs font-bold text-foreground truncate">
+                      {entry.username}
+                    </span>
+                    {entry.badge && (
+                      <span className="px-1 py-0.5 rounded-xs bg-accent/15 text-accent-foreground text-3xs font-semibold border border-border-subtle shrink-0">
+                        {entry.badge}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Primary metric */}
+                  <span className="text-xs font-bold text-foreground shrink-0">
+                    {primaryMetric(entry, sortBy)}
+                  </span>
+
+                  {/* Streak */}
+                  <span className="flex items-center gap-0.5 text-3xs text-foreground-muted shrink-0">
+                    <Flame size={9} className={entry.currentStreak > 7 ? 'text-danger' : ''} />
                     {entry.currentStreak}d
                   </span>
-                  <span>·</span>
-                  <span>{entry.languages.join(', ')}</span>
+
+                  {/* Languages */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {entry.languages.map((lang) => (
+                      <span
+                        key={lang}
+                        className="px-1 py-0.5 rounded-xs bg-surface-muted text-foreground-muted text-3xs font-semibold border border-border-subtle"
+                      >
+                        {lang}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Trend indicator */}
+                  <ChevronUp size={12} className="text-success shrink-0 opacity-40" />
                 </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Rest of Rankings */}
-        <div className="divide-y divide-border-subtle">
-          {entries.slice(3).map((entry, i) => (
-            <div
-              key={entry.id}
-              className="flex items-center gap-3 px-4 py-2.5 bg-surface hover:bg-surface-muted/30 transition-colors"
-            >
-              {/* Rank */}
-              <span className="w-8 text-center text-xs font-bold text-foreground-muted shrink-0">
-                #{i + 4}
-              </span>
-
-              {/* Username & Badge */}
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <span className="text-xs font-bold text-foreground truncate">
-                  {entry.username}
-                </span>
-                {entry.badge && (
-                  <span className="px-1 py-0.5 rounded-xs bg-accent/15 text-accent-foreground text-3xs font-semibold border border-border-subtle shrink-0">
-                    {entry.badge}
-                  </span>
-                )}
-              </div>
-
-              {/* Primary metric */}
-              <span className="text-xs font-bold text-foreground shrink-0">
-                {primaryMetric(entry, sortBy)}
-              </span>
-
-              {/* Streak */}
-              <span className="flex items-center gap-0.5 text-3xs text-foreground-muted shrink-0">
-                <Flame size={9} className={entry.currentStreak > 7 ? 'text-danger' : ''} />
-                {entry.currentStreak}d
-              </span>
-
-              {/* Languages */}
-              <div className="flex items-center gap-1 shrink-0">
-                {entry.languages.map((lang) => (
-                  <span
-                    key={lang}
-                    className="px-1 py-0.5 rounded-xs bg-surface-muted text-foreground-muted text-3xs font-semibold border border-border-subtle"
-                  >
-                    {lang}
-                  </span>
-                ))}
-              </div>
-
-              {/* Trend indicator */}
-              <ChevronUp size={12} className="text-success shrink-0 opacity-40" />
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );

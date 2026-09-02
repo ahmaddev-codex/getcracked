@@ -15,7 +15,17 @@ import { z } from 'zod';
 export const LANGUAGES = ['javascript', 'python'] as const;
 export type Language = (typeof LANGUAGES)[number];
 
-/** PRD H1: Java is suspended, not cancelled. Adding it back is one entry here. */
+export const RUNNABLE_LANGUAGES = [
+  'javascript',
+  'python',
+  'typescript',
+  'java',
+  'cpp',
+  'go',
+] as const;
+export type RunnableLanguage = (typeof RUNNABLE_LANGUAGES)[number];
+
+export const runnableLanguageSchema = z.enum(RUNNABLE_LANGUAGES);
 export const languageSchema = z.enum(LANGUAGES);
 
 export const tierSchema = z.enum(['lesson', 'problem', 'challenge']);
@@ -71,8 +81,8 @@ export const testSpecSchema = z.object({
 export type TestSpec = z.infer<typeof testSpecSchema>;
 
 /** The function name to call for a given language. */
-export function entryFor(spec: TestSpec, language: Language): string {
-  return spec.entryByLanguage?.[language] ?? spec.entry;
+export function entryFor(spec: TestSpec, language: RunnableLanguage): string {
+  return (spec.entryByLanguage as Record<string, string> | undefined)?.[language] ?? spec.entry;
 }
 
 /**

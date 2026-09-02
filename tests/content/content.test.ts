@@ -137,13 +137,13 @@ describe('test spec runner', () => {
   }, 60_000);
 
   it('refuses a language with no registered adapter', async () => {
-    // Java is suspended (H1). Asking for it should say so plainly rather than
-    // failing somewhere obscure downstream.
+    // Unregistered language refusal check (asking for an unsupported language
+    // says so plainly rather than failing downstream).
     await expect(
       runTestSpec({
         spec: { entry: 'f', cases: [{ args: [], expected: 1, hidden: false }] },
         source: 'x',
-        language: 'java' as never,
+        language: 'rust' as never,
       }),
     ).rejects.toThrow(/no runtime adapter/i);
   });

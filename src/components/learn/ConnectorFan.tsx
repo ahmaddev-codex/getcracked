@@ -117,7 +117,7 @@ export function ConnectorFan({
   return (
     <svg
       aria-hidden
-      className="pointer-events-none absolute inset-0 h-full w-full"
+      className="pointer-events-none absolute inset-0 hidden h-full w-full md:block"
       width={size.width}
       height={size.height}
       viewBox={`0 0 ${size.width} ${size.height}`}

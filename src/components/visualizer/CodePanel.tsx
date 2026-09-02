@@ -6,7 +6,7 @@ import { EditorState } from '@codemirror/state';
 import { applyHighlight, highlightField } from '@/components/problem/line-highlight';
 import { editorTheme, syntaxExtension } from '@/components/problem/editor-theme';
 import { languageExtension } from '@/components/problem/language-support';
-import type { Language } from '@/content/schema';
+import type { Language, RunnableLanguage } from '@/content/schema';
 
 /**
  * The learner's own code, with the executing line highlighted (B1).
@@ -29,7 +29,7 @@ export function CodePanel({
 }: {
   source: string;
   line: number | null;
-  language?: Language;
+  language?: Language | RunnableLanguage | string;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);

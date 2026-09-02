@@ -4,6 +4,16 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { Link2, Play } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Node } from '@/components/ui/Node';
+import { LanguageIcon } from '@/components/ui/LanguageIcon';
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  javascript: 'JS',
+  typescript: 'TS',
+  python: 'Python',
+  java: 'Java',
+  cpp: 'C++',
+  go: 'Go',
+};
 import { Editor } from '@/components/problem/Editor';
 import { Complexity } from '@/components/problem/Complexity';
 import { Visualizer } from '@/components/visualizer/Visualizer';
@@ -12,7 +22,6 @@ import { humanizeError, TIMEOUT_MESSAGE } from '@/lib/runtime/errors';
 import { entryPoints, resolveEntry } from '@/lib/runtime/entry-points';
 import { clearDraft, readDraft, subscribeToDrafts, writeDraft } from '@/lib/drafts';
 import { track } from '@/lib/analytics/track';
-import { supportedLanguages } from '@/content/test-runner';
 import { DEFAULT_PRESET, SANDBOX_PRESETS } from '@/lib/sandbox-presets';
 import { decodeRun, encodeRun, MAX_LINK_LENGTH } from '@/lib/share-link';
 import type { Language } from '@/content/schema';
@@ -40,7 +49,7 @@ import type { SpecResult } from '@/content/test-runner';
 const DRAFT_ID = 'sandbox';
 
 export function Sandbox() {
-  const available = supportedLanguages();
+  const available: Language[] = ['javascript', 'python'];
 
   /**
    * A run someone shared, read from the fragment once at mount.
@@ -272,12 +281,13 @@ export function Sandbox() {
         </label>
 
         {available.length > 1 && (
-          <div className="ml-auto flex gap-2">
+          <div className="ml-auto flex flex-wrap gap-1.5">
             {available.map((l) => (
               <Button
                 key={l}
                 tone={l === language ? 'strong' : 'surface'}
                 aria-pressed={l === language}
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs"
                 onClick={() => {
                   // Each language gets its own scratchpad, so switching back
                   // finds what was left there rather than a translation of the
@@ -290,7 +300,8 @@ export function Sandbox() {
                   setResetCount((n) => n + 1);
                 }}
               >
-                {l}
+                <LanguageIcon language={l} size={13} />
+                <span>{LANGUAGE_LABELS[l] ?? l}</span>
               </Button>
             ))}
           </div>

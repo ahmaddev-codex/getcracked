@@ -20,13 +20,12 @@ export interface DiscussionComment {
 const STORAGE_KEY = 'getcracked_discussions';
 const UPVOTES_KEY = 'getcracked_discussion_upvotes';
 
-/** Curated seed discussion threads covering common interview edge cases. */
 export const SEED_COMMENTS: DiscussionComment[] = [
   {
     id: 'disc-two-sum-1',
     exerciseId: 'problem:two-sum',
-    author: 'PrincipalEng',
-    authorBadge: 'Interviewer',
+    author: 'GetCracked Staff',
+    authorBadge: 'Editorial Note',
     content:
       'Always clarify: Can the same element be used twice? (The prompt says no). Also clarify if the array is guaranteed to have exactly one solution, and whether numbers can be negative.',
     upvotes: 45,
@@ -36,9 +35,9 @@ export const SEED_COMMENTS: DiscussionComment[] = [
   {
     id: 'disc-two-sum-1-reply',
     exerciseId: 'problem:two-sum',
-    author: 'JuniorDev',
+    author: 'GetCracked Staff',
     content:
-      'Great callout! When target is negative (e.g., target = -5 and nums = [-2, -3]), the hash map approach still works identically because `target - num` preserves sign arithmetic.',
+      'When target is negative (e.g., target = -5 and nums = [-2, -3]), the hash map approach works identically because target - num preserves sign arithmetic in standard integer systems.',
     upvotes: 19,
     createdAt: '2026-08-16T13:30:00Z',
     parentId: 'disc-two-sum-1',
@@ -47,8 +46,8 @@ export const SEED_COMMENTS: DiscussionComment[] = [
   {
     id: 'disc-two-sum-2',
     exerciseId: 'problem:two-sum',
-    author: 'SystemDesigner',
-    authorBadge: 'Staff',
+    author: 'GetCracked Staff',
+    authorBadge: 'System Design Variant',
     content:
       'What if the input array is 500GB and cannot fit in memory? Interview follow-up: External sorting (multi-way merge sort on disk blocks) followed by two-pointer search on the streaming sorted segments.',
     upvotes: 38,
@@ -58,10 +57,10 @@ export const SEED_COMMENTS: DiscussionComment[] = [
   {
     id: 'disc-lru-1',
     exerciseId: 'challenge:build-lru-cache',
-    author: 'CacheWizard',
-    authorBadge: 'Infra Lead',
+    author: 'GetCracked Staff',
+    authorBadge: 'Design Note',
     content:
-      'Why doubly-linked list instead of singly-linked? Because deleting a node when updating MRU requires $O(1)$ access to its predecessor (`node.prev`). A singly linked list would require an $O(n)$ traversal to find the previous pointer.',
+      'Why doubly-linked list instead of singly-linked? Because deleting a node when updating MRU requires O(1) access to its predecessor (node.prev). A singly linked list would require an O(n) traversal to find the previous pointer.',
     upvotes: 62,
     createdAt: '2026-08-23T14:10:00Z',
     tag: 'intuition',
@@ -69,16 +68,16 @@ export const SEED_COMMENTS: DiscussionComment[] = [
   {
     id: 'disc-invert-tree-1',
     exerciseId: 'problem:invert-binary-tree',
-    author: 'RecursionPro',
+    author: 'GetCracked Staff',
     content:
-      'Watch out for call stack overflow if the binary tree is severely skewed (degenerate linked list with $N = 10^5$). In that case, an iterative BFS using a queue or DFS with explicit heap stack avoids exceeding recursion limits.',
+      'Watch out for call stack overflow if the binary tree is severely skewed (degenerate linked list with N = 10^5). In that case, an iterative BFS using a queue or DFS with explicit heap stack avoids exceeding recursion limits.',
     upvotes: 27,
     createdAt: '2026-08-25T17:00:00Z',
     tag: 'edge_case',
   },
 ];
 
-/** Retrieves all discussion comments for an exercise, structured with seed comments. */
+/** Retrieves all discussion comments for an exercise. */
 export function getDiscussionComments(exerciseId: string): DiscussionComment[] {
   const seedMatches = SEED_COMMENTS.filter((c) => c.exerciseId === exerciseId);
 
@@ -93,6 +92,20 @@ export function getDiscussionComments(exerciseId: string): DiscussionComment[] {
     return [...matchedLocal, ...seedMatches];
   } catch {
     return seedMatches;
+  }
+}
+
+/** Retrieves all community discussion threads across all exercises. */
+export function getAllDiscussionComments(): DiscussionComment[] {
+  if (typeof window === 'undefined') {
+    return [...SEED_COMMENTS];
+  }
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const localComments: DiscussionComment[] = raw ? JSON.parse(raw) : [];
+    return [...localComments, ...SEED_COMMENTS];
+  } catch {
+    return [...SEED_COMMENTS];
   }
 }
 

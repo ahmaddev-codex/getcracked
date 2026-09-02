@@ -13,6 +13,8 @@ import {
   Flame,
   Shield,
   Brain,
+  Layers,
+  Network,
 } from 'lucide-react';
 import { Node } from '@/components/ui/Node';
 import { Page } from '@/components/ui/Page';
@@ -21,25 +23,8 @@ import { conceptCount } from '@/content/concepts';
 import { getLabs, getTopics, getTrack } from '@/content/registry';
 import { getCompanies } from '@/content/companies';
 import { CompanyLogo } from '@/components/company/CompanyLogo';
+import { LandingDsaVisualizer, LandingArchitectureDemo } from '@/components/landing';
 
-/**
- * The landing page.
- *
- * **Every number here is derived, none is written down.** A marketing page is
- * the single most tempting place to round up, and it is also the page nobody
- * revisits when the catalogue changes — so a hardcoded "100+ problems" is a
- * claim that starts false and stays false. Counting the content at build time
- * means the page is either accurate or it does not build.
- *
- * **Structured around the three tiers (AD-7)** rather than around features,
- * because that progression *is* the product: read the topic, practise it on
- * single functions, then build the thing across several files. A feature grid
- * would list the same surfaces without saying why there are three of them.
- *
- * Public and static, which matters more here than anywhere: this is the page
- * search engines land on, and ADR 0001 §1 makes organic search the primary
- * channel.
- */
 export const metadata = {
   title: 'GetCracked — Build real systems. Step by step. In your browser.',
   description:
@@ -87,36 +72,109 @@ export default function LandingPage() {
   ];
 
   return (
-    <Page width="catalog">
-      <header className="node-surface flex flex-col gap-4 bg-surface p-6 sm:p-10">
+    <Page width="canvas">
+      {/* Hero Header */}
+      <header className="node-surface flex flex-col gap-5 bg-surface p-6 sm:p-10">
         <h1 className="max-w-3xl font-sans text-4xl font-bold tracking-tight sm:text-6xl">
           Build real systems. Step by step. In your browser.
         </h1>
         <p className="max-w-2xl text-base text-foreground-muted sm:text-lg">
-          Not slides, not videos. You write the code, run it against real tests, and watch
-          your own solution execute — then go and build the thing itself.
+          Not slides, not videos. You write the code, run it against real tests, watch
+          your own solution physically execute in spatial visualizers, and build complete production architectures.
         </p>
 
-        <div className="flex flex-wrap items-center gap-3 pt-1">
+        <div className="flex flex-wrap items-center gap-3 pt-2">
           <Link
             href="/sign-up"
-            className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-accent-strong px-4 py-2 text-sm font-bold text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+            className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-accent-strong px-5 py-2.5 text-sm font-bold text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
           >
             Create free account
             <ArrowRight size={15} aria-hidden />
           </Link>
           <Link
-            href="/problems"
-            className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-surface px-4 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+            href="/learn/visualizer"
+            className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-surface px-4 py-2.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
           >
-            Explore as guest
+            <Play size={15} className="text-link" />
+            Try DS Visualizer
           </Link>
-          <span className="text-xs text-foreground-muted">
-            Start solving instantly without an account — sign up when you&apos;re ready to permanently save your progress.
+          <Link
+            href="/problems"
+            className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-surface px-4 py-2.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+          >
+            Explore Problems
+          </Link>
+          <span className="w-full text-xs text-foreground-muted pt-1">
+            Start solving and visualizing instantly without an account — sign up when you&apos;re ready to permanently save your progress.
           </span>
         </div>
       </header>
 
+      {/* Visualizer Showcase: True Spatial Motion */}
+      <section className="node-surface flex flex-col gap-6 bg-surface p-6 sm:p-8">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex flex-col gap-1">
+            <span className="flex items-center gap-1.5 font-mono text-3xs font-bold uppercase tracking-wider text-link">
+              <Layers size={13} aria-hidden />
+              Stepwise Data Structure Visualizer
+            </span>
+            <h2 className="font-sans text-2xl font-bold tracking-tight sm:text-3xl">
+              Watch data structures move in physical space
+            </h2>
+            <p className="max-w-2xl text-sm text-foreground-muted">
+              Not a pre-recorded animation. Elements actually lift, translate along arcs, and land in their new slots.
+              Step forward and backward line-by-line with synchronized algorithmic code across 5 languages.
+            </p>
+          </div>
+          <Link
+            href="/learn/visualizer"
+            className="node-surface node-interactive node-pressable inline-flex shrink-0 items-center gap-2 bg-accent-strong px-4 py-2 text-xs font-bold text-accent-foreground"
+          >
+            Launch Visualizer
+            <ArrowRight size={14} aria-hidden />
+          </Link>
+        </div>
+
+        <LandingDsaVisualizer />
+      </section>
+
+      {/* System Design Canvas & Architecture Labs Showcase */}
+      <section className="node-surface flex flex-col gap-6 bg-surface p-6 sm:p-8">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex flex-col gap-1">
+            <span className="flex items-center gap-1.5 font-mono text-3xs font-bold uppercase tracking-wider text-link">
+              <Network size={13} aria-hidden />
+              Interactive System Design
+            </span>
+            <h2 className="font-sans text-2xl font-bold tracking-tight sm:text-3xl">
+              Architect real-world scale before you get interviewed
+            </h2>
+            <p className="max-w-2xl text-sm text-foreground-muted">
+              Draw system topologies, run automated reliability validation, and estimate storage, QPS,
+              and network throughput with back-of-the-envelope calculators.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/learn/system-design/labs"
+              className="node-surface node-interactive node-pressable inline-flex items-center gap-1.5 bg-surface px-3.5 py-2 text-xs font-semibold"
+            >
+              Scored Labs
+            </Link>
+            <Link
+              href="/learn/system-design/canvas"
+              className="node-surface node-interactive node-pressable inline-flex items-center gap-1.5 bg-accent-strong px-3.5 py-2 text-xs font-bold text-accent-foreground"
+            >
+              Open Canvas
+              <ArrowRight size={14} aria-hidden />
+            </Link>
+          </div>
+        </div>
+
+        <LandingArchitectureDemo />
+      </section>
+
+      {/* Three Tiers Section */}
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <h2 className="font-sans text-2xl font-bold tracking-tight">Three tiers, one loop</h2>
@@ -157,13 +215,14 @@ export default function LandingPage() {
         </ol>
       </section>
 
+      {/* The Part That Is Actually Different */}
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <h2 className="font-sans text-2xl font-bold tracking-tight">
             The part that is actually different
           </h2>
           <p className="max-w-2xl text-sm text-foreground-muted">
-            Everything runs in your browser — Python, JavaScript, and TypeScript, on real
+            Everything runs in your browser — Python, JavaScript, TypeScript, Go, C++, and Java on real
             interpreters compiled to WebAssembly. Nothing is queued on a server, so nothing
             costs anything to run.
           </p>
@@ -376,12 +435,9 @@ export default function LandingPage() {
         </ul>
       </section>
 
+      {/* Catalog Counts Section */}
       <section className="flex flex-col gap-3">
         <h2 className="font-sans text-2xl font-bold tracking-tight">What is in it</h2>
-        {/*
-          Counted, never claimed. These move on their own as content lands, which
-          is the only way a number on a landing page stays true.
-        */}
         <Node tone="surface" className="grid gap-px overflow-hidden bg-border-subtle sm:grid-cols-3">
           {[
             { value: counts.lessons, label: 'lessons', href: '/learn/dsa' },
@@ -403,16 +459,16 @@ export default function LandingPage() {
         </Node>
       </section>
 
-      {/* Final CTA */}
-      <section className="flex flex-col items-center gap-3 py-4 text-center">
-        <h2 className="font-sans text-2xl font-bold tracking-tight">
+      {/* Final Call to Action */}
+      <section className="flex flex-col items-center gap-3 py-6 text-center">
+        <h2 className="font-sans text-2xl font-bold tracking-tight sm:text-3xl">
           Ready to start cracking?
         </h2>
         <p className="max-w-lg text-sm text-foreground-muted">
           Jump in and start exploring — when you&apos;re ready to track your streaks,
           save progress, and climb the leaderboard, create a free account in seconds.
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
           <Link
             href="/sign-up"
             className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-accent-strong px-5 py-2.5 text-sm font-bold text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
@@ -421,10 +477,16 @@ export default function LandingPage() {
             <ArrowRight size={15} aria-hidden />
           </Link>
           <Link
+            href="/learn/visualizer"
+            className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-surface px-5 py-2.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+          >
+            Interactive Visualizer
+          </Link>
+          <Link
             href="/learn/dsa"
             className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-surface px-5 py-2.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
           >
-            Explore as guest
+            Explore Roadmap
           </Link>
         </div>
       </section>

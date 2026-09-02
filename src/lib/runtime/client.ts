@@ -1,6 +1,6 @@
 'use client';
 
-import type { Language, TestSpec } from '@/content/schema';
+import type { RunnableLanguage, TestSpec } from '@/content/schema';
 import type { SpecResult } from '@/content/test-runner';
 import type { RunRequest, RunResponse } from './protocol';
 
@@ -23,7 +23,7 @@ import type { RunRequest, RunResponse } from './protocol';
 export interface RunOptions {
   spec: TestSpec;
   source: string;
-  language: Language;
+  language: RunnableLanguage;
   trace?: boolean;
   /** Passed to QuickJS's interrupt handler. */
   timeoutMs?: number;

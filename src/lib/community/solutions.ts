@@ -24,14 +24,13 @@ export interface CommunitySolution {
 const STORAGE_KEY = 'getcracked_community_solutions';
 const UPVOTES_KEY = 'getcracked_solution_upvotes';
 
-/** Curated community seed solutions to ensure immediate value on launch. */
 export const SEED_SOLUTIONS: CommunitySolution[] = [
   {
-    id: 'seed-two-sum-1',
+    id: 'editorial-two-sum-py',
     exerciseId: 'problem:two-sum',
     title: 'One-Pass Hash Map with Complement Lookup',
-    author: 'StaffCandidate',
-    authorBadge: 'Staff Engineer',
+    author: 'GetCracked Staff',
+    authorBadge: 'Editorial',
     language: 'python',
     code: `def two_sum(nums, target):
     seen = {}
@@ -42,7 +41,7 @@ export const SEED_SOLUTIONS: CommunitySolution[] = [
         seen[num] = i
     return []`,
     explanation:
-      'By inserting each number into a hash map as we iterate, we can query whether its complement (`target - num`) has already been seen in $O(1)$ amortized time.',
+      'By inserting each number into a hash map as we iterate, we can query whether its complement (`target - num`) has already been seen in O(1) amortized time.',
     timeComplexity: 'O(n)',
     spaceComplexity: 'O(n)',
     upvotes: 42,
@@ -50,11 +49,11 @@ export const SEED_SOLUTIONS: CommunitySolution[] = [
     tags: ['Hash Map', 'One-Pass', 'Optimal'],
   },
   {
-    id: 'seed-two-sum-2',
+    id: 'editorial-two-sum-js',
     exerciseId: 'problem:two-sum',
     title: 'Idiomatic JavaScript Map Solution',
-    author: 'FullStackDev',
-    authorBadge: 'Frontend Lead',
+    author: 'GetCracked Staff',
+    authorBadge: 'Editorial',
     language: 'javascript',
     code: `function twoSum(nums, target) {
   const seen = new Map();
@@ -68,7 +67,7 @@ export const SEED_SOLUTIONS: CommunitySolution[] = [
   return [];
 }`,
     explanation:
-      'Using JavaScript `Map` avoids prototype collision pitfalls and provides predictable key-value storage across primitive and numeric types.',
+      'Using JavaScript Map avoids prototype collision pitfalls and provides predictable key-value storage across primitive and numeric types.',
     timeComplexity: 'O(n)',
     spaceComplexity: 'O(n)',
     upvotes: 28,
@@ -76,11 +75,11 @@ export const SEED_SOLUTIONS: CommunitySolution[] = [
     tags: ['Hash Map', 'ES6 Map'],
   },
   {
-    id: 'seed-invert-tree-1',
+    id: 'editorial-invert-tree-py',
     exerciseId: 'problem:invert-binary-tree',
     title: 'Recursive Depth-First Swap',
-    author: 'AlgoMaster',
-    authorBadge: 'L5 Prep',
+    author: 'GetCracked Staff',
+    authorBadge: 'Editorial',
     language: 'python',
     code: `def invert_tree(root):
     if not root:
@@ -88,7 +87,7 @@ export const SEED_SOLUTIONS: CommunitySolution[] = [
     root.left, root.right = invert_tree(root.right), invert_tree(root.left)
     return root`,
     explanation:
-      'Bottom-up recursion swapping the inverted subtrees in a single tuple assignment. Base case returns `None` on leaf children.',
+      'Bottom-up recursion swapping the inverted subtrees in a single tuple assignment. Base case returns None on leaf children.',
     timeComplexity: 'O(n)',
     spaceComplexity: 'O(h) where h is tree height',
     upvotes: 35,
@@ -96,11 +95,11 @@ export const SEED_SOLUTIONS: CommunitySolution[] = [
     tags: ['DFS', 'Recursion', 'Binary Tree'],
   },
   {
-    id: 'seed-lru-cache-1',
+    id: 'editorial-lru-cache-py',
     exerciseId: 'challenge:build-lru-cache',
     title: 'Doubly-Linked List + Hash Map Decomposition',
-    author: 'SystemsArchitect',
-    authorBadge: 'Senior Infra',
+    author: 'GetCracked Staff',
+    authorBadge: 'Editorial',
     language: 'python',
     code: `class Node:
     def __init__(self, key=0, val=0):
@@ -123,7 +122,7 @@ class LRUCache:
         self.head.next.prev = node
         self.head.next = node`,
     explanation:
-      'Sentinel dummy nodes (`head` and `tail`) eliminate edge cases when inserting and removing from the doubly-linked list. Hash map points directly to Node references.',
+      'Sentinel dummy nodes (head and tail) eliminate edge cases when inserting and removing from the doubly-linked list. Hash map points directly to Node references.',
     timeComplexity: 'O(1) get and put',
     spaceComplexity: 'O(capacity)',
     upvotes: 56,
@@ -147,6 +146,20 @@ export function getCommunitySolutions(exerciseId: string): CommunitySolution[] {
     return [...matchedLocal, ...seedMatches];
   } catch {
     return seedMatches;
+  }
+}
+
+/** Retrieves all community solutions across all exercises. */
+export function getAllCommunitySolutions(): CommunitySolution[] {
+  if (typeof window === 'undefined') {
+    return [...SEED_SOLUTIONS];
+  }
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const localSolutions: CommunitySolution[] = raw ? JSON.parse(raw) : [];
+    return [...localSolutions, ...SEED_SOLUTIONS];
+  } catch {
+    return [...SEED_SOLUTIONS];
   }
 }
 

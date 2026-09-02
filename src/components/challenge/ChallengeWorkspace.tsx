@@ -4,7 +4,17 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Node } from '@/components/ui/Node';
+import { LanguageIcon } from '@/components/ui/LanguageIcon';
 import { Editor } from '@/components/problem/Editor';
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  javascript: 'JS',
+  typescript: 'TS',
+  python: 'Python',
+  java: 'Java',
+  cpp: 'C++',
+  go: 'Go',
+};
 import { TestCases } from '@/components/problem/TestCases';
 import { Complexity } from '@/components/problem/Complexity';
 import { RuntimeClient } from '@/lib/runtime/client';
@@ -278,12 +288,13 @@ export function ChallengeWorkspace({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-sm font-semibold">Your build</h2>
         {available.length > 1 ? (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {available.map((l) => (
               <Button
                 key={l}
                 tone={l === language ? 'strong' : 'surface'}
                 aria-pressed={l === language}
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs"
                 onClick={() => {
                   // Drafts are keyed per language, so switching preserves
                   // whatever was written in the language being left.
@@ -293,7 +304,8 @@ export function ChallengeWorkspace({
                   setSubmitted(false);
                 }}
               >
-                {l}
+                <LanguageIcon language={l} size={13} />
+                <span>{LANGUAGE_LABELS[l] ?? l}</span>
               </Button>
             ))}
           </div>

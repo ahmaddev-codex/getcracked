@@ -1,9 +1,11 @@
 import { runJavaScript } from '@/lib/runtime/javascript';
 import { runPython } from '@/lib/runtime/python';
+import { runTypeScript } from '@/lib/runtime/typescript';
+import { runJava, runCpp, runGo } from '@/lib/runtime/adapters/compiled-languages';
 import type { RunOptions, RunResult } from '@/lib/runtime/javascript';
 import { measureRun, type RuntimeMetrics } from '@/lib/runtime/measure';
 import { toProtocol, type Trace } from '@/lib/trace/protocol';
-import { entryFor, type Language, type TestSpec } from './schema';
+import { entryFor, type RunnableLanguage, type TestSpec } from './schema';
 
 /**
  * Runs a declarative test spec against learner code (AD-3).
@@ -77,20 +79,24 @@ function describeCase(index: number, args: unknown[], name?: string): string {
  */
 export type LanguageRuntime = (opts: RunOptions) => Promise<RunResult>;
 
-const RUNTIMES: Partial<Record<Language, LanguageRuntime>> = {
+const RUNTIMES: Record<RunnableLanguage, LanguageRuntime> = {
   javascript: runJavaScript,
   python: runPython,
+  typescript: runTypeScript,
+  java: runJava,
+  cpp: runCpp,
+  go: runGo,
 };
 
 /** Languages with a working adapter, for the editor's switcher. */
-export function supportedLanguages(): Language[] {
-  return (Object.keys(RUNTIMES) as Language[]).filter((l) => RUNTIMES[l]);
+export function supportedLanguages(): RunnableLanguage[] {
+  return (Object.keys(RUNTIMES) as RunnableLanguage[]).filter((l) => RUNTIMES[l]);
 }
 
 export interface RunSpecOptions {
   spec: TestSpec;
   source: string;
-  language: Language;
+  language: RunnableLanguage;
   trace?: boolean;
   timeoutMs?: number;
   /** Off by default: measurement costs an extra sandboxed run. */
