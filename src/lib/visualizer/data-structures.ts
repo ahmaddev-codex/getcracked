@@ -381,8 +381,9 @@ export interface ListNodeState {
 export function simulateLinkedList(
   initialValues: number[],
   operation: string,
-  params: { value?: number } = {},
+  params: { value?: number; index?: number } = {},
   isDoubly = false,
+  isCircular = false,
 ): VisualStep[] {
   const steps: VisualStep[] = [];
   let nodes: ListNodeState[] = initialValues.map((v, i) => ({
@@ -391,6 +392,13 @@ export function simulateLinkedList(
     nextId: i < initialValues.length - 1 ? `node-${i + 1}` : null,
     prevId: isDoubly && i > 0 ? `node-${i - 1}` : null,
   }));
+
+  if (isCircular && nodes.length > 0) {
+    nodes[nodes.length - 1].nextId = nodes[0].id;
+    if (isDoubly) {
+      nodes[0].prevId = nodes[nodes.length - 1].id;
+    }
+  }
 
   let stepCounter = 0;
   const pushStep = (
@@ -418,32 +426,83 @@ export function simulateLinkedList(
       highlightNodeIds: highlightIds,
       pointers,
       motion,
-      state: { nodes: JSON.parse(JSON.stringify(nodes)), isDoubly },
+      state: { nodes: JSON.parse(JSON.stringify(nodes)), isDoubly, isCircular },
     });
   };
 
-  if (operation.includes('Insert Head')) {
+  const op = operation.toLowerCase();
+
+  if (op.includes('insert head')) {
     const val = params.value ?? 5;
     const newId = `node-${Date.now()}`;
     const headId = nodes[0]?.id ?? null;
-    pushStep('Allocate Node', `Created new ListNode with value ${val}.`, 'write', 'O(1)', `const node = new ListNode(${val});`, 2, [], { newNode: newId }, { type: 'lift', nodeId: newId });
+    pushStep('Allocate Node', `Allocated new ListNode memory cell with value ${val}.`, 'write', 'O(1)', `const node = new ListNode(${val});`, 2, [], { newNode: newId }, { type: 'lift', nodeId: newId });
     nodes = [{ id: newId, value: val, nextId: headId, prevId: null }, ...nodes];
     if (isDoubly && nodes[1]) nodes[1].prevId = newId;
-    pushStep('Link as New Head', `Pointed newNode.next to former head (${headId ?? 'null'}). Updated head pointer.`, 'write', 'O(1)', 'node.next = head; head = node;', 3, [newId], { head: newId }, { type: 'link', nodeId: newId, targetNodeId: headId ?? undefined });
-  } else if (operation.includes('Insert Tail')) {
+    if (isCircular && nodes.length > 1) {
+      nodes[nodes.length - 1].nextId = newId;
+      if (isDoubly) nodes[0].prevId = nodes[nodes.length - 1].id;
+    }
+    pushStep('Link as New Head', `Linked newNode.next to former head (${headId ?? 'null'}). Updated head pointer.`, 'write', 'O(1)', 'node.next = head; head = node;', 3, [newId], { head: newId }, { type: 'link', nodeId: newId, targetNodeId: headId ?? undefined });
+  } else if (op.includes('insert tail')) {
     const val = params.value ?? 88;
     const newId = `node-${Date.now()}`;
     if (nodes.length === 0) {
-      nodes = [{ id: newId, value: val, nextId: null, prevId: null }];
-      pushStep('Initialize Head', `List empty. New node ${val} is now head and tail.`, 'write', 'O(1)', 'head = node;', 2, [newId], { head: newId });
+      nodes = [{ id: newId, value: val, nextId: isCircular ? newId : null, prevId: isCircular && isDoubly ? newId : null }];
+      pushStep('Initialize Head', `List was empty. Node ${val} is now head${isCircular ? ' and loops to itself' : ''}.`, 'write', 'O(1)', 'head = node;', 2, [newId], { head: newId });
     } else {
-      pushStep('Traverse toward Tail', `Starting at head (${nodes[0].value}) and traversing next pointers.`, 'read', 'O(n)', 'let curr = head; while (curr.next) curr = curr.next;', 4, [nodes[0].id], { curr: nodes[0].id });
+      pushStep('Traverse to Tail', `Traversing from head (${nodes[0].value}) along next pointers to reach tail.`, 'read', 'O(n)', 'let curr = head; while (curr.next) curr = curr.next;', 4, [nodes[0].id], { curr: nodes[0].id });
       const last = nodes[nodes.length - 1];
       last.nextId = newId;
-      nodes.push({ id: newId, value: val, nextId: null, prevId: isDoubly ? last.id : null });
-      pushStep('Connect Tail Pointer', `Linked last node (${last.value}).next to new node ${val}.`, 'write', 'O(1)', 'curr.next = node;', 5, [last.id, newId], { tail: newId }, { type: 'link', nodeId: last.id, targetNodeId: newId });
+      const targetNext = isCircular ? nodes[0].id : null;
+      nodes.push({ id: newId, value: val, nextId: targetNext, prevId: isDoubly ? last.id : null });
+      if (isCircular && isDoubly) nodes[0].prevId = newId;
+      pushStep('Connect Tail Link', `Set former tail (${last.value}).next = new node ${val}${isCircular ? ' and new node.next = head' : ''}.`, 'write', 'O(1)', 'curr.next = node;', 5, [last.id, newId], { tail: newId }, { type: 'link', nodeId: last.id, targetNodeId: newId });
     }
-  } else if (operation.includes('Reverse')) {
+  } else if (op.includes('insert at') || op.includes('index')) {
+    const val = params.value ?? 42;
+    const targetIdx = Math.max(0, Math.min(nodes.length, params.index ?? 2));
+    const newId = `node-${Date.now()}`;
+    if (targetIdx === 0) {
+      const headId = nodes[0]?.id ?? null;
+      nodes = [{ id: newId, value: val, nextId: headId, prevId: null }, ...nodes];
+      if (isDoubly && nodes[1]) nodes[1].prevId = newId;
+      if (isCircular) nodes[nodes.length - 1].nextId = newId;
+      pushStep('Insert at Index 0', `Allocated node ${val} and linked as new head of list.`, 'write', 'O(1)', 'node.next = head; head = node;', 2, [newId], { head: newId });
+    } else {
+      const prevNode = nodes[targetIdx - 1];
+      const nextNode = nodes[targetIdx] ?? null;
+      pushStep('Traverse to Insertion Point', `Walking to index ${targetIdx - 1} (node ${prevNode.value}).`, 'read', 'O(k)', 'for (let i = 0; i < index - 1; i++) curr = curr.next;', 3, [prevNode.id], { curr: prevNode.id });
+      const newNode: ListNodeState = { id: newId, value: val, nextId: nextNode ? nextNode.id : (isCircular ? nodes[0].id : null), prevId: isDoubly ? prevNode.id : null };
+      prevNode.nextId = newId;
+      if (isDoubly && nextNode) nextNode.prevId = newId;
+      nodes.splice(targetIdx, 0, newNode);
+      pushStep('Splice Node In', `Linked node ${val} between ${prevNode.value} and ${nextNode ? nextNode.value : 'tail'}.`, 'write', 'O(1)', 'node.next = curr.next; curr.next = node;', 5, [prevNode.id, newId], { newNode: newId });
+    }
+  } else if (op.includes('delete')) {
+    const targetVal = params.value ?? (nodes[1]?.value ?? nodes[0]?.value ?? 20);
+    pushStep('Search for Target to Delete', `Scanning nodes to find key ${targetVal}.`, 'read', 'O(n)', 'let curr = head, prev = null;', 2, nodes[0] ? [nodes[0].id] : [], nodes[0] ? { curr: nodes[0].id } : {});
+    const idx = nodes.findIndex((n) => n.value === targetVal);
+    if (idx === -1) {
+      pushStep('Value Not Found', `Value ${targetVal} does not exist in the linked list.`, 'done', 'O(n)', 'return head;', 8, []);
+    } else if (idx === 0) {
+      const removed = nodes[0];
+      nodes = nodes.slice(1);
+      if (nodes.length > 0) {
+        if (isDoubly) nodes[0].prevId = isCircular ? nodes[nodes.length - 1].id : null;
+        if (isCircular) nodes[nodes.length - 1].nextId = nodes[0].id;
+      }
+      pushStep('Unlink Head Node', `Removed node ${removed.value}. Head advances to ${nodes[0]?.value ?? 'null'}.`, 'write', 'O(1)', 'head = head.next;', 4, nodes[0] ? [nodes[0].id] : [], nodes[0] ? { head: nodes[0].id } : {});
+    } else {
+      const prevNode = nodes[idx - 1];
+      const targetNode = nodes[idx];
+      const nextNode = nodes[idx + 1] ?? null;
+      prevNode.nextId = nextNode ? nextNode.id : (isCircular ? nodes[0].id : null);
+      if (isDoubly && nextNode) nextNode.prevId = prevNode.id;
+      nodes.splice(idx, 1);
+      pushStep('Bypass Node Link', `Unlinked node ${targetNode.value}: set prev (${prevNode.value}).next = ${nextNode ? nextNode.value : 'null'}.`, 'write', 'O(1)', 'prev.next = curr.next;', 6, [prevNode.id], { prev: prevNode.id });
+    }
+  } else if (op.includes('reverse')) {
     pushStep('Initialize Three Pointers', 'Setting prev = null, curr = head.', 'read', 'O(n)', 'let prev = null, curr = head;', 2, nodes[0] ? [nodes[0].id] : [], nodes[0] ? { curr: nodes[0].id } : {});
     const reversed: ListNodeState[] = [];
     for (let i = 0; i < nodes.length; i++) {
@@ -454,25 +513,31 @@ export function simulateLinkedList(
         id: curr.id,
         value: curr.value,
         nextId: reversed[0]?.id ?? null,
+        prevId: isDoubly ? nextId : null,
       });
     }
     nodes = reversed;
+    if (isCircular && nodes.length > 0) {
+      nodes[nodes.length - 1].nextId = nodes[0].id;
+      if (isDoubly) nodes[0].prevId = nodes[nodes.length - 1].id;
+    }
     pushStep('Reversal Finished', `Single O(n) pass complete. Head is now ${nodes[0]?.value ?? 'null'}.`, 'done', 'O(n)', 'return prev;', 8, nodes[0] ? [nodes[0].id] : [], nodes[0] ? { head: nodes[0].id } : {});
-  } else if (operation.includes('Search')) {
-    const target = params.value ?? 20;
+  } else if (op.includes('search')) {
+    const target = params.value ?? (nodes[2]?.value ?? 20);
     pushStep('Start Search at Head', `Traversing linked chain searching for value ${target}.`, 'read', 'O(n)', 'let curr = head;', 2, nodes[0] ? [nodes[0].id] : [], nodes[0] ? { curr: nodes[0].id } : {});
     let found = false;
-    for (const node of nodes) {
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
       if (node.value === target) {
-        pushStep('Target Located!', `Found node with matching value ${target}!`, 'done', 'O(n)', 'return curr;', 4, [node.id], { found: node.id }, { type: 'pulse', nodeId: node.id });
+        pushStep('Target Located!', `Found node at position [${i}] with matching value ${target}!`, 'done', 'O(n)', 'return curr;', 4, [node.id], { found: node.id }, { type: 'pulse', nodeId: node.id });
         found = true;
         break;
       } else {
-        pushStep('Advance to Next Node', `Node ${node.value} != ${target}. Following pointer to next node.`, 'compare', 'O(n)', 'curr = curr.next;', 5, [node.id], { curr: node.id });
+        pushStep('Advance to Next Node', `Node ${node.value} != ${target}. Following next pointer.`, 'compare', 'O(n)', 'curr = curr.next;', 5, [node.id], { curr: node.id });
       }
     }
     if (!found) {
-      pushStep('Reached Null', `Reached end of linked list. Value ${target} not found.`, 'done', 'O(n)', 'return null;', 7, []);
+      pushStep('Reached Null / End', `Reached end of linked chain. Value ${target} not found.`, 'done', 'O(n)', 'return null;', 7, []);
     }
   }
 
@@ -613,6 +678,12 @@ export function simulateQueue(
       const val = items.pop()!;
       pushStep('Deque Pop Back', `Popped ${val} from rear of Double-Ended Queue.`, 'done', 'O(1)', 'return deque.pop();', 2, [], {});
     }
+  } else if (operation.includes('Peek Front') || operation.includes('Peek')) {
+    if (items.length === 0) {
+      pushStep('Queue Empty', 'Queue has no elements to peek.', 'error', 'O(1)', 'return null;', 2);
+    } else {
+      pushStep('Peek Front Element', `Front element is ${items[0]} at index 0. O(1) constant time access.`, 'read', 'O(1)', 'return queue[0];', 2, [0], { front: 0 });
+    }
   }
 
   return steps.map((s) => ({ ...s, totalSteps: steps.length }));
@@ -648,15 +719,15 @@ export function simulateBST(
       if (!node) return;
       node.x = x;
       node.y = y;
-      if (node.leftId) assignCoords(node.leftId, x - spread, y + 22, spread / 2);
-      if (node.rightId) assignCoords(node.rightId, x + spread, y + 22, spread / 2);
+      if (node.leftId) assignCoords(node.leftId, x - spread, y + 58, spread * 0.52);
+      if (node.rightId) assignCoords(node.rightId, x + spread, y + 58, spread * 0.52);
     };
-    assignCoords(rootId, 50, 15, 24);
+    assignCoords(rootId, 200, 36, 95);
   };
 
   const insertNode = (val: number): string => {
     const id = `node-${val}`;
-    const newNode: TreeNode = { id, value: val, leftId: null, rightId: null, x: 50, y: 15 };
+    const newNode: TreeNode = { id, value: val, leftId: null, rightId: null, x: 200, y: 36 };
     nodesMap.set(id, newNode);
     if (!rootId) {
       rootId = id;
@@ -787,6 +858,73 @@ export function simulateBST(
     pushStep('Start In-Order Traversal', 'In-order traversal yields keys in strictly sorted ascending order.', 'read', 'O(n)', 'inOrder(root);', 1);
     traverse(rootId);
     pushStep('Traversal Complete', `Final sorted array: [${visited.join(', ')}].`, 'done', 'O(n)', 'return res;', 6, []);
+  } else if (operation.includes('Pre-Order Traversal')) {
+    const visited: number[] = [];
+    const traverse = (nodeId: string | null) => {
+      if (!nodeId) return;
+      const node = nodesMap.get(nodeId)!;
+      visited.push(node.value);
+      pushStep('Pre-Order Visit', `Node -> Left -> Right: visited ${node.value}. Traversal stream: [${visited.join(', ')}].`, 'read', 'O(n)', `res.push(${node.value});`, 3, [node.id], { curr: node.id }, { type: 'pulse', nodeId: node.id });
+      traverse(node.leftId);
+      traverse(node.rightId);
+    };
+    pushStep('Start Pre-Order Traversal', 'Pre-order visits the current node before left and right subtrees.', 'read', 'O(n)', 'preOrder(root);', 1);
+    traverse(rootId);
+    pushStep('Pre-Order Complete', `Final pre-order sequence: [${visited.join(', ')}].`, 'done', 'O(n)', 'return res;', 6, []);
+  } else if (operation.includes('Delete Node')) {
+    const target = params.value ?? (nodesMap.get(rootId ?? '')?.leftId ? nodesMap.get(nodesMap.get(rootId!)!.leftId!)?.value ?? 20 : 20);
+    pushStep('Locate Node to Delete', `Searching for key ${target} to remove from BST.`, 'read', 'O(log n)', `deleteNode(root, ${target});`, 1);
+    
+    // Find node and its parent
+    let parent: TreeNode | null = null;
+    let curr: TreeNode | null = rootId ? nodesMap.get(rootId) ?? null : null;
+    while (curr && curr.value !== target) {
+      parent = curr;
+      if (target < curr.value) {
+        curr = curr.leftId ? nodesMap.get(curr.leftId) ?? null : null;
+      } else {
+        curr = curr.rightId ? nodesMap.get(curr.rightId) ?? null : null;
+      }
+    }
+
+    if (!curr) {
+      pushStep('Key Not Found', `Node with value ${target} does not exist in BST.`, 'error', 'O(log n)', 'return null;', 2);
+    } else {
+      pushStep('Target Node Located', `Found node ${curr.value}. Determining deletion case (0, 1, or 2 children).`, 'compare', 'O(1)', '// Check child counts', 4, [curr.id]);
+
+      // Case 1 & 2: 0 or 1 child
+      if (!curr.leftId || !curr.rightId) {
+        const replacementId = curr.leftId || curr.rightId;
+        if (!parent) {
+          rootId = replacementId;
+        } else if (parent.leftId === curr.id) {
+          parent.leftId = replacementId;
+        } else {
+          parent.rightId = replacementId;
+        }
+        nodesMap.delete(curr.id);
+        layoutTree();
+        pushStep('Promote Child / Remove', `Unlinked node ${curr.value}. Replaced with ${replacementId ? nodesMap.get(replacementId)?.value : 'null'}.`, 'done', 'O(1)', 'return root.left || root.right;', 6, replacementId ? [replacementId] : []);
+      } else {
+        // Case 3: 2 children - find in-order successor (min in right subtree)
+        let succParent = curr;
+        let succ = nodesMap.get(curr.rightId)!;
+        while (succ.leftId) {
+          succParent = succ;
+          succ = nodesMap.get(succ.leftId)!;
+        }
+        pushStep('Find In-Order Successor', `Node has 2 children. Located successor (${succ.value}) in right subtree.`, 'compare', 'O(log n)', 'let succ = findMin(root.right);', 8, [curr.id, succ.id]);
+        curr.value = succ.value;
+        if (succParent.leftId === succ.id) {
+          succParent.leftId = succ.rightId;
+        } else {
+          succParent.rightId = succ.rightId;
+        }
+        nodesMap.delete(succ.id);
+        layoutTree();
+        pushStep('Replace with Successor Value', `Copied value ${succ.value} into target node. Unlinked original successor.`, 'done', 'O(1)', 'root.val = succ.val;', 10, [curr.id]);
+      }
+    }
   }
 
   return steps.map((s) => ({ ...s, totalSteps: steps.length }));
@@ -930,6 +1068,35 @@ export function simulateHeap(
         }
       }
     }
+  } else if (operation.includes('Peek')) {
+    if (heap.length === 0) {
+      pushStep('Heap Empty', 'Cannot peek from empty heap.', 'error', 'O(1)', 'return null;', 2);
+    } else {
+      pushStep('Inspect Root Priority Element', `Root element is ${heap[0]} at index 0 (optimal priority element). O(1) constant time access.`, 'read', 'O(1)', 'return heap[0];', 2, [0], { root: 0 });
+    }
+  } else if (operation.includes('Heapify')) {
+    pushStep('Start Bottom-Up Heapify', 'Building heap in O(n) linear time by sifting down all non-leaf subtrees.', 'read', 'O(n)', 'for (let i = Math.floor(arr.length / 2) - 1; i >= 0; i--)', 2);
+    for (let startIdx = Math.floor(heap.length / 2) - 1; startIdx >= 0; startIdx--) {
+      let cur = startIdx;
+      pushStep('Inspect Subtree Parent', `Examining subtree rooted at index ${cur} (val: ${heap[cur]}).`, 'compare', 'O(log n)', `siftDown(heap, ${cur});`, 3, [cur], { parent: cur });
+      while (2 * cur + 1 < heap.length) {
+        let smallest = cur;
+        const left = 2 * cur + 1;
+        const right = 2 * cur + 2;
+        if (left < heap.length && heap[left] < heap[smallest]) smallest = left;
+        if (right < heap.length && heap[right] < heap[smallest]) smallest = right;
+        if (smallest !== cur) {
+          pushStep('Sift Down Step', `Swapping parent ${heap[cur]} with child ${heap[smallest]}.`, 'swap', 'O(log n)', `[heap[${cur}], heap[${smallest}]] = [heap[${smallest}], heap[${cur}]];`, 4, [cur, smallest], { cur, smallest });
+          const temp = heap[cur];
+          heap[cur] = heap[smallest];
+          heap[smallest] = temp;
+          cur = smallest;
+        } else {
+          break;
+        }
+      }
+    }
+    pushStep('Heapify Finished', 'All subtrees satisfied heap property. Entire array is now a valid heap.', 'done', 'O(n)', '// Heap construction complete', 6, [0]);
   }
 
   return steps.map((s) => ({ ...s, totalSteps: steps.length }));
@@ -1018,6 +1185,20 @@ export function simulateHashMap(
     } else {
       pushStep('Key Not Found', `Key "${key}" was not in bucket [${bucketIdx}].`, 'error', 'O(1) average', 'return false;', 4, bucketIdx);
     }
+  } else if (operation.includes('Rehash') || operation.includes('Resize')) {
+    pushStep('Check Load Factor', `Current elements count: ${buckets.flat().length}. Threshold reached (> 0.75). Initiating table rehash.`, 'compare', 'O(n)', 'if (size / capacity > 0.75) rehash();', 2);
+    const allEntries = buckets.flat();
+    const newCount = 8;
+    const newBuckets: Array<HashBucketEntry[]> = Array.from({ length: newCount }, () => []);
+    for (const entry of allEntries) {
+      let h = 0;
+      for (let i = 0; i < entry.key.length; i++) h = (h * 31 + entry.key.charCodeAt(i)) % newCount;
+      const targetSlot = Math.abs(h);
+      newBuckets[targetSlot].push(entry);
+    }
+    buckets.length = 0;
+    newBuckets.forEach((b) => buckets.push(b));
+    pushStep('Rehash Completed', `Re-hashed all ${allEntries.length} items across 8 slots. Collision frequency minimized.`, 'done', 'O(n)', '// Rehash finished: load factor normalized', 5);
   }
 
   return steps.map((s) => ({ ...s, totalSteps: steps.length }));
@@ -1040,11 +1221,11 @@ export interface GraphEdge {
 }
 
 export const INITIAL_GRAPH_VERTICES: GraphVertex[] = [
-  { id: 'A', label: 'A', x: 20, y: 30 },
-  { id: 'B', label: 'B', x: 50, y: 18 },
-  { id: 'C', label: 'C', x: 80, y: 30 },
-  { id: 'D', label: 'D', x: 30, y: 70 },
-  { id: 'E', label: 'E', x: 70, y: 70 },
+  { id: 'A', label: 'A', x: 80, y: 130 },
+  { id: 'B', label: 'B', x: 200, y: 45 },
+  { id: 'C', label: 'C', x: 320, y: 130 },
+  { id: 'D', label: 'D', x: 125, y: 215 },
+  { id: 'E', label: 'E', x: 275, y: 215 },
 ];
 
 export const INITIAL_GRAPH_EDGES: GraphEdge[] = [
@@ -1098,7 +1279,7 @@ export function simulateGraph(
       highlightNodeIds: highlightIds,
       pointers,
       motion,
-      state: { vertices, edges },
+      state: { vertices: [...vertices], edges: [...edges] },
     });
   };
 
@@ -1141,6 +1322,53 @@ export function simulateGraph(
 
     dfs(start);
     pushStep('DFS Traversal Complete', `All connected components deeply explored.`, 'done', 'O(V + E)', '// DFS complete', 6, Array.from(visited));
+  } else if (operation.includes('Add Vertex')) {
+    const newId = 'F';
+    pushStep('Register New Vertex', `Adding vertex "${newId}" to adjacency list.`, 'write', 'O(1)', `graph["${newId}"] = [];`, 2, [newId]);
+    vertices.push({ id: newId, label: newId, x: 200, y: 145 });
+    adj.set(newId, []);
+    pushStep('Vertex Initialized', `Vertex "${newId}" placed in coordinate space. Available to connect edges.`, 'done', 'O(1)', '// Vertex ready', 3, [newId]);
+  } else if (operation.includes('Add Edge')) {
+    const from = 'A';
+    const to = 'C';
+    pushStep('Establish Edge Pair', `Adding edge between vertex "${from}" and "${to}" with weight 3.`, 'write', 'O(1)', `graph["${from}"].push("${to}");`, 2, [from, to]);
+    edges.push({ from, to, weight: 3 });
+    adj.get(from)?.push(to);
+    adj.get(to)?.push(from);
+    pushStep('Edge Connected', `Edge (${from} <-> ${to}) confirmed in adjacency structure.`, 'done', 'O(1)', '// Edge created', 3, [from, to]);
+  } else if (operation.includes('Dijkstra') || operation.includes('Shortest Path')) {
+    pushStep('Initialize Distance Table', `Setting dist["${start}"] = 0, all other vertices to Infinity.`, 'write', 'O((V + E) log V)', 'const dist = { [start]: 0 };', 2, [start], { start });
+    const dist: Record<string, number> = {};
+    vertices.forEach((v) => (dist[v.id] = Infinity));
+    dist[start] = 0;
+
+    const pq = [{ id: start, d: 0 }];
+    const settled = new Set<string>();
+
+    while (pq.length > 0) {
+      pq.sort((a, b) => a.d - b.d);
+      const { id: u, d } = pq.shift()!;
+      if (settled.has(u)) continue;
+      settled.add(u);
+
+      pushStep('Settle Shortest Distance', `Vertex "${u}" relaxed with finalized min distance ${d}.`, 'read', 'O(log V)', 'const [u, d] = pq.pop();', 6, [u], { settled: u, dist: `${d}` });
+
+      for (const e of edges) {
+        let neighbor: string | null = null;
+        if (e.from === u) neighbor = e.to;
+        else if (e.to === u) neighbor = e.from;
+
+        if (neighbor && !settled.has(neighbor)) {
+          const w = e.weight ?? 1;
+          if (d + w < dist[neighbor]) {
+            dist[neighbor] = d + w;
+            pq.push({ id: neighbor, d: dist[neighbor] });
+            pushStep('Relax Incident Edge', `Relaxed edge to "${neighbor}": new shorter distance = ${d + w} (via ${u}).`, 'write', 'O(log V)', `dist["${neighbor}"] = ${d + w};`, 9, [u, neighbor], { neighbor });
+          }
+        }
+      }
+    }
+    pushStep('Dijkstra Complete', `All shortest paths from "${start}" computed across the network.`, 'done', 'O((V + E) log V)', 'return dist;', 13, Array.from(settled));
   }
 
   return steps.map((s) => ({ ...s, totalSteps: steps.length }));

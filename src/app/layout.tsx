@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Balsamiq_Sans } from "next/font/google";
+import { Inter, Balsamiq_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
@@ -7,6 +7,12 @@ import { SignedOutNotice } from "./SignedOutNotice";
 import { SiteHeader } from "@/components/SiteHeader";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { AssistantProvider, AssistantPanel, AssistantFloatingButton } from "@/components/assistant";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans-family",
+  display: "swap",
+});
 
 const nodeFont = Balsamiq_Sans({
   subsets: ["latin"],
@@ -138,7 +144,7 @@ const JSON_LD = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`h-full antialiased ${nodeFont.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`h-full antialiased scroll-smooth ${inter.variable} ${nodeFont.variable}`} suppressHydrationWarning>
       <head>
         {/* Applies the theme before first paint. A React effect runs after
             paint, which is one frame of the wrong theme on every load. */}

@@ -91,7 +91,7 @@ function CategoryRow({
                 : 'md:col-start-1 md:justify-self-end md:pr-16'
             }`}
           >
-            <ul className="flex w-full flex-col gap-2 md:w-72">
+            <ul className="flex w-full flex-col gap-2 border-l-2 border-connector/30 pl-3 ml-2 md:border-l-0 md:pl-0 md:ml-0 md:w-72">
               {row.concepts.map((concept) => (
                 <li key={concept.slug}>
                   <button

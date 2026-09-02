@@ -33,7 +33,7 @@ type PageWidth = 'canvas' | 'catalog' | 'reading';
 const EXPECTED: Record<string, PageWidth> = {
   // Was exempt while it was a centred hero with two lines in it. It is a real
   // page now, so it aligns with everything else it links to.
-  'src/app/page.tsx': 'catalog',
+  'src/app/page.tsx': 'canvas',
 
   'src/app/dashboard/page.tsx': 'catalog',
   'src/app/account/page.tsx': 'catalog',
@@ -59,6 +59,7 @@ const EXPECTED: Record<string, PageWidth> = {
   'src/app/companies/page.tsx': 'catalog',
   'src/app/companies/[slug]/page.tsx': 'catalog',
 
+  'src/app/community/page.tsx': 'catalog',
   'src/app/leaderboard/page.tsx': 'catalog',
 
   'src/app/challenges/page.tsx': 'catalog',

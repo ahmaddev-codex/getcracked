@@ -13,7 +13,7 @@ import {
   Flame,
   Shield,
   Brain,
-  Sparkles,
+  Layers,
   Network,
 } from 'lucide-react';
 import { Node } from '@/components/ui/Node';
@@ -23,7 +23,7 @@ import { conceptCount } from '@/content/concepts';
 import { getLabs, getTopics, getTrack } from '@/content/registry';
 import { getCompanies } from '@/content/companies';
 import { CompanyLogo } from '@/components/company/CompanyLogo';
-import { LanguageIcon } from '@/components/ui/LanguageIcon';
+import { LandingDsaVisualizer, LandingArchitectureDemo } from '@/components/landing';
 
 export const metadata = {
   title: 'GetCracked — Build real systems. Step by step. In your browser.',
@@ -72,7 +72,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <Page width="catalog">
+    <Page width="canvas">
       {/* Hero Header */}
       <header className="node-surface flex flex-col gap-5 bg-surface p-6 sm:p-10">
         <h1 className="max-w-3xl font-sans text-4xl font-bold tracking-tight sm:text-6xl">
@@ -115,7 +115,7 @@ export default function LandingPage() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex flex-col gap-1">
             <span className="flex items-center gap-1.5 font-mono text-3xs font-bold uppercase tracking-wider text-link">
-              <Sparkles size={13} aria-hidden />
+              <Layers size={13} aria-hidden />
               Stepwise Data Structure Visualizer
             </span>
             <h2 className="font-sans text-2xl font-bold tracking-tight sm:text-3xl">
@@ -123,7 +123,7 @@ export default function LandingPage() {
             </h2>
             <p className="max-w-2xl text-sm text-foreground-muted">
               Not a pre-recorded animation. Elements actually lift, translate along arcs, and land in their new slots.
-              Step forward and backward line-by-line with synchronized algorithmic code across 6 languages.
+              Step forward and backward line-by-line with synchronized algorithmic code across 5 languages.
             </p>
           </div>
           <Link
@@ -135,97 +135,7 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        {/* Live Visualizer Teaser Card */}
-        <div className="grid gap-4 lg:grid-cols-12 rounded-md border border-border-subtle bg-surface-muted/50 p-4 sm:p-6">
-          {/* Animated Buffer Mockup */}
-          <div className="lg:col-span-7 flex flex-col justify-between gap-6 rounded-md border border-border bg-surface p-4 sm:p-6 shadow-xs">
-            <div className="flex items-center justify-between border-b border-border-subtle pb-3">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-accent-strong ring-2 ring-accent-strong/20" />
-                <span className="font-mono text-xs font-bold">Two-Pointer Array In-Place Reversal</span>
-              </div>
-              <span className="rounded bg-accent-strong/15 px-2 py-0.5 font-mono text-3xs font-bold text-accent-foreground">
-                Step 3 of 7 · Physical Swap
-              </span>
-            </div>
-
-            {/* Visual Arc Crossover Simulation */}
-            <div className="flex flex-col items-center justify-center py-6">
-              <div className="flex items-end gap-2.5 sm:gap-3 flex-wrap justify-center min-h-24">
-                {[
-                  { val: 12, idx: 0, motion: 'gc-swap-arc-right-4', label: 'left pointer' },
-                  { val: 24, idx: 1, motion: '', label: '' },
-                  { val: 36, idx: 2, motion: '', label: 'mid' },
-                  { val: 48, idx: 3, motion: '', label: '' },
-                  { val: 60, idx: 4, motion: 'gc-swap-arc-left-4', label: 'right pointer' },
-                ].map((item) => (
-                  <div key={item.idx} className="flex flex-col items-center gap-1.5">
-                    <span className="text-3xs font-mono text-foreground-muted">[{item.idx}]</span>
-                    <div
-                      className={`flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-md border-2 font-mono text-sm font-bold shadow-sm transition-all ${item.motion
-                          ? `${item.motion} border-link bg-accent-strong text-accent-foreground shadow-xl`
-                          : 'border-border-strong bg-surface text-foreground'
-                        }`}
-                    >
-                      {item.val}
-                    </div>
-                    {item.label ? (
-                      <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-3xs text-link font-semibold">
-                        {item.label}
-                      </span>
-                    ) : (
-                      <span className="h-4" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-border-subtle pt-3 text-xs text-foreground-muted">
-              <span>Time: <strong className="text-foreground">O(n)</strong> · Space: <strong className="text-foreground">O(1)</strong></span>
-              <span className="font-mono text-3xs">Speed: 0.25x slow-motion enabled</span>
-            </div>
-          </div>
-
-          {/* Synchronized Algorithmic Code Preview */}
-          <div className="lg:col-span-5 flex flex-col justify-between gap-4 rounded-md border border-border bg-header p-4 text-header-foreground font-mono text-xs shadow-xs">
-            <div className="flex items-center justify-between border-b border-header-foreground/15 pb-2.5">
-              <div className="flex items-center gap-1.5">
-                <SquareCode size={14} className="text-accent-strong" />
-                <span className="text-3xs uppercase tracking-wider font-bold">Algorithmic Code</span>
-              </div>
-              <div className="flex items-center gap-1">
-                {(['TS', 'Python', 'Java', 'C++', 'Go'] as const).map((lang) => (
-                  <span
-                    key={lang}
-                    className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-3xs font-bold ${lang === 'TS' ? 'bg-accent-strong text-accent-foreground' : 'text-header-foreground/60'
-                      }`}
-                  >
-                    <LanguageIcon language={lang} size={10} />
-                    {lang}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-1 py-1 font-mono text-2xs sm:text-xs">
-              <div className="text-header-foreground/50">{`// In-place two-pointer crossover`}</div>
-              <div><span className="text-link">function</span> <span className="text-accent-strong">reverseArray</span>(arr: number[]) &#123;</div>
-              <div className="pl-3">let left = 0, right = arr.length - 1;</div>
-              <div className="pl-3">while (left &lt; right) &#123;</div>
-              <div className="pl-6 bg-header-foreground/15 rounded px-1.5 py-0.5 border-l-2 border-accent-strong text-accent-strong font-bold">
-                [arr[left], arr[right]] = [arr[right], arr[left]];
-              </div>
-              <div className="pl-6">left++; right--;</div>
-              <div className="pl-3">&#125;</div>
-              <div>&#125;</div>
-            </div>
-
-            <div className="border-t border-header-foreground/15 pt-2 text-2xs text-header-foreground/70">
-              Covers Arrays, Linked Lists, Trees, Heaps, Hash Maps &amp; Graphs.
-            </div>
-          </div>
-        </div>
+        <LandingDsaVisualizer />
       </section>
 
       {/* System Design Canvas & Architecture Labs Showcase */}
@@ -261,38 +171,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Node tone="surface" className="flex flex-col gap-2.5 p-5">
-            <span className="font-mono text-3xs font-bold uppercase tracking-wider text-link">01 · Topology Canvas</span>
-            <h3 className="font-sans text-base font-bold">Drag &amp; Drop Architectures</h3>
-            <p className="text-xs text-foreground-muted">
-              Connect Load Balancers, API Gateways, Microservices, Redis Caches, Message Queues, and Sharded Databases with instant topology linting.
-            </p>
-            <Link href="/learn/system-design/canvas" className="mt-auto pt-2 text-xs text-link font-medium hover:underline">
-              Launch canvas &rarr;
-            </Link>
-          </Node>
-          <Node tone="surface" className="flex flex-col gap-2.5 p-5">
-            <span className="font-mono text-3xs font-bold uppercase tracking-wider text-link">02 · Capacity Estimator</span>
-            <h3 className="font-sans text-base font-bold">Back-of-the-Envelope Math</h3>
-            <p className="text-xs text-foreground-muted">
-              Live calculations for Daily Active Users, Peak Read/Write QPS, Bandwidth egress, and 5-year distributed storage capacities.
-            </p>
-            <Link href="/learn/system-design/capacity" className="mt-auto pt-2 text-xs text-link font-medium hover:underline">
-              Run calculations &rarr;
-            </Link>
-          </Node>
-          <Node tone="surface" className="flex flex-col gap-2.5 p-5">
-            <span className="font-mono text-3xs font-bold uppercase tracking-wider text-link">03 · Decision Trees</span>
-            <h3 className="font-sans text-base font-bold">Consistency vs Availability</h3>
-            <p className="text-xs text-foreground-muted">
-              Interactive guides on SQL vs NoSQL, Eventual vs Strong Consistency, Write-Through vs Cache-Aside, and Leader-Follower replication.
-            </p>
-            <Link href="/learn/system-design" className="mt-auto pt-2 text-xs text-link font-medium hover:underline">
-              Read reference &rarr;
-            </Link>
-          </Node>
-        </div>
+        <LandingArchitectureDemo />
       </section>
 
       {/* Three Tiers Section */}

@@ -8,6 +8,7 @@ import { signOut, useSession } from '@/lib/auth-client';
 import { Avatar } from '@/components/account/Avatar';
 import { StreakBadge } from '@/components/account/StreakBadge';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useHydrated } from '@/lib/use-hydrated';
 
 /**
  * The signed-in account menu (A2).
@@ -131,11 +132,13 @@ export function AccountMenu({
 
 /** Header slot: the menu when signed in, the two calls to action when not. */
 export function AccountSlot() {
+  const hydrated = useHydrated();
   const { data: session, isPending } = useSession();
 
-  // Nothing until the session is known: flashing "Sign in" at someone who is
-  // signed in reads as having been logged out.
-  if (isPending) return null;
+  // Nothing until client mounts and session is known: prevents SSR hydration mismatch
+  if (!hydrated || isPending) {
+    return <div className="h-7 w-20" aria-hidden />;
+  }
 
   if (session) {
     return (

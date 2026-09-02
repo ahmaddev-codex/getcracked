@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Trophy } from 'lucide-react';
+
 import { AccountSlot } from '@/components/auth/AccountMenu';
 import { SearchTrigger } from '@/components/search/SearchTrigger';
 import { SiteNav } from '@/components/nav/SiteNav';
@@ -24,7 +24,14 @@ export function SiteHeader() {
           href="/"
           className="flex items-center gap-2 rounded-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
         >
-          <Image src="/getcracked_logo_light.svg" alt="GetCracked" width={96} height={96} />
+          <Image
+            src="/getcracked_logo_light.svg"
+            alt="GetCracked"
+            width={104}
+            height={32}
+            className="h-6 w-auto sm:h-7"
+            priority
+          />
         </Link>
 
         <SiteNav />
@@ -38,15 +45,6 @@ export function SiteHeader() {
           across rather than centred.
         */}
         <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-4 sm:ml-0">
-          <Link
-            href="/leaderboard"
-            title="Leaderboard"
-            aria-label="Leaderboard"
-            className="flex items-center gap-1.5 rounded-xs text-header-foreground/80 transition-colors hover:text-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
-          >
-            <Trophy size={16} aria-hidden />
-            <span className="hidden sm:inline text-xs font-medium">Leaderboard</span>
-          </Link>
           <SearchTrigger />
           <HeaderThemeToggle />
           <AccountSlot />

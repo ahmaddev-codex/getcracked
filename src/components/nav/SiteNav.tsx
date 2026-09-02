@@ -114,6 +114,11 @@ const GROUPS: NavGroup[] = [
 
 const FLAT: NavItem[] = [
   {
+    href: '/community',
+    label: 'Community',
+    detail: 'Learner solutions, discussion threads, and global rank leaderboards',
+  },
+  {
     href: '/companies',
     label: 'Companies',
     detail: 'What each loop assesses, with a source on every claim',

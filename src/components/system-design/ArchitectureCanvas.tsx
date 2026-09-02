@@ -38,6 +38,7 @@ import {
   type RemediationPrompt,
   type RemediationOption,
 } from '@/lib/system-design/simulation';
+import { getSmartConnector } from '@/lib/canvas/smartConnector';
 import type {
   CanvasArchitecture,
   CanvasEdge,
@@ -71,6 +72,7 @@ export function ArchitectureCanvas({
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [connectingSourceId, setConnectingSourceId] = useState<string | null>(null);
+  const [connectingPointer, setConnectingPointer] = useState<{ x: number; y: number } | null>(null);
   const connectingProtocol: ProtocolType = 'https';
 
   const [zoom, setZoom] = useState(1);
@@ -187,6 +189,7 @@ export function ArchitectureCanvas({
     }
 
     setConnectingSourceId(null);
+    setConnectingPointer(null);
   };
 
   // Node Drag Initiator
@@ -236,6 +239,7 @@ export function ArchitectureCanvas({
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
     setConnectingSourceId(null);
+    setConnectingPointer(null);
 
     try {
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -266,6 +270,11 @@ export function ArchitectureCanvas({
             : n,
         ),
       );
+    } else if (connectingSourceId && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const mouseX = (e.clientX - rect.left - pan.x) / zoom;
+      const mouseY = (e.clientY - rect.top - pan.y) / zoom;
+      setConnectingPointer({ x: mouseX, y: mouseY });
     }
   };
 
@@ -613,16 +622,29 @@ export function ArchitectureCanvas({
                 <circle cx={2} cy={2} r={1} fill="var(--color-border-strong)" opacity={0.3} />
               </pattern>
 
+              {/* Surgical Arrowhead Markers */}
               <marker
                 id="arrow"
                 viewBox="0 0 10 10"
-                refX="10"
+                refX="7"
                 refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto"
               >
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-connector)" />
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="var(--color-connector)" />
+              </marker>
+
+              <marker
+                id="arrow-selected"
+                viewBox="0 0 10 10"
+                refX="7"
+                refY="5"
+                markerWidth="8"
+                markerHeight="8"
+                orient="auto"
+              >
+                <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="var(--color-link)" />
               </marker>
             </defs>
 
@@ -636,18 +658,14 @@ export function ArchitectureCanvas({
                 const tgt = nodes.find((n) => n.id === edge.targetId);
                 if (!src || !tgt) return null;
 
-                const sx = src.x + 77;
-                const sy = src.y + 31;
-                const tx = tgt.x + 77;
-                const ty = tgt.y + 31;
+                const nodeHeight = canvasMode === 'simulate' ? 68 : 62;
+                const connector = getSmartConnector(
+                  src,
+                  tgt,
+                  158,
+                  nodeHeight
+                );
 
-                const dx = tx - sx;
-                const cx1 = sx + dx * 0.5;
-                const cy1 = sy;
-                const cx2 = sx + dx * 0.5;
-                const cy2 = ty;
-
-                const pathD = `M ${sx} ${sy} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${tx} ${ty}`;
                 const isSelected = selectedEdgeId === edge.id;
 
                 return (
@@ -660,32 +678,97 @@ export function ArchitectureCanvas({
                       setSelectedNodeId(null);
                     }}
                   >
-                    {/* Hover hitbox */}
-                    <path d={pathD} stroke="transparent" strokeWidth="16" fill="none" />
-                    {/* Visual line */}
+                    {/* Source Terminal Pin */}
+                    <circle
+                      cx={connector.startPoint.x}
+                      cy={connector.startPoint.y}
+                      r="2.5"
+                      fill={isSelected ? 'var(--color-link)' : 'var(--color-connector)'}
+                    />
+
+                    {/* Wide Invisible Hover Hitbox */}
+                    <path d={connector.pathD} stroke="transparent" strokeWidth="20" fill="none" />
+
+                    {/* Visual Line */}
                     <path
-                      d={pathD}
-                      stroke="var(--color-connector)"
-                      strokeWidth={isSelected ? '3.5' : '2'}
+                      d={connector.pathD}
+                      stroke={isSelected ? 'var(--color-link)' : 'var(--color-connector)'}
+                      strokeWidth={isSelected ? '3' : '2'}
                       strokeDasharray={edge.protocol === 'sql' ? '4 3' : undefined}
                       fill="none"
-                      markerEnd="url(#arrow)"
+                      markerEnd={isSelected ? 'url(#arrow-selected)' : 'url(#arrow)'}
                       className={edge.animated ? 'animate-pulse' : ''}
                     />
-                    {edge.label && (
-                      <text
-                        x={(sx + tx) / 2}
-                        y={(sy + ty) / 2 - 6}
-                        textAnchor="middle"
-                        fontSize={9}
-                        className="font-mono fill-foreground-muted font-medium select-none"
-                      >
-                        {edge.label}
-                      </text>
-                    )}
+
+                    {/* Centered Floating Protocol Pill Badge */}
+                    {(() => {
+                      const labelText = edge.label || (edge.protocol ? edge.protocol.toUpperCase() : 'FLOW');
+                      const badgeWidth = Math.max(34, labelText.length * 6.5 + 14);
+                      const badgeHeight = 18;
+                      return (
+                        <g
+                          transform={`translate(${connector.midPoint.x}, ${connector.midPoint.y})`}
+                          className="pointer-events-none select-none"
+                        >
+                          <rect
+                            x={-badgeWidth / 2}
+                            y={-badgeHeight / 2}
+                            width={badgeWidth}
+                            height={badgeHeight}
+                            rx={badgeHeight / 2}
+                            fill="var(--color-surface)"
+                            stroke="none"
+                            className="shadow-xs"
+                          />
+                          <text
+                            x="0"
+                            y="3.5"
+                            textAnchor="middle"
+                            fontSize="8"
+                            fontWeight="700"
+                            fontFamily="ui-monospace, monospace"
+                            fill={isSelected ? 'var(--color-link)' : 'var(--color-foreground-muted)'}
+                          >
+                            {labelText}
+                          </text>
+                        </g>
+                      );
+                    })()}
                   </g>
                 );
               })}
+
+              {/* Live Connecting Arrow Preview when User is Connecting Nodes */}
+              {connectingSourceId && connectingPointer && (() => {
+                const src = nodes.find((n) => n.id === connectingSourceId);
+                if (!src) return null;
+                const nodeHeight = canvasMode === 'simulate' ? 68 : 62;
+                const connector = getSmartConnector(
+                  src,
+                  { x: connectingPointer.x - 10, y: connectingPointer.y - 10, width: 20, height: 20 },
+                  158,
+                  nodeHeight
+                );
+                return (
+                  <g className="pointer-events-none">
+                    <circle
+                      cx={connector.startPoint.x}
+                      cy={connector.startPoint.y}
+                      r="3"
+                      fill="var(--color-link)"
+                    />
+                    <path
+                      d={connector.pathD}
+                      stroke="var(--color-link)"
+                      strokeWidth="2.5"
+                      strokeDasharray="4 3"
+                      fill="none"
+                      markerEnd="url(#arrow-selected)"
+                      className="animate-pulse"
+                    />
+                  </g>
+                );
+              })()}
 
               {/* Node ForeignObjects */}
               {nodes.map((node) => {
@@ -729,7 +812,7 @@ export function ArchitectureCanvas({
                     >
                       <div className="flex items-center gap-1.5 justify-between min-w-0">
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="p-0.5 rounded-xs bg-surface-muted text-foreground-muted shrink-0">
+                          <span className="p-0.5 rounded-xs bg-surface-muted text-link shrink-0">
                             {renderPaletteIcon(node.icon, 'w-3 h-3')}
                           </span>
                           <span className="text-xs font-semibold truncate leading-tight text-foreground">

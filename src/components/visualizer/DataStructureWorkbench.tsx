@@ -9,6 +9,7 @@ import {
   SkipForward,
   Code2,
   ArrowRight,
+  ArrowLeftRight,
   Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -95,7 +96,14 @@ export function DataStructureWorkbench() {
     }
     if (selectedType === 'linked-list') {
       const isDoubly = selectedSubType === 'doubly';
-      return simulateLinkedList(llState, selectedOp, { value: inputValue }, isDoubly);
+      const isCircular = selectedSubType === 'circular';
+      return simulateLinkedList(
+        llState,
+        selectedOp,
+        { value: inputValue, index: inputIndex },
+        isDoubly,
+        isCircular,
+      );
     }
     if (selectedType === 'stack') {
       return simulateStack(stackState, selectedOp, { value: inputValue });
@@ -157,14 +165,9 @@ export function DataStructureWorkbench() {
   }, [isPlaying, steps.length, speed]);
 
   const currentStep = steps[safeStepIdx] || steps[0];
-  const motionClass =
-    speed >= 3000
-      ? 'duration-1000'
-      : speed >= 1800
-        ? 'duration-700'
-        : speed >= 1000
-          ? 'duration-500'
-          : 'duration-300';
+  const currentArray = (currentStep?.state?.array as number[] | undefined) ?? arrayState;
+  const currentHeap = (currentStep?.state?.heap as number[] | undefined) ?? heapState;
+
   const activeCodeSnippet =
     getCodeSnippet(selectedType, selectedOp, codeLang) ||
     currentMeta.codeSnippets[selectedOp] ||
@@ -366,84 +369,44 @@ export function DataStructureWorkbench() {
           tone="surface"
           className="flex flex-col gap-4 p-5 min-h-80 justify-between lg:col-span-6 xl:col-span-6"
         >
-          {/* Canvas Header & Big-O Badge */}
-          <div className="flex items-center justify-between border-b border-border-subtle pb-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-foreground-muted">
-                Structure Canvas
-              </span>
-              {currentStep?.complexity && (
-                <span className="rounded bg-accent px-2 py-0.5 text-3xs font-bold text-accent-foreground">
-                  Time: {currentStep.complexity}
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 text-xs text-foreground-muted font-mono">
-              Step {currentStep ? currentStep.stepIndex : 0} of {steps.length}
-            </div>
-          </div>
-
           {/* Visual Canvas by Structure */}
           <div className="flex flex-1 items-center justify-center py-6 overflow-x-auto min-h-64">
-            {/* ARRAY WITH TRUE PHYSICAL ELEVATION AND TRANSLATION */}
+            {/* ARRAY */}
             {selectedType === 'array' && (
               <div className="flex flex-col items-center gap-6">
                 <div className="flex items-end gap-2.5 flex-wrap justify-center min-h-24">
-                  {((currentStep?.state?.array as number[] | undefined) ?? arrayState).map(
-                    (val: number, idx: number) => {
-                      const isHighlighted = currentStep?.highlightIndices?.includes(idx);
-                      let motionEffectClass = '';
+                  {currentArray.map((val: number, idx: number) => {
+                    const isHighlighted = currentStep?.highlightIndices?.includes(idx);
+                    const isSwapping =
+                      currentStep?.motion?.type === 'swap' &&
+                      (currentStep.motion.fromIndex === idx || currentStep.motion.toIndex === idx);
 
-                      if (currentStep?.motion?.type === 'swap') {
-                        const from = currentStep.motion.fromIndex ?? -1;
-                        const to = currentStep.motion.toIndex ?? -1;
-                        if (idx === from && to !== -1) {
-                          const delta = to - from;
-                          const step = Math.min(6, Math.max(1, Math.abs(delta)));
-                          motionEffectClass = delta > 0 ? `gc-swap-arc-right-${step}` : `gc-swap-arc-left-${step}`;
-                        } else if (idx === to && from !== -1) {
-                          const delta = from - to;
-                          const step = Math.min(6, Math.max(1, Math.abs(delta)));
-                          motionEffectClass = delta > 0 ? `gc-swap-arc-right-${step}` : `gc-swap-arc-left-${step}`;
-                        }
-                      } else if (currentStep?.motion?.type === 'shift') {
-                        const from = currentStep.motion.fromIndex ?? -1;
-                        const to = currentStep.motion.toIndex ?? -1;
-                        if (idx === from && to !== -1) {
-                          motionEffectClass = to > from ? 'gc-swap-arc-right-1' : 'gc-swap-arc-left-1';
-                        }
-                      } else if (currentStep?.motion?.type === 'lift' && isHighlighted) {
-                        motionEffectClass = '-translate-y-8 shadow-2xl scale-110';
-                      }
-
-                      return (
-                        <div key={idx} className="flex flex-col items-center gap-1.5">
-                          <span className="text-3xs font-mono text-foreground-muted">[{idx}]</span>
-                          <div
-                            className={`flex h-14 w-14 items-center justify-center rounded-md border-2 font-mono text-sm font-bold transition-all ${motionClass} ease-out ${
-                              motionEffectClass
-                                ? `${motionEffectClass} border-link bg-accent-strong text-accent-foreground shadow-2xl`
-                                : isHighlighted
-                                  ? 'border-link bg-accent-strong text-accent-foreground scale-105 shadow-md'
-                                  : 'border-border-strong bg-surface text-foreground'
-                            }`}
-                          >
-                            {val}
-                          </div>
+                    return (
+                      <div key={idx} className="flex flex-col items-center gap-2.5">
+                        <span className="font-mono text-4xs text-foreground-muted/70">{idx}</span>
+                        <div
+                          className={`flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-lg border-2 font-mono text-sm font-bold transition-all duration-300 ease-out ${
+                            isSwapping
+                              ? 'border-link bg-accent-strong text-accent-foreground shadow-xl -translate-y-2 scale-105'
+                              : isHighlighted
+                                ? 'border-link bg-accent-strong text-accent-foreground shadow-md -translate-y-1.5 scale-105'
+                                : 'border-border-strong bg-surface text-foreground'
+                          }`}
+                        >
+                          {val}
                         </div>
-                      );
-                    },
-                  )}
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Pointers Legend */}
                 {currentStep?.pointers && Object.keys(currentStep.pointers).length > 0 && (
-                  <div className="flex items-center gap-4 text-xs">
+                  <div className="flex items-center gap-3 text-xs">
                     {Object.entries(currentStep.pointers).map(([name, pos]) => (
                       <span
                         key={name}
-                        className="flex items-center gap-1.5 rounded bg-surface-muted px-2 py-0.5 font-mono text-3xs"
+                        className="flex items-center gap-1.5 rounded-full bg-surface-muted px-2.5 py-0.5 font-mono text-3xs border border-border-subtle"
                       >
                         <span className="font-bold text-link">{name}</span> &rarr; index {pos}
                       </span>
@@ -453,49 +416,80 @@ export function DataStructureWorkbench() {
               </div>
             )}
 
-            {/* LINKED LIST WITH DIRECTED ARROWS AND PREV LINKS */}
-            {selectedType === 'linked-list' && (
-              <div className="flex items-center gap-2 flex-wrap justify-center">
-                {(
-                  (currentStep?.state?.nodes as ListNodeState[] | undefined) ?? []
-                ).map((node: ListNodeState, i: number, allNodes: ListNodeState[]) => {
-                  const isHighlighted = currentStep?.highlightNodeIds?.includes(node.id);
-                  const isDoubly = currentStep?.state?.isDoubly as boolean;
+            {/* LINKED LIST (SINGLY, DOUBLY, CIRCULAR) */}
+            {selectedType === 'linked-list' && (() => {
+              const nodes = (currentStep?.state?.nodes as ListNodeState[] | undefined) ?? [];
+              const isDoubly = Boolean(currentStep?.state?.isDoubly ?? (selectedSubType === 'doubly'));
+              const isCircular = Boolean(currentStep?.state?.isCircular ?? (selectedSubType === 'circular'));
 
-                  return (
-                    <div key={node.id} className="flex items-center gap-2">
-                      <div
-                        className={`flex flex-col items-center rounded-md border-2 px-3.5 py-2 font-mono transition-all ${motionClass} ${
-                          isHighlighted
-                            ? 'border-link bg-accent-strong text-accent-foreground scale-105 shadow-md -translate-y-1'
-                            : 'border-border-strong bg-surface text-foreground'
-                        }`}
-                      >
-                        <span className="text-sm font-bold">{node.value}</span>
-                        <div className="flex items-center gap-1 text-3xs opacity-65">
-                          {isDoubly && <span>&larr;prev</span>}
-                          <span>next&rarr;</span>
-                        </div>
+              return (
+                <div className="flex flex-col items-center gap-6 w-full py-4">
+                  <div className="relative flex items-center gap-2 flex-wrap justify-center max-w-full px-4">
+                    {/* Doubly Linked List Head NULL */}
+                    {isDoubly && !isCircular && (
+                      <div className="flex items-center gap-1 text-xs font-mono text-foreground-muted">
+                        <span>null</span>
+                        <ArrowRight size={16} className="rotate-180 text-foreground-muted" />
                       </div>
-                      {i < allNodes.length - 1 ? (
-                        <div className="flex flex-col items-center">
-                          <ArrowRight size={18} className="text-foreground-muted" />
-                          {isDoubly && (
-                            <span className="text-3xs font-mono text-foreground-muted/70">
-                              &larr;
+                    )}
+
+                    {nodes.map((node: ListNodeState, i: number) => {
+                      const isHighlighted = currentStep?.highlightNodeIds?.includes(node.id);
+                      const isHead = i === 0;
+                      const isTail = i === nodes.length - 1;
+
+                      return (
+                        <div key={node.id} className="flex items-center gap-2">
+                          <div className="flex flex-col items-center gap-2.5">
+                            <span className="text-4xs font-mono text-foreground-muted/70 h-3">
+                              {isHead ? 'head' : isTail ? 'tail' : i}
                             </span>
+                            <div
+                              className={`flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-lg border-2 font-mono text-sm font-bold transition-all duration-300 ease-out ${
+                                isHighlighted
+                                  ? 'border-link bg-accent-strong text-accent-foreground shadow-lg scale-105 -translate-y-1'
+                                  : 'border-border-strong bg-surface text-foreground shadow-xs'
+                              }`}
+                            >
+                              {node.value}
+                            </div>
+                          </div>
+
+                          {/* Inter-Node Connectors */}
+                          {i < nodes.length - 1 && (
+                            <div className="flex items-center justify-center pt-4">
+                              {isDoubly ? (
+                                <ArrowLeftRight size={18} className="text-link shrink-0" />
+                              ) : (
+                                <ArrowRight size={18} className="text-foreground-muted shrink-0" />
+                              )}
+                            </div>
                           )}
                         </div>
-                      ) : (
-                        <span className="font-mono text-xs text-foreground-muted pl-1">null</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                      );
+                    })}
 
-            {/* STACK WITH 3D GLASS CHAMBER AND VERTICAL DROP */}
+                    {/* Singly & Doubly Tail NULL */}
+                    {!isCircular && (
+                      <div className="flex items-center gap-1 text-xs font-mono text-foreground-muted pt-4 pl-1">
+                        <ArrowRight size={16} className="text-foreground-muted" />
+                        <span>null</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Circular Linked List Return Track */}
+                  {isCircular && nodes.length > 0 && (
+                    <div className="flex items-center gap-2 text-xs font-mono text-link bg-link/10 border border-link/25 px-3 py-1 rounded-full">
+                      <span>↺</span>
+                      <span>tail loops back to head [node 0]</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* STACK */}
             {selectedType === 'stack' && (
               <div className="flex flex-col items-center gap-2">
                 <span className="text-3xs font-mono uppercase tracking-wider text-foreground-muted">
@@ -511,7 +505,7 @@ export function DataStructureWorkbench() {
                       return (
                         <div
                           key={idx}
-                          className={`flex w-full items-center justify-between px-3 py-2 rounded border-2 font-mono text-xs font-bold transition-all ${motionClass} ease-out ${
+                          className={`flex w-full items-center justify-between px-3 py-2 rounded border-2 font-mono text-xs font-bold transition-all duration-300 ease-out ${
                             isLifted
                               ? '-translate-y-8 opacity-75 border-link bg-accent-strong text-accent-foreground'
                               : isHighlighted
@@ -531,37 +525,44 @@ export function DataStructureWorkbench() {
               </div>
             )}
 
-            {/* QUEUE PIPELINE WITH CONVEYOR SLIDE */}
-            {selectedType === 'queue' && (
-              <div className="flex flex-col items-center gap-2">
-                <div className="flex items-center gap-2 border-t-2 border-b-2 border-border-strong px-5 py-4 bg-surface-muted/25 rounded">
-                  <span className="text-3xs font-bold text-link mr-2">&larr; Front (Dequeue)</span>
-                  {((currentStep?.state?.items as number[] | undefined) ?? queueState).map(
-                    (item: number, idx: number) => {
-                      const isHighlighted = currentStep?.highlightIndices?.includes(idx);
-                      return (
-                        <div
-                          key={idx}
-                          className={`flex h-12 w-12 items-center justify-center rounded border-2 font-mono text-xs font-bold transition-all ${motionClass} ${
-                            isHighlighted
-                              ? 'border-link bg-accent-strong text-accent-foreground scale-105 shadow-md'
-                              : 'border-border-strong bg-surface text-foreground'
-                          }`}
-                        >
-                          {item}
-                        </div>
-                      );
-                    },
-                  )}
-                  <span className="text-3xs font-bold text-warning ml-2">&larr; Rear (Enqueue)</span>
+            {/* QUEUE */}
+            {selectedType === 'queue' && (() => {
+              const isDeque = selectedSubType === 'deque';
+              return (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-2 border-t-2 border-b-2 border-border-strong px-5 py-4 bg-surface-muted/25 rounded">
+                    <span className="text-3xs font-bold text-link mr-2">
+                      {isDeque ? '&harr; Front' : '&larr; Front (Dequeue)'}
+                    </span>
+                    {((currentStep?.state?.items as number[] | undefined) ?? queueState).map(
+                      (item: number, idx: number) => {
+                        const isHighlighted = currentStep?.highlightIndices?.includes(idx);
+                        return (
+                          <div
+                            key={idx}
+                            className={`flex h-12 w-12 items-center justify-center rounded border-2 font-mono text-xs font-bold transition-all duration-300 ${
+                              isHighlighted
+                                ? 'border-link bg-accent-strong text-accent-foreground scale-105 shadow-md'
+                                : 'border-border-strong bg-surface text-foreground'
+                            }`}
+                          >
+                            {item}
+                          </div>
+                        );
+                      },
+                    )}
+                    <span className="text-3xs font-bold text-warning ml-2">
+                      {isDeque ? '&harr; Rear' : '&larr; Rear (Enqueue)'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
-            {/* REAL HIERARCHICAL SVG TREE (BST) */}
+            {/* BINARY SEARCH TREE */}
             {selectedType === 'binary-search-tree' && (
-              <div className="w-full max-w-lg h-64 flex items-center justify-center">
-                <svg viewBox="0 0 100 70" className="w-full h-full">
+              <div className="w-full max-w-lg h-72 flex items-center justify-center">
+                <svg viewBox="0 0 400 240" className="w-full h-full">
                   {/* Tree Branches */}
                   {Object.values(
                     (currentStep?.state?.nodes as Record<string, TreeNode> | undefined) ?? {},
@@ -579,7 +580,7 @@ export function DataStructureWorkbench() {
                             x2={leftChild.x}
                             y2={leftChild.y}
                             stroke="currentColor"
-                            strokeWidth="1.5"
+                            strokeWidth="1.2"
                             className="text-border-strong"
                           />
                         )}
@@ -590,7 +591,7 @@ export function DataStructureWorkbench() {
                             x2={rightChild.x}
                             y2={rightChild.y}
                             stroke="currentColor"
-                            strokeWidth="1.5"
+                            strokeWidth="1.2"
                             className="text-border-strong"
                           />
                         )}
@@ -607,20 +608,20 @@ export function DataStructureWorkbench() {
                       <g
                         key={node.id}
                         transform={`translate(${node.x}, ${node.y})`}
-                        className={`transition-transform ${motionClass}`}
+                        className="transition-transform duration-300"
                       >
                         <circle
-                          r="6.5"
-                          className={`transition-colors ${motionClass} ${
+                          r="14"
+                          className={`transition-colors duration-300 ${
                             isHighlighted
                               ? 'fill-accent-strong stroke-link stroke-2'
-                              : 'fill-surface stroke-border-strong stroke-1.5'
+                              : 'fill-surface stroke-border-strong stroke-1'
                           }`}
                         />
                         <text
                           textAnchor="middle"
-                          dy="2.2"
-                          className={`font-mono text-3xs font-bold ${
+                          dy="4"
+                          className={`font-mono text-xs font-bold ${
                             isHighlighted ? 'fill-accent-foreground' : 'fill-foreground'
                           }`}
                         >
@@ -633,57 +634,105 @@ export function DataStructureWorkbench() {
               </div>
             )}
 
-            {/* MIN/MAX HEAP (TREE + 0-INDEXED ARRAY DUAL VIEW) */}
-            {selectedType === 'min-heap' && (
-              <div className="flex flex-col items-center gap-5 w-full">
-                <span className="text-3xs font-mono text-foreground-muted uppercase tracking-wider">
-                  Contiguous Array Representation
-                </span>
-                <div className="flex items-center gap-2 flex-wrap justify-center">
-                  {((currentStep?.state?.heap as number[] | undefined) ?? heapState).map(
-                    (val: number, idx: number) => {
+            {/* BINARY HEAP */}
+            {selectedType === 'min-heap' && (() => {
+              const getHeapCoords = (i: number) => {
+                if (i === 0) return { x: 200, y: 32 };
+                if (i === 1) return { x: 110, y: 88 };
+                if (i === 2) return { x: 290, y: 88 };
+                if (i === 3) return { x: 65, y: 144 };
+                if (i === 4) return { x: 155, y: 144 };
+                if (i === 5) return { x: 245, y: 144 };
+                if (i === 6) return { x: 335, y: 144 };
+                const col = i - 7;
+                return { x: 35 + col * 48, y: 196 };
+              };
+
+              return (
+                <div className="flex flex-col items-center gap-6 w-full max-w-md">
+                  {/* Complete Binary Tree SVG */}
+                  <div className="w-full h-52 flex items-center justify-center">
+                    <svg viewBox="0 0 400 220" className="w-full h-full">
+                      {/* Branch lines */}
+                      {currentHeap.map((_, i) => {
+                        if (i === 0) return null;
+                        const parentIdx = Math.floor((i - 1) / 2);
+                        const p = getHeapCoords(parentIdx);
+                        const c = getHeapCoords(i);
+                        const isEdgeActive =
+                          currentStep?.highlightIndices?.includes(i) &&
+                          currentStep?.highlightIndices?.includes(parentIdx);
+                        return (
+                          <line
+                            key={`heap-edge-${i}`}
+                            x1={p.x}
+                            y1={p.y}
+                            x2={c.x}
+                            y2={c.y}
+                            stroke="currentColor"
+                            strokeWidth={isEdgeActive ? '2' : '1.2'}
+                            className={isEdgeActive ? 'text-link' : 'text-border-strong'}
+                          />
+                        );
+                      })}
+
+                      {/* Nodes */}
+                      {currentHeap.map((val, i) => {
+                        const c = getHeapCoords(i);
+                        const isHighlighted = currentStep?.highlightIndices?.includes(i);
+                        const isSwapping =
+                          currentStep?.motion?.type === 'swap' &&
+                          (currentStep.motion.fromIndex === i || currentStep.motion.toIndex === i);
+                        return (
+                          <g key={`heap-node-${i}`} transform={`translate(${c.x}, ${c.y})`}>
+                            <circle
+                              r="13"
+                              className={`transition-all duration-300 ${
+                                isSwapping || isHighlighted
+                                  ? 'fill-accent-strong stroke-link stroke-2'
+                                  : 'fill-surface stroke-border-strong stroke-1'
+                              }`}
+                            />
+                            <text
+                              textAnchor="middle"
+                              dy="4"
+                              className={`font-mono text-xs font-bold ${
+                                isSwapping || isHighlighted ? 'fill-accent-foreground' : 'fill-foreground'
+                              }`}
+                            >
+                              {val}
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  </div>
+
+                  {/* Array representation */}
+                  <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                    {currentHeap.map((val: number, idx: number) => {
                       const isHighlighted = currentStep?.highlightIndices?.includes(idx);
-                      let heapMotionClass = '';
-
-                      if (currentStep?.motion?.type === 'swap') {
-                        const from = currentStep.motion.fromIndex ?? -1;
-                        const to = currentStep.motion.toIndex ?? -1;
-                        if (idx === from && to !== -1) {
-                          const delta = to - from;
-                          const step = Math.min(5, Math.max(1, Math.abs(delta)));
-                          heapMotionClass = delta > 0 ? `gc-heap-swap-right-${step}` : `gc-heap-swap-left-${step}`;
-                        } else if (idx === to && from !== -1) {
-                          const delta = from - to;
-                          const step = Math.min(5, Math.max(1, Math.abs(delta)));
-                          heapMotionClass = delta > 0 ? `gc-heap-swap-right-${step}` : `gc-heap-swap-left-${step}`;
-                        }
-                      } else if (currentStep?.motion?.type === 'lift' && isHighlighted) {
-                        heapMotionClass = '-translate-y-6 shadow-xl scale-110';
-                      }
-
                       return (
-                        <div key={idx} className="flex flex-col items-center gap-1">
-                          <span className="text-3xs font-mono text-foreground-muted">[{idx}]</span>
+                        <div key={idx} className="flex flex-col items-center gap-2">
+                          <span className="text-4xs font-mono text-foreground-muted/70">{idx}</span>
                           <div
-                            className={`flex h-12 w-12 items-center justify-center rounded border-2 font-mono text-xs font-bold transition-all ${motionClass} ${
-                              heapMotionClass
-                                ? `${heapMotionClass} border-link bg-accent-strong text-accent-foreground shadow-2xl`
-                                : isHighlighted
-                                  ? 'border-link bg-accent-strong text-accent-foreground scale-105 shadow-md -translate-y-1'
-                                  : 'border-border-strong bg-surface text-foreground'
+                            className={`flex h-9 w-9 items-center justify-center rounded border-2 font-mono text-xs font-bold transition-all duration-300 ${
+                              isHighlighted
+                                ? 'border-link bg-accent-strong text-accent-foreground scale-105 shadow-sm'
+                                : 'border-border-strong bg-surface text-foreground'
                             }`}
                           >
                             {val}
                           </div>
                         </div>
                       );
-                    },
-                  )}
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
-            {/* HASH TABLE: FUNCTION MACHINE + BUCKET ARRAY + OVERFLOW CHAINS */}
+            {/* HASH TABLE */}
             {selectedType === 'hash-map' && (
               <div className="flex flex-col items-center gap-4 w-full max-w-xl">
                 {currentStep?.state?.lastHash !== undefined && (
@@ -700,16 +749,17 @@ export function DataStructureWorkbench() {
 
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 w-full">
                   {(
-                    (currentStep?.state?.buckets as Array<HashBucketEntry[]> | undefined) ?? mapState
+                    (currentStep?.state?.buckets as Array<HashBucketEntry[]> | undefined) ??
+                    mapState
                   ).map((bucket: HashBucketEntry[], idx: number) => {
                     const isHighlighted = currentStep?.highlightIndices?.includes(idx);
                     return (
                       <div
                         key={idx}
-                        className={`flex flex-col rounded-md border-2 p-2.5 text-xs transition-all duration-300 ${
+                        className={`flex flex-col rounded border p-2 transition-all duration-300 ${
                           isHighlighted
-                            ? 'border-link bg-accent-strong/20 shadow-md scale-102'
-                            : 'border-border-strong bg-surface'
+                            ? 'border-link bg-accent-strong/10 ring-2 ring-link/40 shadow-sm'
+                            : 'border-border bg-surface'
                         }`}
                       >
                         <div className="flex items-center justify-between border-b border-border-subtle pb-1">
@@ -743,22 +793,37 @@ export function DataStructureWorkbench() {
               </div>
             )}
 
-            {/* REAL 2D COORDINATE GRAPH NETWORK */}
+            {/* GRAPH NETWORK */}
             {selectedType === 'graph' && (
-              <div className="w-full max-w-md h-64 flex items-center justify-center">
-                <svg viewBox="0 0 100 100" className="w-full h-full">
+              <div className="w-full max-w-md h-72 flex items-center justify-center">
+                <svg viewBox="0 0 400 260" className="w-full h-full overflow-visible">
+                  <defs>
+                    <marker
+                      id="graph-arrowhead"
+                      markerWidth="8"
+                      markerHeight="8"
+                      refX="22"
+                      refY="4"
+                      orient="auto"
+                    >
+                      <polygon points="0 1, 7 4, 0 7" fill="currentColor" className="text-link" />
+                    </marker>
+                  </defs>
+
                   {/* Graph Edges */}
                   {(
                     (currentStep?.state?.edges as GraphEdge[] | undefined) ?? []
                   ).map((edge: GraphEdge, idx: number) => {
                     const verts = currentStep?.state?.vertices as GraphVertex[];
-                    const fromV = verts.find((v) => v.id === edge.from);
-                    const toV = verts.find((v) => v.id === edge.to);
+                    const fromV = verts?.find((v) => v.id === edge.from);
+                    const toV = verts?.find((v) => v.id === edge.to);
                     if (!fromV || !toV) return null;
 
                     const isActive =
                       currentStep?.highlightNodeIds?.includes(edge.from) &&
                       currentStep?.highlightNodeIds?.includes(edge.to);
+
+                    const isDirected = selectedSubType === 'directed';
 
                     return (
                       <g key={`edge-${idx}`}>
@@ -768,20 +833,30 @@ export function DataStructureWorkbench() {
                           x2={toV.x}
                           y2={toV.y}
                           stroke="currentColor"
-                          strokeWidth={isActive ? '2.5' : '1.5'}
-                          className={`transition-colors duration-400 ${
+                          strokeWidth={isActive ? '2' : '1.2'}
+                          markerEnd={isDirected ? 'url(#graph-arrowhead)' : undefined}
+                          className={`transition-colors duration-300 ${
                             isActive ? 'text-link' : 'text-border-strong'
                           }`}
                         />
-                        {edge.weight && (
-                          <text
-                            x={(fromV.x + toV.x) / 2}
-                            y={(fromV.y + toV.y) / 2 - 2}
-                            textAnchor="middle"
-                            className="font-mono text-4xs fill-foreground-muted"
-                          >
-                            {edge.weight}
-                          </text>
+                        {edge.weight !== undefined && (
+                          <g transform={`translate(${(fromV.x + toV.x) / 2}, ${(fromV.y + toV.y) / 2})`}>
+                            <rect
+                              x="-11"
+                              y="-8"
+                              width="22"
+                              height="16"
+                              rx="4"
+                              className="fill-surface stroke-border-strong stroke-1"
+                            />
+                            <text
+                              textAnchor="middle"
+                              dy="4"
+                              className="font-mono text-3xs font-bold fill-foreground"
+                            >
+                              {edge.weight}
+                            </text>
+                          </g>
                         )}
                       </g>
                     );
@@ -796,19 +871,19 @@ export function DataStructureWorkbench() {
                       <g
                         key={v.id}
                         transform={`translate(${v.x}, ${v.y})`}
-                        className={`transition-transform ${motionClass}`}
+                        className="transition-transform duration-300"
                       >
                         <circle
-                          r="7"
-                          className={`transition-colors ${motionClass} ${
+                          r="16"
+                          className={`transition-colors duration-300 ${
                             isHighlighted
-                              ? 'fill-accent-strong stroke-link stroke-2'
-                              : 'fill-surface stroke-border-strong stroke-1.5'
+                              ? 'fill-accent-strong stroke-link stroke-2 shadow-md'
+                              : 'fill-surface stroke-border-strong stroke-1'
                           }`}
                         />
                         <text
                           textAnchor="middle"
-                          dy="2.5"
+                          dy="4.5"
                           className={`font-mono text-xs font-bold ${
                             isHighlighted ? 'fill-accent-foreground' : 'fill-foreground'
                           }`}
