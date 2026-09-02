@@ -44,18 +44,14 @@ export function SearchTrigger() {
         onClick={openSearch}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="flex items-center gap-1.5 rounded-xs text-header-foreground/80 transition-colors hover:text-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
+        aria-label="Search"
+        className="flex items-center gap-2 rounded-full border border-header-foreground/20 bg-header-foreground/5 px-2.5 py-1 text-xs text-header-foreground/75 transition-all hover:border-header-foreground/35 hover:bg-header-foreground/10 hover:text-header-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
       >
-        <Search size={17} aria-hidden />
-        <span className="sr-only">Search</span>
-        {/*
-          The shortcut is shown rather than only bound, which is most of what
-          makes anyone learn it — and hidden on small screens, where there is no
-          keyboard to press it with and the header has no room to say so.
-        */}
+        <Search size={13} className="shrink-0 text-header-foreground/60" aria-hidden />
+        <span className="hidden sm:inline font-sans text-xs">Search...</span>
         <kbd
           aria-hidden
-          className="hidden text-sm text-header-foreground/75 lg:inline"
+          className="flex items-center justify-center rounded-sm bg-header-foreground/10 px-1.5 py-0.5 font-mono text-3xs font-semibold text-header-foreground/80"
         >
           ⌘K
         </kbd>

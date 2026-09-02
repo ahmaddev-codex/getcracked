@@ -5,9 +5,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { SignedOutNotice } from "./SignedOutNotice";
 import { SiteHeader } from "@/components/SiteHeader";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
-import { AssistantProvider, AssistantPanel } from "@/components/assistant";
+import { AssistantProvider, AssistantPanel, AssistantFloatingButton } from "@/components/assistant";
 
 const nodeFont = Balsamiq_Sans({
   subsets: ["latin"],
@@ -157,9 +156,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SiteHeader />
           {children}
           <AssistantPanel />
-          <div className="fixed bottom-3 right-3 z-40">
-            <ThemeToggle />
-          </div>
+          <AssistantFloatingButton />
         </AssistantProvider>
 
         {/* Vercel's own analytics and Core Web Vitals reporting. */}

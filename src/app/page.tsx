@@ -13,6 +13,8 @@ import {
   Flame,
   Shield,
   Brain,
+  Sparkles,
+  Network,
 } from 'lucide-react';
 import { Node } from '@/components/ui/Node';
 import { Page } from '@/components/ui/Page';
@@ -21,25 +23,8 @@ import { conceptCount } from '@/content/concepts';
 import { getLabs, getTopics, getTrack } from '@/content/registry';
 import { getCompanies } from '@/content/companies';
 import { CompanyLogo } from '@/components/company/CompanyLogo';
+import { LanguageIcon } from '@/components/ui/LanguageIcon';
 
-/**
- * The landing page.
- *
- * **Every number here is derived, none is written down.** A marketing page is
- * the single most tempting place to round up, and it is also the page nobody
- * revisits when the catalogue changes — so a hardcoded "100+ problems" is a
- * claim that starts false and stays false. Counting the content at build time
- * means the page is either accurate or it does not build.
- *
- * **Structured around the three tiers (AD-7)** rather than around features,
- * because that progression *is* the product: read the topic, practise it on
- * single functions, then build the thing across several files. A feature grid
- * would list the same surfaces without saying why there are three of them.
- *
- * Public and static, which matters more here than anywhere: this is the page
- * search engines land on, and ADR 0001 §1 makes organic search the primary
- * channel.
- */
 export const metadata = {
   title: 'GetCracked — Build real systems. Step by step. In your browser.',
   description:
@@ -88,35 +73,229 @@ export default function LandingPage() {
 
   return (
     <Page width="catalog">
-      <header className="node-surface flex flex-col gap-4 bg-surface p-6 sm:p-10">
+      {/* Hero Header */}
+      <header className="node-surface flex flex-col gap-5 bg-surface p-6 sm:p-10">
         <h1 className="max-w-3xl font-sans text-4xl font-bold tracking-tight sm:text-6xl">
           Build real systems. Step by step. In your browser.
         </h1>
         <p className="max-w-2xl text-base text-foreground-muted sm:text-lg">
-          Not slides, not videos. You write the code, run it against real tests, and watch
-          your own solution execute — then go and build the thing itself.
+          Not slides, not videos. You write the code, run it against real tests, watch
+          your own solution physically execute in spatial visualizers, and build complete production architectures.
         </p>
 
-        <div className="flex flex-wrap items-center gap-3 pt-1">
+        <div className="flex flex-wrap items-center gap-3 pt-2">
           <Link
             href="/sign-up"
-            className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-accent-strong px-4 py-2 text-sm font-bold text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+            className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-accent-strong px-5 py-2.5 text-sm font-bold text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
           >
             Create free account
             <ArrowRight size={15} aria-hidden />
           </Link>
           <Link
-            href="/problems"
-            className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-surface px-4 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+            href="/learn/visualizer"
+            className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-surface px-4 py-2.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
           >
-            Explore as guest
+            <Play size={15} className="text-link" />
+            Try DS Visualizer
           </Link>
-          <span className="text-xs text-foreground-muted">
-            Start solving instantly without an account — sign up when you&apos;re ready to permanently save your progress.
+          <Link
+            href="/problems"
+            className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-surface px-4 py-2.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+          >
+            Explore Problems
+          </Link>
+          <span className="w-full text-xs text-foreground-muted pt-1">
+            Start solving and visualizing instantly without an account — sign up when you&apos;re ready to permanently save your progress.
           </span>
         </div>
       </header>
 
+      {/* Visualizer Showcase: True Spatial Motion */}
+      <section className="node-surface flex flex-col gap-6 bg-surface p-6 sm:p-8">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex flex-col gap-1">
+            <span className="flex items-center gap-1.5 font-mono text-3xs font-bold uppercase tracking-wider text-link">
+              <Sparkles size={13} aria-hidden />
+              Stepwise Data Structure Visualizer
+            </span>
+            <h2 className="font-sans text-2xl font-bold tracking-tight sm:text-3xl">
+              Watch data structures move in physical space
+            </h2>
+            <p className="max-w-2xl text-sm text-foreground-muted">
+              Not a pre-recorded animation. Elements actually lift, translate along arcs, and land in their new slots.
+              Step forward and backward line-by-line with synchronized algorithmic code across 6 languages.
+            </p>
+          </div>
+          <Link
+            href="/learn/visualizer"
+            className="node-surface node-interactive node-pressable inline-flex shrink-0 items-center gap-2 bg-accent-strong px-4 py-2 text-xs font-bold text-accent-foreground"
+          >
+            Launch Visualizer
+            <ArrowRight size={14} aria-hidden />
+          </Link>
+        </div>
+
+        {/* Live Visualizer Teaser Card */}
+        <div className="grid gap-4 lg:grid-cols-12 rounded-md border border-border-subtle bg-surface-muted/50 p-4 sm:p-6">
+          {/* Animated Buffer Mockup */}
+          <div className="lg:col-span-7 flex flex-col justify-between gap-6 rounded-md border border-border bg-surface p-4 sm:p-6 shadow-xs">
+            <div className="flex items-center justify-between border-b border-border-subtle pb-3">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-accent-strong ring-2 ring-accent-strong/20" />
+                <span className="font-mono text-xs font-bold">Two-Pointer Array In-Place Reversal</span>
+              </div>
+              <span className="rounded bg-accent-strong/15 px-2 py-0.5 font-mono text-3xs font-bold text-accent-foreground">
+                Step 3 of 7 · Physical Swap
+              </span>
+            </div>
+
+            {/* Visual Arc Crossover Simulation */}
+            <div className="flex flex-col items-center justify-center py-6">
+              <div className="flex items-end gap-2.5 sm:gap-3 flex-wrap justify-center min-h-24">
+                {[
+                  { val: 12, idx: 0, motion: 'gc-swap-arc-right-4', label: 'left pointer' },
+                  { val: 24, idx: 1, motion: '', label: '' },
+                  { val: 36, idx: 2, motion: '', label: 'mid' },
+                  { val: 48, idx: 3, motion: '', label: '' },
+                  { val: 60, idx: 4, motion: 'gc-swap-arc-left-4', label: 'right pointer' },
+                ].map((item) => (
+                  <div key={item.idx} className="flex flex-col items-center gap-1.5">
+                    <span className="text-3xs font-mono text-foreground-muted">[{item.idx}]</span>
+                    <div
+                      className={`flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-md border-2 font-mono text-sm font-bold shadow-sm transition-all ${item.motion
+                          ? `${item.motion} border-link bg-accent-strong text-accent-foreground shadow-xl`
+                          : 'border-border-strong bg-surface text-foreground'
+                        }`}
+                    >
+                      {item.val}
+                    </div>
+                    {item.label ? (
+                      <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-3xs text-link font-semibold">
+                        {item.label}
+                      </span>
+                    ) : (
+                      <span className="h-4" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between border-t border-border-subtle pt-3 text-xs text-foreground-muted">
+              <span>Time: <strong className="text-foreground">O(n)</strong> · Space: <strong className="text-foreground">O(1)</strong></span>
+              <span className="font-mono text-3xs">Speed: 0.25x slow-motion enabled</span>
+            </div>
+          </div>
+
+          {/* Synchronized Algorithmic Code Preview */}
+          <div className="lg:col-span-5 flex flex-col justify-between gap-4 rounded-md border border-border bg-header p-4 text-header-foreground font-mono text-xs shadow-xs">
+            <div className="flex items-center justify-between border-b border-header-foreground/15 pb-2.5">
+              <div className="flex items-center gap-1.5">
+                <SquareCode size={14} className="text-accent-strong" />
+                <span className="text-3xs uppercase tracking-wider font-bold">Algorithmic Code</span>
+              </div>
+              <div className="flex items-center gap-1">
+                {(['TS', 'Python', 'Java', 'C++', 'Go'] as const).map((lang) => (
+                  <span
+                    key={lang}
+                    className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-3xs font-bold ${lang === 'TS' ? 'bg-accent-strong text-accent-foreground' : 'text-header-foreground/60'
+                      }`}
+                  >
+                    <LanguageIcon language={lang} size={10} />
+                    {lang}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1 py-1 font-mono text-2xs sm:text-xs">
+              <div className="text-header-foreground/50">{`// In-place two-pointer crossover`}</div>
+              <div><span className="text-link">function</span> <span className="text-accent-strong">reverseArray</span>(arr: number[]) &#123;</div>
+              <div className="pl-3">let left = 0, right = arr.length - 1;</div>
+              <div className="pl-3">while (left &lt; right) &#123;</div>
+              <div className="pl-6 bg-header-foreground/15 rounded px-1.5 py-0.5 border-l-2 border-accent-strong text-accent-strong font-bold">
+                [arr[left], arr[right]] = [arr[right], arr[left]];
+              </div>
+              <div className="pl-6">left++; right--;</div>
+              <div className="pl-3">&#125;</div>
+              <div>&#125;</div>
+            </div>
+
+            <div className="border-t border-header-foreground/15 pt-2 text-2xs text-header-foreground/70">
+              Covers Arrays, Linked Lists, Trees, Heaps, Hash Maps &amp; Graphs.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* System Design Canvas & Architecture Labs Showcase */}
+      <section className="node-surface flex flex-col gap-6 bg-surface p-6 sm:p-8">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex flex-col gap-1">
+            <span className="flex items-center gap-1.5 font-mono text-3xs font-bold uppercase tracking-wider text-link">
+              <Network size={13} aria-hidden />
+              Interactive System Design
+            </span>
+            <h2 className="font-sans text-2xl font-bold tracking-tight sm:text-3xl">
+              Architect real-world scale before you get interviewed
+            </h2>
+            <p className="max-w-2xl text-sm text-foreground-muted">
+              Draw system topologies, run automated reliability validation, and estimate storage, QPS,
+              and network throughput with back-of-the-envelope calculators.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/learn/system-design/labs"
+              className="node-surface node-interactive node-pressable inline-flex items-center gap-1.5 bg-surface px-3.5 py-2 text-xs font-semibold"
+            >
+              Scored Labs
+            </Link>
+            <Link
+              href="/learn/system-design/canvas"
+              className="node-surface node-interactive node-pressable inline-flex items-center gap-1.5 bg-accent-strong px-3.5 py-2 text-xs font-bold text-accent-foreground"
+            >
+              Open Canvas
+              <ArrowRight size={14} aria-hidden />
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Node tone="surface" className="flex flex-col gap-2.5 p-5">
+            <span className="font-mono text-3xs font-bold uppercase tracking-wider text-link">01 · Topology Canvas</span>
+            <h3 className="font-sans text-base font-bold">Drag &amp; Drop Architectures</h3>
+            <p className="text-xs text-foreground-muted">
+              Connect Load Balancers, API Gateways, Microservices, Redis Caches, Message Queues, and Sharded Databases with instant topology linting.
+            </p>
+            <Link href="/learn/system-design/canvas" className="mt-auto pt-2 text-xs text-link font-medium hover:underline">
+              Launch canvas &rarr;
+            </Link>
+          </Node>
+          <Node tone="surface" className="flex flex-col gap-2.5 p-5">
+            <span className="font-mono text-3xs font-bold uppercase tracking-wider text-link">02 · Capacity Estimator</span>
+            <h3 className="font-sans text-base font-bold">Back-of-the-Envelope Math</h3>
+            <p className="text-xs text-foreground-muted">
+              Live calculations for Daily Active Users, Peak Read/Write QPS, Bandwidth egress, and 5-year distributed storage capacities.
+            </p>
+            <Link href="/learn/system-design/capacity" className="mt-auto pt-2 text-xs text-link font-medium hover:underline">
+              Run calculations &rarr;
+            </Link>
+          </Node>
+          <Node tone="surface" className="flex flex-col gap-2.5 p-5">
+            <span className="font-mono text-3xs font-bold uppercase tracking-wider text-link">03 · Decision Trees</span>
+            <h3 className="font-sans text-base font-bold">Consistency vs Availability</h3>
+            <p className="text-xs text-foreground-muted">
+              Interactive guides on SQL vs NoSQL, Eventual vs Strong Consistency, Write-Through vs Cache-Aside, and Leader-Follower replication.
+            </p>
+            <Link href="/learn/system-design" className="mt-auto pt-2 text-xs text-link font-medium hover:underline">
+              Read reference &rarr;
+            </Link>
+          </Node>
+        </div>
+      </section>
+
+      {/* Three Tiers Section */}
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <h2 className="font-sans text-2xl font-bold tracking-tight">Three tiers, one loop</h2>
@@ -157,13 +336,14 @@ export default function LandingPage() {
         </ol>
       </section>
 
+      {/* The Part That Is Actually Different */}
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <h2 className="font-sans text-2xl font-bold tracking-tight">
             The part that is actually different
           </h2>
           <p className="max-w-2xl text-sm text-foreground-muted">
-            Everything runs in your browser — Python, JavaScript, and TypeScript, on real
+            Everything runs in your browser — Python, JavaScript, TypeScript, Go, C++, and Java on real
             interpreters compiled to WebAssembly. Nothing is queued on a server, so nothing
             costs anything to run.
           </p>
@@ -376,12 +556,9 @@ export default function LandingPage() {
         </ul>
       </section>
 
+      {/* Catalog Counts Section */}
       <section className="flex flex-col gap-3">
         <h2 className="font-sans text-2xl font-bold tracking-tight">What is in it</h2>
-        {/*
-          Counted, never claimed. These move on their own as content lands, which
-          is the only way a number on a landing page stays true.
-        */}
         <Node tone="surface" className="grid gap-px overflow-hidden bg-border-subtle sm:grid-cols-3">
           {[
             { value: counts.lessons, label: 'lessons', href: '/learn/dsa' },
@@ -403,16 +580,16 @@ export default function LandingPage() {
         </Node>
       </section>
 
-      {/* Final CTA */}
-      <section className="flex flex-col items-center gap-3 py-4 text-center">
-        <h2 className="font-sans text-2xl font-bold tracking-tight">
+      {/* Final Call to Action */}
+      <section className="flex flex-col items-center gap-3 py-6 text-center">
+        <h2 className="font-sans text-2xl font-bold tracking-tight sm:text-3xl">
           Ready to start cracking?
         </h2>
         <p className="max-w-lg text-sm text-foreground-muted">
           Jump in and start exploring — when you&apos;re ready to track your streaks,
           save progress, and climb the leaderboard, create a free account in seconds.
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
           <Link
             href="/sign-up"
             className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-accent-strong px-5 py-2.5 text-sm font-bold text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
@@ -421,10 +598,16 @@ export default function LandingPage() {
             <ArrowRight size={15} aria-hidden />
           </Link>
           <Link
+            href="/learn/visualizer"
+            className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-surface px-5 py-2.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+          >
+            Interactive Visualizer
+          </Link>
+          <Link
             href="/learn/dsa"
             className="node-surface node-interactive node-pressable inline-flex items-center gap-2 bg-surface px-5 py-2.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
           >
-            Explore as guest
+            Explore Roadmap
           </Link>
         </div>
       </section>

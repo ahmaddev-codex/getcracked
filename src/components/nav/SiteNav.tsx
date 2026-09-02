@@ -118,11 +118,6 @@ const FLAT: NavItem[] = [
     label: 'Companies',
     detail: 'What each loop assesses, with a source on every claim',
   },
-  {
-    href: '/leaderboard',
-    label: 'Leaderboard',
-    detail: 'Global rankings, streaks, and community solve stats',
-  },
 ];
 
 export function SiteNav() {
@@ -218,7 +213,7 @@ export function SiteNav() {
       {openGroup && (
         <div
           id={panelId}
-          className="order-last w-full border-t border-header-foreground/15 pt-3"
+          className="order-last w-full border-t border-header-foreground/15 pt-3 gc-nav-panel-enter"
         >
           <ul className="grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-4">
             {openGroup.items.map((item) => {
@@ -229,14 +224,23 @@ export function SiteNav() {
                     href={item.href}
                     onClick={close}
                     aria-current={active ? 'page' : undefined}
-                    className="flex flex-col gap-0.5 rounded-xs px-2 py-1.5 transition-colors hover:bg-header-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
+                    className="group flex flex-col gap-0.5 rounded-xs px-2.5 py-1.5 transition-all duration-150 hover:bg-header-foreground/10 hover:translate-x-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
                   >
                     <span
-                      className={`text-sm ${active ? 'font-semibold text-accent-strong' : 'font-medium'}`}
+                      className={`text-sm flex items-center justify-between transition-colors ${
+                        active
+                          ? 'font-semibold text-accent-strong'
+                          : 'font-medium group-hover:text-accent-strong'
+                      }`}
                     >
                       {item.label}
+                      <span className="opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150 text-xs font-mono text-accent-strong">
+                        &rarr;
+                      </span>
                     </span>
-                    <span className="text-xs text-header-foreground/70">{item.detail}</span>
+                    <span className="text-xs text-header-foreground/70 group-hover:text-header-foreground/90 transition-colors">
+                      {item.detail}
+                    </span>
                   </Link>
                 </li>
               );

@@ -2,27 +2,11 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Sparkles, Trophy } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { AccountSlot } from '@/components/auth/AccountMenu';
 import { SearchTrigger } from '@/components/search/SearchTrigger';
 import { SiteNav } from '@/components/nav/SiteNav';
-import { useAssistant } from '@/components/assistant';
-
-function AssistantHeaderButton() {
-  const { openAssistant } = useAssistant();
-  return (
-    <button
-      type="button"
-      onClick={() => openAssistant()}
-      aria-label="Open AI Assistant"
-      className="flex items-center gap-1.5 rounded-xs text-header-foreground/80 transition-colors hover:text-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
-      title="Open AI Assistant"
-    >
-      <Sparkles size={16} aria-hidden />
-      <span className="hidden sm:inline text-xs font-medium">AI</span>
-    </button>
-  );
-}
+import { HeaderThemeToggle } from '@/components/theme/HeaderThemeToggle';
 
 export function SiteHeader() {
   return (
@@ -53,7 +37,7 @@ export function SiteHeader() {
           three claims on the space and the links would sit a third of the way
           across rather than centred.
         */}
-        <div className="ml-auto flex shrink-0 items-center gap-4 sm:ml-0">
+        <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-4 sm:ml-0">
           <Link
             href="/leaderboard"
             title="Leaderboard"
@@ -63,8 +47,8 @@ export function SiteHeader() {
             <Trophy size={16} aria-hidden />
             <span className="hidden sm:inline text-xs font-medium">Leaderboard</span>
           </Link>
-          <AssistantHeaderButton />
           <SearchTrigger />
+          <HeaderThemeToggle />
           <AccountSlot />
         </div>
       </nav>

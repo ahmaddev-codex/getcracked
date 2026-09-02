@@ -7,6 +7,7 @@ import { ChevronDown, LayoutDashboard, LogOut, User } from 'lucide-react';
 import { signOut, useSession } from '@/lib/auth-client';
 import { Avatar } from '@/components/account/Avatar';
 import { StreakBadge } from '@/components/account/StreakBadge';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 /**
  * The signed-in account menu (A2).
@@ -96,6 +97,13 @@ export function AccountMenu({
             <User size={14} aria-hidden />
             Account
           </Link>
+
+          <div className="my-1 border-t border-border-subtle px-3 py-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-2xs font-medium text-foreground-muted">Theme</span>
+              <ThemeToggle />
+            </div>
+          </div>
 
           <button
             role="menuitem"

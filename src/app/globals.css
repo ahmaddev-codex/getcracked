@@ -594,4 +594,26 @@ body {
 .gc-heap-swap-left-4 { transform: translateY(2.25rem) translateX(-14rem) scale(0.95); z-index: 10; }
 .gc-heap-swap-left-5 { transform: translateY(2.5rem) translateX(-17.5rem) scale(0.95); z-index: 10; }
 
+/* Header navigation dropdown entrance animation */
+@keyframes gc-nav-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.gc-nav-panel-enter {
+  animation: gc-nav-enter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gc-nav-panel-enter {
+    animation: none;
+  }
+}
+
 
