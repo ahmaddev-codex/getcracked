@@ -52,7 +52,7 @@ describe('Test Runner Hardening', () => {
     `;
 
     // 10 cases with very low single timeout (50ms) and low aggregate ceiling
-    const cases = Array.from({ length: 5 }, (_, i) => ({
+    const cases = Array.from({ length: 5 }, () => ({
       args: [],
       expected: 1,
       hidden: false,

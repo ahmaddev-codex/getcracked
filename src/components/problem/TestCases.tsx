@@ -57,10 +57,10 @@ function ResultCell({ outcome, hidden }: { outcome: CaseResult | undefined; hidd
       <div>{status}</div>
       {hasLogs && (
         <details className="group mt-0.5">
-          <summary className="cursor-pointer text-[10px] text-foreground-muted hover:text-foreground inline-flex items-center gap-1 select-none">
+          <summary className="cursor-pointer text-xs text-foreground-muted hover:text-foreground inline-flex items-center gap-1 select-none">
             <span className="underline underline-offset-2">stdout ({outcome.logs!.length})</span>
           </summary>
-          <pre className="mt-1 max-h-36 overflow-y-auto whitespace-pre-wrap rounded border border-border-subtle bg-surface-muted/40 p-1.5 font-mono text-[11px] text-foreground">
+          <pre className="mt-1 max-h-36 overflow-y-auto whitespace-pre-wrap rounded border border-border-subtle bg-surface-muted/40 p-1.5 font-mono text-xs text-foreground">
             {outcome.logs!.join('\n')}
           </pre>
         </details>

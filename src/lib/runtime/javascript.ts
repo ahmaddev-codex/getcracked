@@ -3,7 +3,7 @@
 // evaluation, so one import of the convenience package drags in loaders we
 // deliberately do not use — including the single-file one, whose embedded
 // binary Turbopack's minifier corrupts (see lib/runtime/quickjs.ts).
-import { shouldInterruptAfterDeadline } from 'quickjs-emscripten-core';
+import { shouldInterruptAfterDeadline, type QuickJSContext } from 'quickjs-emscripten-core';
 import { getQuickJS } from './quickjs';
 import { instrument } from './instrument';
 import { javaScriptIndexVariables, type IndexVariables } from './index-vars';
@@ -414,7 +414,7 @@ globalThis.make = function (type, cap) {
 };
 `;
 
-function extractVmLogs(vm: { evalCode: (code: string) => { error?: { dispose: () => void }; value?: { dispose: () => void } }; dump: (val: unknown) => unknown }): string[] {
+function extractVmLogs(vm: QuickJSContext): string[] {
   try {
     const handle = vm.evalCode('JSON.stringify(globalThis.__logs || [])');
     if (!handle.error && handle.value) {

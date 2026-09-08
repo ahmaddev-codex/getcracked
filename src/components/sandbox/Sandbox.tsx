@@ -391,7 +391,7 @@ export function Sandbox() {
         <Node tone="muted" className="p-3">
           <div className="flex items-center justify-between mb-1.5">
             <p className="text-xs font-semibold text-foreground-muted">Console output</p>
-            <span className="text-[10px] text-foreground-muted font-mono">
+            <span className="text-xs text-foreground-muted font-mono">
               {result.cases[0].logs.length} {result.cases[0].logs.length === 1 ? 'line' : 'lines'}
             </span>
           </div>
