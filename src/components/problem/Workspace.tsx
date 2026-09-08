@@ -291,6 +291,7 @@ export function Workspace({
       if (failure) {
         setError(humanizeError(failure) ?? failure);
         setWatchTrace(null);
+        setResult(outcome);
         return;
       }
       setWatchTrace(outcome.trace);

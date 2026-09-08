@@ -36,17 +36,36 @@ function formatValue(value: unknown): string {
 
 const WITHHELD = <span className="text-foreground-muted">withheld</span>;
 
-function ResultCell({ outcome }: { outcome: CaseResult | undefined }) {
+function ResultCell({ outcome, hidden }: { outcome: CaseResult | undefined; hidden?: boolean }) {
   if (!outcome) return <span className="text-foreground-muted">—</span>;
-  if (outcome.passed) return <span>✓ pass</span>;
 
   const error = humanizeError(outcome.error);
-  if (error) return <span className="text-danger">✗ {error}</span>;
-
-  return (
+  const status = outcome.passed ? (
+    <span>✓ pass</span>
+  ) : error ? (
+    <span className="text-danger">✗ {error}</span>
+  ) : (
     <span className="text-danger">
       ✗ {outcome.hidden ? 'fail' : formatValue(outcome.actual)}
     </span>
+  );
+
+  const hasLogs = !hidden && outcome.logs && outcome.logs.length > 0;
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div>{status}</div>
+      {hasLogs && (
+        <details className="group mt-0.5">
+          <summary className="cursor-pointer text-[10px] text-foreground-muted hover:text-foreground inline-flex items-center gap-1 select-none">
+            <span className="underline underline-offset-2">stdout ({outcome.logs!.length})</span>
+          </summary>
+          <pre className="mt-1 max-h-36 overflow-y-auto whitespace-pre-wrap rounded border border-border-subtle bg-surface-muted/40 p-1.5 font-mono text-[11px] text-foreground">
+            {outcome.logs!.join('\n')}
+          </pre>
+        </details>
+      )}
+    </div>
   );
 }
 
@@ -93,7 +112,7 @@ export function TestCases({ spec, result }: { spec: TestSpec; result?: SpecResul
                     {testCase.hidden ? WITHHELD : formatValue(testCase.expected)}
                   </td>
                   <td className="py-2">
-                    <ResultCell outcome={outcome} />
+                    <ResultCell outcome={outcome} hidden={testCase.hidden} />
                   </td>
                 </tr>
               );

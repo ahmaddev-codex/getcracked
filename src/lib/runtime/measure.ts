@@ -141,6 +141,7 @@ export async function measureRun(opts: {
 
   const QuickJS = await getQuickJS();
   const runtime = QuickJS.newRuntime();
+  runtime.setMemoryLimit(64 * 1024 * 1024);
   const vm = runtime.newContext();
   runtime.setInterruptHandler(shouldInterruptAfterDeadline(Date.now() + (opts.timeoutMs ?? 5_000)));
 
@@ -195,7 +196,7 @@ export async function measureRun(opts: {
   } catch {
     return null;
   } finally {
-    vm.dispose();
-    runtime.dispose();
+    try { vm.dispose(); } catch {}
+    try { runtime.dispose(); } catch {}
   }
 }

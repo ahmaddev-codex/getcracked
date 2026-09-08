@@ -52,6 +52,7 @@ const TERMINATE_GRACE_MS = 2_000;
  * is the most confusing failure the runtime could produce.
  */
 const PYTHON_COLD_START_MS = 60_000;
+export const MAX_RUNS_BEFORE_RECYCLE = 25;
 
 /** Minimal surface the client needs, so a test can substitute a fake. */
 export interface WorkerLike {
@@ -84,6 +85,7 @@ const defaultFactory: WorkerFactory = () =>
 export class RuntimeClient {
   private worker: WorkerLike | null = null;
   private nextId = 0;
+  private runCount = 0;
   private readonly createWorker: WorkerFactory;
 
   /**
@@ -137,6 +139,12 @@ export class RuntimeClient {
   private reset() {
     this.worker?.terminate();
     this.worker = null;
+    this.runCount = 0;
+  }
+
+  /** Number of successful runs executed on the current worker. */
+  get executionCount(): number {
+    return this.runCount;
   }
 
   /**
@@ -210,8 +218,16 @@ export class RuntimeClient {
           return;
         }
 
-        if (data.ok) resolve(data.result);
-        else reject(new Error(data.error));
+        if (data.ok) {
+          this.runCount++;
+          if (this.runCount >= MAX_RUNS_BEFORE_RECYCLE) {
+            this.reset();
+          }
+          resolve(data.result);
+        } else {
+          this.reset();
+          reject(new Error(data.error));
+        }
       };
 
       const killTimer = setTimeout(
