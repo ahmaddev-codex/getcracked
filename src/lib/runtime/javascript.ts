@@ -3,7 +3,7 @@
 // evaluation, so one import of the convenience package drags in loaders we
 // deliberately do not use — including the single-file one, whose embedded
 // binary Turbopack's minifier corrupts (see lib/runtime/quickjs.ts).
-import { shouldInterruptAfterDeadline } from 'quickjs-emscripten-core';
+import { shouldInterruptAfterDeadline, type QuickJSContext } from 'quickjs-emscripten-core';
 import { getQuickJS } from './quickjs';
 import { instrument } from './instrument';
 import { javaScriptIndexVariables, type IndexVariables } from './index-vars';
@@ -61,6 +61,7 @@ export interface RunResult {
    * `a[i]` and `a[0]` are the same call. See index-vars.ts.
    */
   indexedBy?: IndexVariables;
+  logs?: string[];
 }
 
 const DEFAULT_TIMEOUT_MS = 5_000;
@@ -170,7 +171,12 @@ globalThis.__invoke = function (argsJson) {
   var value = __fn.apply(null, wrapped);
   var snappedValue = __quiet(function () { return __snap(value); });
   __push({ kind: 'return', value: snappedValue });
-  return JSON.stringify({ value: snappedValue, events: __events, dropped: __dropped });
+  return JSON.stringify({
+    value: snappedValue,
+    events: __events,
+    dropped: __dropped,
+    logs: globalThis.__logs || [],
+  });
 };
 `;
 }
@@ -231,6 +237,198 @@ function entryParamNames(source: string, entry: string): string[] {
     .filter(Boolean);
 }
 
+const SANDBOX_PRELUDE = `
+globalThis.__logs = [];
+function __fmtLogArg(a) {
+  if (a === null) return 'null';
+  if (a === undefined) return 'undefined';
+  if (typeof a === 'string') return a;
+  if (typeof a === 'number' || typeof a === 'boolean' || typeof a === 'symbol') return String(a);
+  if (typeof a === 'bigint') return a.toString() + 'n';
+  if (typeof a === 'function') return '[Function' + (a.name ? ': ' + a.name : '') + ']';
+  if (a instanceof Error) return a.stack || (a.name + ': ' + a.message);
+  try {
+    var seen = [];
+    var str = JSON.stringify(a, function (key, val) {
+      if (typeof val === 'object' && val !== null) {
+        if (seen.indexOf(val) !== -1) return '[Circular]';
+        seen.push(val);
+      }
+      return val;
+    });
+    return str.length > 2000 ? str.slice(0, 2000) + '…' : str;
+  } catch (e) {
+    return String(a);
+  }
+}
+function __appendLog(args) {
+  if (!globalThis.__logs) globalThis.__logs = [];
+  if (globalThis.__logs.length >= 500) return;
+  var parts = [];
+  for (var i = 0; i < args.length; i++) parts.push(__fmtLogArg(args[i]));
+  var line = parts.join(' ');
+  if (line.length > 2000) line = line.slice(0, 2000) + '…';
+  globalThis.__logs.push(line);
+}
+globalThis.console = {
+  log: function () { __appendLog(arguments); },
+  error: function () { __appendLog(arguments); },
+  warn: function () { __appendLog(arguments); },
+  info: function () { __appendLog(arguments); },
+  debug: function () { __appendLog(arguments); },
+  dir: function () { __appendLog(arguments); },
+  trace: function () { __appendLog(arguments); },
+  table: function () { __appendLog(arguments); }
+};
+if (typeof globalThis.performance === 'undefined') {
+  globalThis.performance = { now: function () { return Date.now(); } };
+}
+
+// Algorithmic Data Structures: PriorityQueue (Min/Max Heap)
+function PriorityQueue(comparator) {
+  this.comparator = typeof comparator === 'function' ? comparator : function (a, b) { return a < b ? -1 : a > b ? 1 : 0; };
+  this.heap = [];
+}
+PriorityQueue.prototype = {
+  size: function () { return this.heap.length; },
+  isEmpty: function () { return this.heap.length === 0; },
+  empty: function () { return this.heap.length === 0; },
+  peek: function () { return this.heap[0]; },
+  top: function () { return this.heap[0]; },
+  offer: function (val) { return this.push(val); },
+  add: function (val) { return this.push(val); },
+  push: function (val) {
+    this.heap.push(val);
+    this._siftUp(this.heap.length - 1);
+    return true;
+  },
+  poll: function () { return this.pop(); },
+  pop: function () {
+    if (this.heap.length === 0) return undefined;
+    var top = this.heap[0];
+    var bottom = this.heap.pop();
+    if (this.heap.length > 0) {
+      this.heap[0] = bottom;
+      this._siftDown(0);
+    }
+    return top;
+  },
+  _siftUp: function (node) {
+    while (node > 0) {
+      var parent = (node - 1) >>> 1;
+      if (this.comparator(this.heap[node], this.heap[parent]) < 0) {
+        var tmp = this.heap[node];
+        this.heap[node] = this.heap[parent];
+        this.heap[parent] = tmp;
+        node = parent;
+      } else break;
+    }
+  },
+  _siftDown: function (node) {
+    var length = this.heap.length;
+    var halfLength = length >>> 1;
+    while (node < halfLength) {
+      var left = (node << 1) + 1;
+      var right = left + 1;
+      var best = left;
+      if (right < length && this.comparator(this.heap[right], this.heap[left]) < 0) {
+        best = right;
+      }
+      if (this.comparator(this.heap[best], this.heap[node]) < 0) {
+        var tmp = this.heap[node];
+        this.heap[node] = this.heap[best];
+        this.heap[best] = tmp;
+        node = best;
+      } else break;
+    }
+  }
+};
+globalThis.PriorityQueue = PriorityQueue;
+globalThis.MinPriorityQueue = PriorityQueue;
+globalThis.MaxPriorityQueue = function () {
+  return new PriorityQueue(function (a, b) { return a > b ? -1 : a < b ? 1 : 0; });
+};
+
+// Algorithmic Data Structures: FIFO Queue / Deque
+function Queue() {
+  this._items = [];
+  this._head = 0;
+}
+Queue.prototype = {
+  offer: function (val) { this._items.push(val); return true; },
+  push: function (val) { this._items.push(val); return true; },
+  add: function (val) { this._items.push(val); return true; },
+  poll: function () {
+    if (this._head >= this._items.length) return undefined;
+    var item = this._items[this._head++];
+    if (this._head * 2 >= this._items.length && this._head > 32) {
+      this._items = this._items.slice(this._head);
+      this._head = 0;
+    }
+    return item;
+  },
+  pop: function () { return this.poll(); },
+  peek: function () { return this._items[this._head]; },
+  front: function () { return this._items[this._head]; },
+  size: function () { return this._items.length - this._head; },
+  isEmpty: function () { return this.size() === 0; },
+  empty: function () { return this.size() === 0; }
+};
+globalThis.Queue = Queue;
+globalThis.LinkedList = Queue;
+
+// Collection method compatibility for Java / C++ transpiled code
+if (typeof Map !== 'undefined') {
+  Map.prototype.put = function (k, v) { this.set(k, v); return v; };
+  Map.prototype.containsKey = function (k) { return this.has(k); };
+  Map.prototype.getOrDefault = function (k, d) { return this.has(k) ? this.get(k) : d; };
+}
+if (typeof Set !== 'undefined') {
+  Set.prototype.contains = function (v) { return this.has(v); };
+  Set.prototype.remove = function (v) { return this.delete(v); };
+}
+if (typeof Array !== 'undefined') {
+  Array.prototype.add = function (v) { this.push(v); return true; };
+  Array.prototype.get = function (i) { return this[i]; };
+  Array.prototype.set = function (i, v) { this[i] = v; };
+  Array.prototype.isEmpty = function () { return this.length === 0; };
+  Array.prototype.size = function () { return this.length; };
+}
+
+// Go language built-ins
+globalThis.len = function (x) {
+  if (x == null) return 0;
+  if (typeof x.length === 'number') return x.length;
+  if (typeof x.size === 'number') return x.size;
+  if (typeof x.size === 'function') return x.size();
+  return Object.keys(x).length;
+};
+globalThis.append = function (arr) {
+  var res = Array.isArray(arr) ? arr.slice() : [];
+  for (var i = 1; i < arguments.length; i++) res.push(arguments[i]);
+  return res;
+};
+globalThis.make = function (type, cap) {
+  if (typeof type === 'string' && type.startsWith('map')) return new Map();
+  return new Array(typeof cap === 'number' ? cap : 0).fill(0);
+};
+`;
+
+function extractVmLogs(vm: QuickJSContext): string[] {
+  try {
+    const handle = vm.evalCode('JSON.stringify(globalThis.__logs || [])');
+    if (!handle.error && handle.value) {
+      const dumped = vm.dump(handle.value);
+      handle.value.dispose();
+      return JSON.parse(dumped as string) as string[];
+    }
+    handle.error?.dispose();
+  } catch {
+    // Ignore extraction failure and return empty
+  }
+  return [];
+}
+
 /**
  * Runs the learner's code once, exactly as given.
  *
@@ -256,6 +454,10 @@ async function executeOnce(
   const trace = useTrace;
   const QuickJS = await getQuickJS();
   const runtime = QuickJS.newRuntime();
+
+  // Enforce memory bounds to prevent linear memory exhaustion or thread freezing
+  runtime.setMemoryLimit(64 * 1024 * 1024); // 64 MB heap limit
+
   const vm = runtime.newContext();
 
   // The only execution hook QuickJS offers. It cannot report where execution
@@ -268,9 +470,18 @@ async function executeOnce(
     events: [],
     truncated: false,
     traceDegraded: false,
+    logs: [],
   };
 
   try {
+    // Preload console and safe host environment polyfills before evaluating any user code
+    const preludeSetup = vm.evalCode(SANDBOX_PRELUDE);
+    if (preludeSetup.error) {
+      preludeSetup.error.dispose();
+    } else {
+      preludeSetup.value.dispose();
+    }
+
     /**
      * Instrumentation can fail to locate the entry (a function expression, say).
      * That is not fatal: structure events come from a Proxy on the arguments and
@@ -308,9 +519,10 @@ async function executeOnce(
 
     const setup = vm.evalCode(program);
     if (setup.error) {
+      const logs = extractVmLogs(vm);
       const err = vm.dump(setup.error);
       setup.error.dispose();
-      return { ...empty, timedOut: isInterrupt(err), error: formatError(err) };
+      return { ...empty, timedOut: isInterrupt(err), error: formatError(err), logs };
     }
     setup.value.dispose();
 
@@ -321,15 +533,17 @@ async function executeOnce(
     invoke.dispose();
 
     if (called.error) {
+      const logs = extractVmLogs(vm);
       const err = vm.dump(called.error);
       called.error.dispose();
-      return { ...empty, timedOut: isInterrupt(err), error: formatError(err) };
+      return { ...empty, timedOut: isInterrupt(err), error: formatError(err), logs };
     }
 
     const payload = JSON.parse(vm.dump(called.value) as string) as {
       value: unknown;
       events: TraceEvent[];
       dropped: number;
+      logs?: string[];
     };
     called.value.dispose();
 
@@ -346,13 +560,23 @@ async function executeOnce(
       truncated: payload.dropped > 0,
       traceDegraded: degraded,
       indexedBy: javaScriptIndexVariables(source),
+      logs: payload.logs ?? extractVmLogs(vm),
     };
   } catch (e) {
+    const logs = extractVmLogs(vm);
     const message = e instanceof Error ? e.message : String(e);
-    return { ...empty, error: message };
+    return { ...empty, error: message, logs };
   } finally {
-    vm.dispose();
-    runtime.dispose();
+    try {
+      vm.dispose();
+    } catch {
+      // Ignore disposal failure if the VM state was abruptly unwound
+    }
+    try {
+      runtime.dispose();
+    } catch {
+      // Ignore disposal failure if the runtime was aborted
+    }
   }
 }
 

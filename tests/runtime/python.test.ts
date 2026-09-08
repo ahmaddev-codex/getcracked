@@ -132,4 +132,46 @@ describe('runPython', () => {
     },
     LOAD_TIMEOUT,
   );
+
+  it(
+    'captures print statements and console.log calls in logs',
+    async () => {
+      const r = await runPython({
+        source: `
+def greet(name):
+    print(f"Hello, {name}!")
+    console.log("From console:", name)
+    return True
+`,
+        entry: 'greet',
+        args: ['Antigravity'],
+      });
+
+      expect(r.ok).toBe(true);
+      expect(r.logs).toBeDefined();
+      expect(r.logs).toContain('Hello, Antigravity!');
+      expect(r.logs).toContain('From console: Antigravity');
+    },
+    LOAD_TIMEOUT,
+  );
+
+  it(
+    'preserves stdout output before an exception in Python',
+    async () => {
+      const r = await runPython({
+        source: `
+def crash():
+    print("checkpoint in python")
+    raise ValueError("crash in python")
+`,
+        entry: 'crash',
+        args: [],
+      });
+
+      expect(r.ok).toBe(false);
+      expect(r.logs).toEqual(['checkpoint in python']);
+      expect(r.error).toContain('crash in python');
+    },
+    LOAD_TIMEOUT,
+  );
 });

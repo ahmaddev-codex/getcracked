@@ -31,6 +31,7 @@ export interface CaseResult {
   actual?: unknown;
   error?: string;
   hidden: boolean;
+  logs?: string[];
 }
 
 export interface SpecResult {
@@ -51,6 +52,7 @@ export interface SpecResult {
    * measured, or when nothing passed and there is nothing meaningful to measure.
    */
   metrics: RuntimeMetrics | null;
+  logs?: string[];
 }
 
 /**
@@ -62,7 +64,16 @@ export interface SpecResult {
  * sequence.
  */
 function equal(a: unknown, b: unknown): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
+  if (a === b) return true;
+  if (typeof a === 'number' && typeof b === 'number') {
+    if (Number.isNaN(a) && Number.isNaN(b)) return true;
+    return Math.abs(a - b) < 1e-9;
+  }
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch {
+    return false;
+  }
 }
 
 function describeCase(index: number, args: unknown[], name?: string): string {
@@ -139,7 +150,23 @@ export async function runTestSpec(opts: RunSpecOptions): Promise<SpecResult> {
   let traceDegraded = false;
   let indexedBy: RunResult['indexedBy'];
 
+  const suiteStartTime = Date.now();
+  const AGGREGATE_TIMEOUT_MS = Math.max(15_000, (timeoutMs ?? 5_000) * 3);
+
   for (const [i, testCase] of spec.cases.entries()) {
+    if (i > 0 && Date.now() - suiteStartTime > AGGREGATE_TIMEOUT_MS) {
+      timedOut = true;
+      cases.push({
+        name: describeCase(i, testCase.args, testCase.name),
+        passed: false,
+        args: testCase.args,
+        expected: testCase.expected,
+        error: 'Aggregate test suite timeout exceeded — execution took too long.',
+        hidden: testCase.hidden,
+      });
+      break;
+    }
+
     const result = await run({
       source,
       modules,
@@ -167,6 +194,7 @@ export async function runTestSpec(opts: RunSpecOptions): Promise<SpecResult> {
         expected: testCase.expected,
         error: 'Timed out — check for an infinite loop.',
         hidden: testCase.hidden,
+        logs: result.logs,
       });
       // A timeout will repeat for every remaining case; stop rather than making
       // the learner wait out the whole suite.
@@ -181,6 +209,7 @@ export async function runTestSpec(opts: RunSpecOptions): Promise<SpecResult> {
       actual: result.value,
       error: result.error,
       hidden: testCase.hidden,
+      logs: result.logs,
     });
   }
 
@@ -218,5 +247,6 @@ export async function runTestSpec(opts: RunSpecOptions): Promise<SpecResult> {
     trace: trace ? toProtocol(traceEvents, { degraded: traceDegraded, indexedBy }) : null,
     traceDegraded,
     metrics,
+    logs: cases[0]?.logs,
   };
 }

@@ -249,7 +249,7 @@ export function Sandbox() {
       if (failure) {
         // "No trace to show" is a useless thing to tell someone whose code threw.
         setError(humanizeError(failure) ?? failure);
-        setResult(null);
+        setResult(outcome);
         return;
       }
       setResult(outcome);
@@ -387,7 +387,21 @@ export function Sandbox() {
         </Node>
       )}
 
-      {result && (
+      {result?.cases[0]?.logs && result.cases[0].logs.length > 0 && (
+        <Node tone="muted" className="p-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-xs font-semibold text-foreground-muted">Console output</p>
+            <span className="text-xs text-foreground-muted font-mono">
+              {result.cases[0].logs.length} {result.cases[0].logs.length === 1 ? 'line' : 'lines'}
+            </span>
+          </div>
+          <pre className="max-h-60 overflow-x-auto overflow-y-auto whitespace-pre-wrap font-mono text-xs text-foreground bg-surface/50 p-2.5 rounded border border-border-subtle">
+            {result.cases[0].logs.join('\n')}
+          </pre>
+        </Node>
+      )}
+
+      {result && !error && (
         <Node tone="strong" className="p-3">
           <p className="text-xs font-semibold">returned</p>
           <pre className="mt-1 overflow-x-auto font-mono text-sm">
@@ -396,11 +410,11 @@ export function Sandbox() {
         </Node>
       )}
 
-      {result?.trace && (
+      {result?.trace && !error && (
         <Visualizer trace={result.trace} language={language} onLineChange={setTracedLine} />
       )}
 
-      {result && <Complexity metrics={result.metrics} />}
+      {result && !error && <Complexity metrics={result.metrics} />}
     </div>
   );
 }

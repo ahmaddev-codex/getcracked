@@ -105,4 +105,107 @@ describe('runJavaScript', () => {
 
     expect(r.events).toEqual([]);
   });
+
+  it('captures console.log and various console methods without throwing ReferenceError', async () => {
+    const r = await runJavaScript({
+      source: `
+      function logTest() {
+        console.log("hello", 123, { a: 1 });
+        console.info("info msg");
+        console.warn("warn msg");
+        return "done";
+      }
+      `,
+      entry: 'logTest',
+      args: [],
+    });
+
+    expect(r.ok).toBe(true);
+    expect(r.logs).toBeDefined();
+    expect(r.logs).toContain('hello 123 {"a":1}');
+    expect(r.logs).toContain('info msg');
+    expect(r.logs).toContain('warn msg');
+  });
+
+  it('preserves logs produced before an exception is thrown', async () => {
+    const r = await runJavaScript({
+      source: `
+      function failWithLogs() {
+        console.log("checkpoint 1 reached");
+        throw new Error("unhandled error");
+      }
+      `,
+      entry: 'failWithLogs',
+      args: [],
+    });
+
+    expect(r.ok).toBe(false);
+    expect(r.logs).toEqual(['checkpoint 1 reached']);
+    expect(r.error).toContain('unhandled error');
+  });
+
+  it('supports PriorityQueue and Queue data structures from prelude', async () => {
+    const r = await runJavaScript({
+      source: `
+      function testStructures() {
+        var pq = new PriorityQueue();
+        pq.offer(15);
+        pq.offer(5);
+        pq.offer(30);
+        pq.offer(10);
+        var sorted = [];
+        while (!pq.isEmpty()) {
+          sorted.push(pq.poll());
+        }
+
+        var q = new Queue();
+        q.offer('a');
+        q.offer('b');
+        var fifo = [q.poll(), q.poll()];
+
+        return { sorted: sorted, fifo: fifo };
+      }
+      `,
+      entry: 'testStructures',
+      args: [],
+    });
+
+    expect(r.ok).toBe(true);
+    expect(r.value).toEqual({
+      sorted: [5, 10, 15, 30],
+      fifo: ['a', 'b'],
+    });
+  });
+
+  it('catches deep stack overflow gracefully without crashing the runner', async () => {
+    const r = await runJavaScript({
+      source: `
+      function recurse(n) {
+        return recurse(n + 1);
+      }
+      `,
+      entry: 'recurse',
+      args: [1],
+    });
+
+    expect(r.ok).toBe(false);
+    expect(r.error).toContain('stack');
+  });
+
+  it('bounds linear memory allocation via setMemoryLimit', async () => {
+    const r = await runJavaScript({
+      source: `
+      function hog() {
+        var arr = [];
+        while (true) arr.push(new Array(100000));
+      }
+      `,
+      entry: 'hog',
+      args: [],
+      timeoutMs: 1000,
+    });
+
+    expect(r.ok).toBe(false);
+    expect(r.error?.toLowerCase()).toMatch(/out of memory|interrupted/);
+  });
 });

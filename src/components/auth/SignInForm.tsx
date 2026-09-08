@@ -14,8 +14,7 @@ export function SignInForm({ providers }: { providers: ReadonlyArray<{ id: OAuth
   const router = useRouter();
   // Validated, not just defaulted — `next` reaches router.push() and the OAuth
   // callback so it must be safe against open redirects.
-  const searchParams = useSearchParams();
-  const next = safeNext(searchParams.get('next'));
+  const next = safeNext(useSearchParams().get('next'));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 

@@ -74,6 +74,36 @@ export function pythonRuntimeAvailable(): boolean {
  * transient failure — a dropped connection on a multi-megabyte download — into a
  * permanent one for the rest of the session.
  */
+/**
+ * Enables offline & fast disk caching for Pyodide assets via the Cache Storage API.
+ */
+function ensurePyodideCaching(): void {
+  if (typeof globalThis.caches === 'undefined' || (globalThis as unknown as { __pyodideFetchWrapped?: boolean }).__pyodideFetchWrapped) {
+    return;
+  }
+  const originalFetch = globalThis.fetch.bind(globalThis);
+  (globalThis as unknown as { __pyodideFetchWrapped?: boolean }).__pyodideFetchWrapped = true;
+
+  globalThis.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url && url.includes('cdn.jsdelivr.net/pyodide/')) {
+      try {
+        const cache = await caches.open(`getcracked-pyodide-${PYODIDE_VERSION}`);
+        const cached = await cache.match(input);
+        if (cached) return cached;
+        const response = await originalFetch(input, init);
+        if (response.ok) {
+          cache.put(input, response.clone()).catch(() => {});
+        }
+        return response;
+      } catch {
+        // Fallback to original fetch if cache API errors
+      }
+    }
+    return originalFetch(input, init);
+  };
+}
+
 export function getPyodide(): Promise<PyodideInterface> {
   pyodidePromise ??= (async () => {
     if (isNodeRuntime()) {
@@ -85,6 +115,7 @@ export function getPyodide(): Promise<PyodideInterface> {
         'Python cannot run here: Pyodide does not support classic web workers.',
       );
     }
+    ensurePyodideCaching();
     const mod = (await import(
       /* webpackIgnore: true */ /* turbopackIgnore: true */
       `${BROWSER_INDEX_URL}pyodide.mjs`
@@ -212,18 +243,35 @@ def _install(modules, entry_module, entry_source):
 
 
 def _run(source, entry, args_json, tracing, max_events, deadline, modules_json="", entry_module=""):
+    import io
+    _stdout_buf = io.StringIO()
+    _orig_stdout = sys.stdout
+    _orig_stderr = sys.stderr
+    sys.stdout = _stdout_buf
+    sys.stderr = _stdout_buf
+
+    def _get_logs():
+        raw = _stdout_buf.getvalue()
+        if not raw:
+            return []
+        lines = raw.splitlines()
+        if len(lines) > 500:
+            lines = lines[:500]
+        return [l[:2000] for l in lines]
+
+    class _Console:
+        @staticmethod
+        def log(*args, **kwargs):
+            print(*args, **kwargs)
+        error = log
+        warn = log
+        info = log
+        debug = log
+
     events = []
     dropped = [0]
 
     def full():
-        # True once nothing more will be recorded.
-        #
-        # Checked by every call site *before* it builds an event, because the
-        # cap has to bound the work and not only the payload. A line event
-        # snapshots every live local, so a loop over a 1000-element list paid a
-        # 1000-element snapshot on each of 1000 iterations to keep the first 50
-        # - quadratic work for a fixed-size result. The JavaScript harness draws
-        # the line in the same place, so a capped trace costs the same in both.
         if not tracing:
             return True
         if len(events) >= max_events:
@@ -239,73 +287,72 @@ def _run(source, entry, args_json, tracing, max_events, deadline, modules_json="
             return
         events.append(e)
 
-    if entry_module:
-        # A build challenge. Line events are skipped for it by construction:
-        # the frames carry real file paths, not _SOURCE_FILE, so the tracer
-        # below never matches them. That is deliberate - a trace event holds one
-        # line number, which says nothing across a workspace of several files -
-        # and it is reported as a degraded trace rather than a wrong one.
-        module = _install(json.loads(modules_json or "[]"), entry_module, source)
-        if not hasattr(module, entry):
-            raise AttributeError(
-                '%s.py does not define %s. Check the spelling.' % (entry_module, entry)
-            )
-        fn = getattr(module, entry)
-    else:
-        # Compiled explicitly so the frames carry a filename we can recognise:
-        # the tracer below uses it to tell the learner's code from this
-        # runner's.
-        scope = {}
-        code = compile(source, _SOURCE_FILE, "exec")
-        exec(code, scope)
-        fn = scope[entry]
-
-    args = json.loads(args_json)
-    import inspect
     try:
-        names = list(inspect.signature(fn).parameters.keys())
-    except (TypeError, ValueError):
-        names = []
+        if entry_module:
+            module = _install(json.loads(modules_json or "[]"), entry_module, source)
+            if not hasattr(module, "console"):
+                setattr(module, "console", _Console())
+            if not hasattr(module, entry):
+                raise AttributeError(
+                    '%s.py does not define %s. Check the spelling.' % (entry_module, entry)
+                )
+            fn = getattr(module, entry)
+        else:
+            scope = {"console": _Console()}
+            code = compile(source, _SOURCE_FILE, "exec")
+            exec(code, scope)
+            fn = scope[entry]
 
-    wrapped = []
-    for i, a in enumerate(args):
-        name = names[i] if i < len(names) else "arg%d" % i
-        wrapped.append(_TracedList(a, name, sink, full) if isinstance(a, list) else a)
+        args = json.loads(args_json)
+        import inspect
+        try:
+            names = list(inspect.signature(fn).parameters.keys())
+        except (TypeError, ValueError):
+            names = []
 
-    def tracer(frame, event, arg):
-        # Runs on every line, so it doubles as the deadline check. Pyodide's
-        # alternative (setInterruptBuffer) needs SharedArrayBuffer, which needs
-        # COOP/COEP headers — see the spike writeup.
-        if time.time() > deadline:
-            raise _Timeout()
-        # Every frame from the learner's source, not just the entry function.
-        # Matching on the entry name alone skipped nested helpers entirely,
-        # which meant the two lessons about recursion - where the recursive
-        # call lives in an inner helper - animated nothing in Python while
-        # animating fully in JavaScript.
-        if event == "line" and tracing and frame.f_code.co_filename == _SOURCE_FILE:
-            if full():
-                return tracer
-            sink({
-                "kind": "line",
-                "line": frame.f_lineno,
-                "vars": {k: _snap(v) for k, v in frame.f_locals.items() if not k.startswith("_")},
-            })
-        return tracer
+        wrapped = []
+        for i, a in enumerate(args):
+            name = names[i] if i < len(names) else "arg%d" % i
+            wrapped.append(_TracedList(a, name, sink, full) if isinstance(a, list) else a)
 
-    sys.settrace(tracer)
-    try:
-        value = fn(*wrapped)
+        def tracer(frame, event, arg):
+            if time.time() > deadline:
+                raise _Timeout()
+            if event == "line" and tracing and frame.f_code.co_filename == _SOURCE_FILE:
+                if full():
+                    return tracer
+                sink({
+                    "kind": "line",
+                    "line": frame.f_lineno,
+                    "vars": {k: _snap(v) for k, v in frame.f_locals.items() if not k.startswith("_")},
+                })
+            return tracer
+
+        sys.settrace(tracer)
+        try:
+            value = fn(*wrapped)
+        finally:
+            sys.settrace(None)
+
+        sink({"kind": "return", "value": _snap(value)})
+        return json.dumps({
+            "ok": True,
+            "value": _snap(value),
+            "events": events,
+            "dropped": dropped[0],
+            "indexedBy": _index_variables(source),
+            "logs": _get_logs(),
+        })
+    except Exception as e:
+        return json.dumps({
+            "ok": False,
+            "error": str(e),
+            "logs": _get_logs(),
+            "timedOut": isinstance(e, _Timeout),
+        })
     finally:
-        sys.settrace(None)
-
-    sink({"kind": "return", "value": _snap(value)})
-    return json.dumps({
-        "value": _snap(value),
-        "events": events,
-        "dropped": dropped[0],
-        "indexedBy": _index_variables(source),
-    })
+        sys.stdout = _orig_stdout
+        sys.stderr = _orig_stderr
 `;
 
 export async function runPython(opts: RunOptions): Promise<RunResult> {
@@ -337,6 +384,7 @@ export async function runPython(opts: RunOptions): Promise<RunResult> {
     events: [],
     truncated: false,
     traceDegraded: trace && multiFile,
+    logs: [],
   };
 
   let py: PyodideInterface;
@@ -367,15 +415,29 @@ export async function runPython(opts: RunOptions): Promise<RunResult> {
       multiFile ? (entryModule ?? '__entry') : '',
     );
     const payload = JSON.parse(raw) as {
-      value: unknown;
-      events: TraceEvent[];
-      dropped: number;
+      ok?: boolean;
+      error?: string;
+      timedOut?: boolean;
+      value?: unknown;
+      events?: TraceEvent[];
+      dropped?: number;
       indexedBy?: Record<string, string[]>;
+      logs?: string[];
     };
 
+    if (payload.ok === false) {
+      return {
+        ...empty,
+        ok: false,
+        timedOut: Boolean(payload.timedOut),
+        error: payload.error,
+        logs: payload.logs ?? [],
+      };
+    }
+
     const events = payload.events ?? [];
-    if (payload.dropped > 0) {
-      events.push({ kind: 'truncated', dropped: payload.dropped });
+    if ((payload.dropped ?? 0) > 0) {
+      events.push({ kind: 'truncated', dropped: payload.dropped! });
     }
 
     return {
@@ -383,9 +445,10 @@ export async function runPython(opts: RunOptions): Promise<RunResult> {
       value: payload.value,
       timedOut: false,
       events,
-      truncated: payload.dropped > 0,
+      truncated: (payload.dropped ?? 0) > 0,
       traceDegraded: trace && multiFile,
       indexedBy: payload.indexedBy ?? {},
+      logs: payload.logs ?? [],
     };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);

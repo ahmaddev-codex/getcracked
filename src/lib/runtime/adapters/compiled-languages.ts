@@ -77,13 +77,21 @@ export function transpileJava(source: string): string {
 
   // 5. Strip local variable types: int x = 0; -> let x = 0;
   code = code.replace(
-    /\b(?:int|long|boolean|double|float|String|char|int\[\]|String\[\]|List<[^>]+>|Map<[^>]+>|[A-Z]\w*(?:<[^>]+>)?)\s+([A-Za-z0-9_$]+)\s*=/g,
+    /\b(?:int|long|boolean|double|float|String|char|int\[\]|String\[\]|List<[^>]+>|Map<[^>]+>|Set<[^>]+>|Queue<[^>]+>|PriorityQueue<[^>]+>|[A-Z]\w*(?:<[^>]+>)?)\s+([A-Za-z0-9_$]+)\s*=/g,
     'let $1 =',
   );
 
-  // 6. Java collection idioms: .size() -> .length, .get(i) -> [i] for arrays/lists if needed
+  // 6. Java collection idioms, instantiations & output
+  code = code.replace(/\bnew\s+PriorityQueue<[^>]*>\([^)]*\)/g, 'new PriorityQueue()');
+  code = code.replace(/\bnew\s+LinkedList<[^>]*>\([^)]*\)/g, 'new Queue()');
+  code = code.replace(/\bnew\s+HashMap<[^>]*>\([^)]*\)/g, 'new Map()');
+  code = code.replace(/\bnew\s+HashSet<[^>]*>\([^)]*\)/g, 'new Set()');
+  code = code.replace(/\bnew\s+ArrayList<[^>]*>\([^)]*\)/g, '[]');
   code = code.replace(/\.size\(\)/g, '.length');
   code = code.replace(/\bSystem\.out\.println\(/g, 'console.log(');
+  code = code.replace(/\bSystem\.out\.print\(/g, 'console.log(');
+  code = code.replace(/\bSystem\.err\.println\(/g, 'console.error(');
+  code = code.replace(/\bSystem\.err\.print\(/g, 'console.error(');
 
   // 7. Remove trailing extra closing brace from class Solution
   const openBraces = (code.match(/\{/g) || []).length;
@@ -127,16 +135,28 @@ export function transpileCpp(source: string): string {
     '$1$2',
   );
 
-  // 5. Strip local variable types: auto/int/vector -> let
+  // 5. C++ data structure instantiation declarations
+  code = code.replace(/\bpriority_queue<[^>]+>\s+([A-Za-z0-9_$]+);/g, 'let $1 = new PriorityQueue();');
+  code = code.replace(/\bqueue<[^>]+>\s+([A-Za-z0-9_$]+);/g, 'let $1 = new Queue();');
+  code = code.replace(/\bunordered_map<[^>]+>\s+([A-Za-z0-9_$]+);/g, 'let $1 = new Map();');
+  code = code.replace(/\bunordered_set<[^>]+>\s+([A-Za-z0-9_$]+);/g, 'let $1 = new Set();');
+  code = code.replace(/\bvector<[^>]+>\s+([A-Za-z0-9_$]+);/g, 'let $1 = [];');
+
+  // 6. Strip local variable types: auto/int/vector -> let
   code = code.replace(
     /\b(?:auto|int|long|long long|bool|double|float|string|char|vector<[^>]+>)\s+([A-Za-z0-9_$]+)\s*=/g,
     'let $1 =',
   );
 
-  // 6. C++ idioms: .size() -> .length, .push_back -> .push
+  // 7. C++ idioms & output
   code = code.replace(/\.size\(\)/g, '.length');
   code = code.replace(/\.push_back\(/g, '.push(');
   code = code.replace(/\.pop_back\(\)/g, '.pop()');
+  code = code.replace(/\b(?:std::)?cout\s*<<\s*([^;]+);/g, (_, expr: string) => {
+    const parts = expr.split(/\s*<<\s*/).filter((p) => !/^(?:std::)?endl$/.test(p.trim()));
+    return `console.log(${parts.join(', ')});`;
+  });
+  code = code.replace(/\bprintf\(/g, 'console.log(');
 
   // 7. Remove trailing extra closing brace
   const openBraces = (code.match(/\{/g) || []).length;
@@ -189,6 +209,11 @@ export function transpileGo(source: string): string {
 
   // 5. append(slice, val) -> (slice.push(val), slice) or in-place
   code = code.replace(/\bappend\(([A-Za-z0-9_$]+),\s*([^)]+)\)/g, '($1.push($2), $1)');
+
+  // 6. Go print/log idioms
+  code = code.replace(/\bfmt\.Print(?:ln|f)?\(/g, 'console.log(');
+  code = code.replace(/\bprintln\(/g, 'console.log(');
+  code = code.replace(/\bprint\(/g, 'console.log(');
 
   return code;
 }

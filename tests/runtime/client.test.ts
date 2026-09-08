@@ -244,6 +244,37 @@ describe('worker that dies at module evaluation', () => {
     // Retrying a worker known to be broken just costs another failure.
     expect(created).toBe(1);
   }, 60_000);
+
+  it('recycles worker after reaching MAX_RUNS_BEFORE_RECYCLE executions', async () => {
+    let created = 0;
+    let currentWorker: FakeWorker;
+    const client = new RuntimeClient(() => {
+      created++;
+      currentWorker = new FakeWorker();
+      return currentWorker;
+    });
+
+    for (let i = 0; i < 24; i++) {
+      const p = client.run({ spec: SPEC, source: 'x', language: 'javascript' });
+      currentWorker!.reply({ id: String(i), ok: true, result: passingResult() });
+      await p;
+    }
+    expect(created).toBe(1);
+    expect(client.executionCount).toBe(24);
+
+    // 25th run reaches threshold and triggers reset
+    const p25 = client.run({ spec: SPEC, source: 'x', language: 'javascript' });
+    currentWorker!.reply({ id: '24', ok: true, result: passingResult() });
+    await p25;
+
+    expect(client.executionCount).toBe(0);
+
+    // Next run will spawn a fresh worker
+    const p26 = client.run({ spec: SPEC, source: 'x', language: 'javascript' });
+    expect(created).toBe(2);
+    currentWorker!.reply({ id: '25', ok: true, result: passingResult() });
+    await p26;
+  });
 });
 
 /**
